@@ -1,11 +1,7 @@
 'use client'
 
 import PageHeader from '@/components/PageHeader/PageHeader';
-import SideNav from '@/components/SideNav/SideNav';
-
-import Link from 'next/link'
-
-import SideNavComponent from '@/components/SideNavComponent/SideNavComponent';
+import SideNavigation from '@/components/SideNav/SideNav';
 
 
 export default function Page() {
@@ -16,11 +12,7 @@ export default function Page() {
                 <PageHeader />
                 <img src="/MongoDBLeafy.svg" alt="Logo" width={120} height={120} style={{ position: 'fixed' }} />
             </div>
-            <SideNav>
-                <Link href={`chat`}> <SideNavComponent title="Chat" /></Link>
-                <SideNavComponent title="Charts" isSelected='true'/>
-                <Link href={`overview`}><SideNavComponent title="Overview"/></Link>
-            </SideNav>
+            <SideNavigation />
 
 
             <div

@@ -20,7 +20,7 @@ export default function Page() {
             </div>
             <SideNav>
                 <SideNavComponent title="Chat" isSelected='true'/>
-                <Link href={`charts`}><SideNavComponent title="Charts"/></Link>
+                <Link ><SideNavComponent title="Charts"/></Link>
                 <Link href={`overview`}><SideNavComponent title="Overview"/></Link>
             </SideNav>
             <div
@@ -32,7 +32,7 @@ export default function Page() {
                     height: '100vh',
                 }}
             >
-                <div style={{ flex: 4 }}>
+                <div style={{ flex: 3 }}>
                     <ChatComponent />
                 </div>
                 <div style={{ flex: 6 }}>
