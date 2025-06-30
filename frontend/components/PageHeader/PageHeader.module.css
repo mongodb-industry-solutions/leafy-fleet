@@ -1,0 +1,11 @@
+.header {
+
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    padding: 30px;
+    height: 120px;
+    margin-left: 120px;
+    width: 100%;
+    position: fixed;
+
+}
