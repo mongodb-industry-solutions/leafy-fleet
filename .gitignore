@@ -178,3 +178,5 @@ cython_debug/
 #.idea/
 
 !frontend/app/lib/
+
+.DS_Store
