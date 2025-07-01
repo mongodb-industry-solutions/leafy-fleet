@@ -12,39 +12,44 @@ const initialMessage = {
     sender: 'bot'
 };
 
-let nextId = 0;
+let nextId = 1;
 
 const ChatComponent = () => {
 
-    const [messages, setMessages] = useState(initialMessage);
+    const [messages, setMessages] = useState([initialMessage]);
 
     const handleSendMessage = async (userMessageText) => {
-       
+
         const newUserMessage = {
             id: nextId++,
             text: userMessageText,
             sender: 'user',
         };
-        setMessages(prev => [newUserMessage]);
+        setMessages(prev => [...prev, newUserMessage]);
         console.log("User message added:", newUserMessage);
     }
 
+    /**
+     * 
+     * Currently the chat is lost whenever the user changes to another page
+     * We oculd use localStorage to temporarly store the chat history
+     * and we could add a start new session button to clear the localStorage 
+     * 
+     */
 
     return (
         <div className={styles.chatComponent} >
 
-            {/* <div>
+            <div>
                 {messages.map(msg => (
-                    <div
-                        key={msg.id}
-                    >
-                        <p>{msg.text}</p>
+                    <div key={msg.id}>
+                        <p>{msg.sender}: {msg.text}</p>
                     </div>
                 ))}
-            </div> */}
+            </div>
 
 
-            <div className={styles.chatBox}><ChatInput onSendMessage={handleSendMessage}/></div>
+            <div className={styles.chatBox}><ChatInput onSendMessage={handleSendMessage} /></div>
 
         </div>
 

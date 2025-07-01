@@ -37,9 +37,7 @@ const ChatInput = ({ onSendMessage }) => {
                         onChange={e => {
                             setValue(e.target.value);
                         }}
-                        value={value}
-                        
-                    >
+                        value={value}>
                     </TextInput>
                     <Button style={{ width: '100px' }} onClick={handleSubmit} >
                         Send!
