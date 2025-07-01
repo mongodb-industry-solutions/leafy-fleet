@@ -1,39 +1,46 @@
-'use client'
+'use client';
 
+import { H2 } from '@leafygreen-ui/typography';
 import PageHeader from '@/components/PageHeader/PageHeader';
 import SideNav from '@/components/SideNav/SideNav';
-
-import Link from 'next/link'
-
+import Link from 'next/link';
+import Card from '@leafygreen-ui/card';
+import Button, { Variant, Size } from '@leafygreen-ui/button';
 import SideNavComponent from '@/components/SideNavComponent/SideNavComponent';
-
+import Icon from '@leafygreen-ui/icon';
+import styles from './page.module.css';
 
 export default function Page() {
+  return (
+    <div>
+      <PageHeader />
+      <img src="/MongoDBLeafy.svg" alt="Logo" width={120} height={120} style={{ position: 'fixed' }} />
 
-    return (
-        <div>
-            <div>
-                <PageHeader />
-                <img src="/MongoDBLeafy.svg" alt="Logo" width={120} height={120} style={{ position: 'fixed' }} />
-            </div>
-            <SideNav>
-                <Link href={`chat`}> <SideNavComponent title="Chat" /></Link>
-                <Link href={`charts`}><SideNavComponent title="Charts"/></Link>
-                <SideNavComponent title="Overview" isSelected='true'/>
-            </SideNav>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    marginLeft: '120px', // There should be a better way to do this
-                    paddingTop: '120px',
-                    height: '100vh',
-                }}
+      <SideNav>
+        <Link href="chat"><SideNavComponent title="Chat" /></Link>
+        <Link href="charts"><SideNavComponent title="Charts" /></Link>
+        <SideNavComponent title="Overview" isSelected="true" />
+      </SideNav>
+
+      <div className={styles.mainContainer}>
+        <div className={styles.headingMargin}>
+          <Card className="card-styles" as="article">
+            {/* You can put the form fields and the blue box/info inside here */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <H2 >Geospatial Vehicle Search</H2>
+            <Button
+              variant={Variant.Default}
+              darkMode={true}
+              size={Size.Default}
+              rightGlyph={<Icon glyph="MagnifyingGlass" />}
             >
-                Overview + Geofencing filtering details
-            </div>
-
-
+              Search Vehicles
+            </Button>
+          </div>
+            This is my card component
+          </Card>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

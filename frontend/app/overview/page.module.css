@@ -1,0 +1,7 @@
+.mainContainer {
+  margin-left: 120px; /* Match SideNav width */
+  padding: 140px 32px 32px 32px; /* top/right/bottom/left */
+  box-sizing: border-box;
+  
+}
+
