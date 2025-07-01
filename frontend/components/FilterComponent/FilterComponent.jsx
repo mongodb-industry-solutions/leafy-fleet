@@ -24,15 +24,14 @@ const FilterComponent = () => {
         </div>
         <div className={styles.checkboxGroup}>
           <h3 className={styles.groupTitle}>Fleet Filter</h3>
-          <Checkbox data-lgid="cb-6" label="Fleet 1" />
-          <Checkbox data-lgid="cb-7" label="Fleet 2" />
-          <Checkbox data-lgid="cb-8" label="Fleet 3" />
+          <Checkbox data-lgid="cb-5" label="Fleet 1" />
+          <Checkbox data-lgid="cb-6" label="Fleet 2" />
+          <Checkbox data-lgid="cb-7" label="Fleet 3" />
         </div>
         <div className={styles.checkboxGroup}>
           <h3 className={styles.groupTitle}>Time</h3>
-          
-          <Checkbox data-lgid="cb-11" label="All time" />
-          <Checkbox data-lgid="cb-12" label="Last hour" />
+          <Checkbox data-lgid="cb-8" label="All time" />
+          <Checkbox data-lgid="cb-9" label="Last hour" />
         </div>
       </div>
     </ExpandableCard>

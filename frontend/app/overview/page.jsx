@@ -1,7 +1,6 @@
 'use client';
 
 import { H2 } from '@leafygreen-ui/typography';
-import PageHeader from '@/components/PageHeader/PageHeader';
 import SideNav from '@/components/SideNav/SideNav';
 import Link from 'next/link';
 import Card from '@leafygreen-ui/card';
@@ -13,9 +12,6 @@ import styles from './page.module.css';
 export default function Page() {
   return (
     <div>
-      <PageHeader />
-      <img src="/MongoDBLeafy.svg" alt="Logo" width={120} height={120} style={{ position: 'fixed' }} />
-
       <SideNav>
         <Link href="chat"><SideNavComponent title="Chat" /></Link>
         <Link href="charts"><SideNavComponent title="Charts" /></Link>

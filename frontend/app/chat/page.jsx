@@ -1,6 +1,5 @@
 'use client'
 
-import PageHeader from '@/components/PageHeader/PageHeader';
 import SideNav from '@/components/SideNav/SideNav';
 import ChatComponent from '@/components/ChatComponent/ChatComponent';
 import FilterComponent from '@/components/FilterComponent/FilterComponent';
@@ -9,15 +8,11 @@ import Link from 'next/link'
 
 import SideNavComponent from '@/components/SideNavComponent/SideNavComponent';
 
-
 export default function Page() {
 
     return (
         <div>
-            <div>
-                <PageHeader />
-                <img src="/MongoDBLeafy.svg" alt="Logo" width={120} height={120} style={{ position: 'fixed' }} />
-            </div>
+            
             <SideNav>
                 <SideNavComponent title="Chat" isSelected='true'/>
                 <Link ><SideNavComponent title="Charts"/></Link>
@@ -28,8 +23,7 @@ export default function Page() {
                     display: 'flex',
                     flexDirection: 'row',
                     marginLeft: '120px', // There should be a better way to do this
-                    paddingTop: '120px',
-                    height: '100vh',
+                    height: '90vh',
                 }}
             >
                 <div style={{ flex: 3 }}>
