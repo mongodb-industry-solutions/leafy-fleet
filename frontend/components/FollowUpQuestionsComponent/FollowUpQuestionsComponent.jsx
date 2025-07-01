@@ -1,0 +1,29 @@
+"use client";
+
+import { Body, Description } from '@leafygreen-ui/typography';
+import Card from '@leafygreen-ui/card';
+import styles from './FollowUpQuestionsComponent.module.css'
+import { useMemo } from 'react';
+
+
+const FollowUpQuestionsComponent = ({ handleSuggestion, questions }) => {
+    // TODO, add redux here to handle the click on the question
+    return (
+
+        <div className={styles.suggestedQuestions}>
+            <Body onClick={() => console.log(messages)}>Suggested Questions:</Body>
+            {
+                questions.map((suggestion, index) =>
+                    <button key={`sug-${index}`} className={styles.suggestion} onClick={() => handleSuggestion(index)}>
+                        <Description>{suggestion}</Description>
+                    </button>
+                )
+            }
+        </div>
+
+    );
+
+
+}
+
+module.exports = FollowUpQuestionsComponent;

@@ -7,7 +7,6 @@ import FilterComponent from '@/components/FilterComponent/FilterComponent';
 
 import Link from 'next/link'
 
-import SideNavComponent from '@/components/SideNavComponent/SideNavComponent';
 
 
 export default function Page() {
@@ -18,11 +17,7 @@ export default function Page() {
                 <PageHeader />
                 <img src="/MongoDBLeafy.svg" alt="Logo" width={120} height={120} style={{ position: 'fixed' }} />
             </div>
-            <SideNav>
-                <SideNavComponent title="Chat" isSelected='true'/>
-                <Link ><SideNavComponent title="Charts"/></Link>
-                <Link href={`overview`}><SideNavComponent title="Overview"/></Link>
-            </SideNav>
+            <SideNav />
             <div
                 style={{
                     display: 'flex',
