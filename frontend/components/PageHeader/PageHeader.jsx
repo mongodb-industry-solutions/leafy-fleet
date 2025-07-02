@@ -16,7 +16,7 @@ const PageHeader = () => {
 
     <header className={styles.wrapper}>
         <div className={styles.leftLogo}> 
-        <MongoDBLogoMark height={70} width={70} color='green-base' darkMode='false'/>
+        <MongoDBLogoMark height={70} width={70} color='green-base' />
         </div>
         
       <div className={styles.center}>
