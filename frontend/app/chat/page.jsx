@@ -6,18 +6,12 @@ import FilterComponent from '@/components/FilterComponent/FilterComponent';
 
 import Link from 'next/link'
 
-import SideNavComponent from '@/components/SideNavComponent/SideNavComponent';
 
 export default function Page() {
 
     return (
-        <div>
-            
-            <SideNav>
-                <SideNavComponent title="Chat" isSelected='true'/>
-                <Link ><SideNavComponent title="Charts"/></Link>
-                <Link href={`overview`}><SideNavComponent title="Overview"/></Link>
-            </SideNav>
+        <div>            
+            <SideNav />
             <div
                 style={{
                     display: 'flex',

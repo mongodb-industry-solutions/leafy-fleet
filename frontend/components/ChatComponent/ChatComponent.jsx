@@ -5,6 +5,8 @@ import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
 import ChatInput from '@/components/ChatInput/ChatInput';
 import { useState, useRef, useEffect } from 'react';
+import TextBubbleComponent from '@/components/TextBubbleComponent/TextBubbleComponent';
+
 
 const initialMessage = {
     id: 'initial',
@@ -16,7 +18,13 @@ let nextId = 1;
 
 const ChatComponent = () => {
 
+    const bottomRef = useRef(null);
     const [messages, setMessages] = useState([initialMessage]);
+
+    useEffect(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
 
     const handleSendMessage = async (userMessageText) => {
 
@@ -29,30 +37,21 @@ const ChatComponent = () => {
         console.log("User message added:", newUserMessage);
     }
 
-    /**
-     * 
-     * Currently the chat is lost whenever the user changes to another page
-     * We oculd use localStorage to temporarly store the chat history
-     * and we could add a start new session button to clear the localStorage 
-     * 
-     */
-
     return (
-        <div className={styles.chatComponent} >
-
-            <div>
-                {messages.map(msg => (
+        <div className={styles.chatComponent}>
+            <div className={styles.messagesContainer}>
+                {messages.map((msg) => (
                     <div key={msg.id}>
-                        <p>{msg.sender}: {msg.text}</p>
+                        <TextBubbleComponent user={msg.sender} text={msg.text} />
                     </div>
                 ))}
+                <div ref={bottomRef} /> {/* 👈 Scroll target */}
             </div>
 
-
-            <div className={styles.chatBox}><ChatInput onSendMessage={handleSendMessage} /></div>
-
+            <div className={styles.chatBox}>
+                <ChatInput onSendMessage={handleSendMessage} />
+            </div>
         </div>
-
     );
 }
 

@@ -1,9 +1,10 @@
 .filterComponent {
-  background-color: #494949;
+  background-color: #ffffff;
   color: white;
   height: 100%;
   padding: 10px;
   box-sizing: border-box;
+  border-left: gray 1px solid;
 }
 
 .cardWrapper {

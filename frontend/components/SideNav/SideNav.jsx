@@ -12,6 +12,7 @@ const SideNavigation = ({ children }) => {
     <SideNav
     widthOverride={120}
     className={styles.sideNav}
+    aria-label="Main navigation"
   >
     <Link href={`chat`} className={styles.sideBarButton}><SideNavItem>Chat</SideNavItem></Link>
     <Link href={`charts`} className={styles.sideBarButton}><SideNavItem>Charts</SideNavItem></Link>
