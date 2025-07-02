@@ -2,7 +2,6 @@
 
 import { H2 } from '@leafygreen-ui/typography';
 import SideNav from '@/components/SideNav/SideNav';
-import Link from 'next/link';
 import Card from '@leafygreen-ui/card';
 import Button, { Variant, Size } from '@leafygreen-ui/button';
 import Icon from '@leafygreen-ui/icon';
