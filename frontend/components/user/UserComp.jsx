@@ -13,7 +13,7 @@ import { setSelectedUser } from '@/redux/slices/UserSlice';
 const UserComp = (props) => {
     const {
         user = null, 
-        setOpen, 
+        handleClose, 
     } = props;
     const dispatch = useDispatch()
     const isSelectedUser = useSelector(state => state.User.selectedUser?._id === user._id)
@@ -23,7 +23,7 @@ const UserComp = (props) => {
     }
     const selectUserAndCloseModal = () => {
         dispatch(setSelectedUser({user: user}))
-        setOpen(false)
+        handleClose()
     }
 
     return (

@@ -12,7 +12,7 @@ import WizardIcon from '@leafygreen-ui/icon/dist/Wizard';
 import { USER_MAP } from '@/lib/constants';
 
 
-const LoginComp = (props) => {
+const LoginComp = ({ modalObserver }) => {
     const [open, setOpen] = useState(false);
     
     useEffect(() => {
@@ -20,6 +20,7 @@ const LoginComp = (props) => {
     }, []);
   
     const handleClose = () => {
+        modalObserver();
         setOpen(false)
     }
 
@@ -54,7 +55,7 @@ const LoginComp = (props) => {
                                 <UserComp 
                                     key={index} 
                                     user={user} 
-                                    setOpen={setOpen}
+                                    handleClose={handleClose}
                                 ></UserComp>
                             ))
                         }

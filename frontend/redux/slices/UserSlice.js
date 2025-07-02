@@ -10,7 +10,7 @@ const UserSlice= createSlice({
     },
     reducers: {
         setSelectedUser: (state, action) => {
-            state.selectedUser = action.payload.user
+            state.selectedUser = {...action.payload.user}
             
         }
     },       

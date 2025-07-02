@@ -1,7 +1,7 @@
 import "@fontsource/geist-mono";
 import '@/node_modules/bootstrap/dist/css/bootstrap.min.css'
 import "./globals.css";
-import LoginComp from "@/components/login/LoginComp";
+import LoginManager from "@/components/LoginManager/LoginManager";
 import StoreProvider from "./StoreProvide";
 import PageHeader from "@/components/PageHeader/PageHeader";
 export const metadata = {
@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
         <StoreProvider> 
         <PageHeader />
         {children}
-        <LoginComp />
+        <LoginManager />
         </StoreProvider>
       </body>
     </html>
