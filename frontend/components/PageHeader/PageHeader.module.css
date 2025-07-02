@@ -1,11 +1,47 @@
-.header {
+.wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 90px;
+  background-color: white;
+  color: white;
+}
 
-    background-color: #f5f5f5;
-    border-bottom: 1px solid #ddd;
-    padding: 30px;
-    height: 120px;
-    margin-left: 120px;
-    width: 100%;
-    position: fixed;
+/* Container for logo mark */
+.leftLogo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-right: 1rem;
+}
 
+/* Group image and title side by side */
+.center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 1rem;
+}
+
+/* Right-side buttons/icons */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-right: 5%;
+}
+
+.userIcon {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
+.leftLogo {
+   width: 120px;
+   height: 90px;
+   display: flex;              
+  justify-content: center;    
+  align-items: center; 
+  /*background-color: azure;  */     
 }
