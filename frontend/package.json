@@ -21,6 +21,7 @@
     "@leafygreen-ui/leafygreen-provider": "^4.0.2",
     "@leafygreen-ui/logo": "^11.0.1",
     "@leafygreen-ui/modal": "^17.0.3",
+    "@leafygreen-ui/number-input": "^5.0.2",
     "@leafygreen-ui/side-nav": "^17.0.1",
     "@leafygreen-ui/skeleton-loader": "^3.0.2",
     "@leafygreen-ui/tabs": "^14.0.2",

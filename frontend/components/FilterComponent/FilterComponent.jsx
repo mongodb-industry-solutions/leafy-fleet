@@ -4,6 +4,7 @@ import Checkbox, { getTestUtils } from '@leafygreen-ui/checkbox';
 import styles from './FilterComponent.module.css';
 import Code from '@leafygreen-ui/code';
 import { H1, H2, Subtitle, Body, InlineCode, InlineKeyCode, Disclaimer, Overline, Link, BackLink } from '@leafygreen-ui/typography';
+import { NumberInput } from '@leafygreen-ui/number-input';
 
 const FilterComponent = () => {
 
@@ -74,12 +75,32 @@ const FilterComponent = () => {
           darkMode={false}
         >
           <div className={styles.filterGrid}>
-            <div><h1>fleet1</h1></div>
+            <NumberInput
+              data-lgid="fleet-1"
+              label="Fleet 1"
+              min={0}
+              max={100}
+              defaultValue={50}
+              unit="vehicles"
+            />
 
+            <NumberInput
+              data-lgid="fleet-2"
+              label="Fleet 2"
+              min={0}
+              max={100}
+              defaultValue={50}
+              unit="vehicles"
+            />
 
-            <div><h1>flee2</h1></div>
-
-            <div><h1>fleet3</h1></div>
+            <NumberInput
+              data-lgid="fleet-3"
+              label="Fleet 3"
+              min={0}
+              max={100}
+              defaultValue={50}
+              unit="vehicles"
+            />
           </div>
         </ExpandableCard>
 
