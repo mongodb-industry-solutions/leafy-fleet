@@ -5,18 +5,14 @@ import SideNav from '@/components/SideNav/SideNav';
 import Link from 'next/link';
 import Card from '@leafygreen-ui/card';
 import Button, { Variant, Size } from '@leafygreen-ui/button';
-import SideNavComponent from '@/components/SideNavComponent/SideNavComponent';
 import Icon from '@leafygreen-ui/icon';
 import styles from './page.module.css';
 
 export default function Page() {
   return (
     <div>
-      <SideNav>
-        <Link href="chat"><SideNavComponent title="Chat" /></Link>
-        <Link href="charts"><SideNavComponent title="Charts" /></Link>
-        <SideNavComponent title="Overview" isSelected="true" />
-      </SideNav>
+      <SideNav />
+        
 
       <div className={styles.mainContainer}>
         <div className={styles.headingMargin}>
