@@ -2,6 +2,7 @@
   margin-left: 120px; /* Match SideNav width */
   padding:  32px 32px 32px; /* top/right/bottom/left */
   box-sizing: border-box;
-  
+  background-color: white;
+  min-height: calc(100vh - 64px); /* Adjust for header height */
 }
 

@@ -1,0 +1,17 @@
+.topComboboxes {
+    padding-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px; /* Adjust padding between comboboxes */
+    margin-bottom: 16px;
+    align-items: center;
+}
+
+.midComboboxes {
+    padding-top: 15px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px; /* Adjust padding between comboboxes */
+    margin-bottom: 16px;
+    align-items: center;
+}
