@@ -9,18 +9,26 @@
 .topPart {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 300px 10px 300px;
+    justify-content: center;
+   
     gap: 80px;
     /* border-bottom: 1px solid #ccc; */
     background-color: white;
+    /* If the screen is small, I want the charts to stack vertically */
+    padding: 10px;
+    flex: 1;
+    flex-wrap: wrap;
+    /* justify-content: space-between; */
 }
+
+
 
 .bottomPart {
     display: flex;
     flex: 5;
     flex-wrap: wrap;
-    justify-content: space-between;
+    /* justify-content: space-between; */
+    justify-content: center;
     align-items: center;
     gap: 20px;
 }
