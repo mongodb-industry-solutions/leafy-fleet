@@ -7,7 +7,6 @@ import { useMemo } from 'react';
 
 
 const FollowUpQuestionsComponent = ({ handleSuggestion, questions }) => {
-    // TODO, add redux here to handle the click on the question
     return (
 
         <div className={styles.suggestedQuestions}>

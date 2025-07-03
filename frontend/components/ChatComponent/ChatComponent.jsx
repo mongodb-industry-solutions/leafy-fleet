@@ -6,6 +6,8 @@ import Icon from "@leafygreen-ui/icon";
 import ChatInput from '@/components/ChatInput/ChatInput';
 import { useState, useRef, useEffect } from 'react';
 import TextBubbleComponent from '@/components/TextBubbleComponent/TextBubbleComponent';
+import { useDispatch, useSelector } from 'react-redux';
+import { pushMessageHistory } from '@/redux/slices/MessageSlice';
 
 
 const initialMessage = {
@@ -19,7 +21,11 @@ let nextId = 1;
 const ChatComponent = () => {
 
     const bottomRef = useRef(null);
-    const [messages, setMessages] = useState([initialMessage]);
+    
+    
+    const dispatch = useDispatch()
+    const messages = useSelector(state => state.Message.messageHistory)
+    
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,19 +39,27 @@ const ChatComponent = () => {
             text: userMessageText,
             sender: 'user',
         };
-        setMessages(prev => [...prev, newUserMessage]);
-        console.log("User message added:", newUserMessage);
+        const botResponseMessage = {
+            id: nextId++,
+            text: "This is a placeholder response from the bot.",
+            sender: 'bot',
+        };
+        dispatch(pushMessageHistory({message: newUserMessage}));
+        dispatch(pushMessageHistory({message: botResponseMessage})); // testing response
+        // console.log("User message added:", newUserMessage);
+
     }
+
 
     return (
         <div className={styles.chatComponent}>
             <div className={styles.messagesContainer}>
                 {messages.map((msg) => (
                     <div key={msg.id}>
-                        <TextBubbleComponent user={msg.sender} text={msg.text} />
+                        <TextBubbleComponent user={msg.sender} text={msg.text} id={msg.id} />
                     </div>
                 ))}
-                <div ref={bottomRef} /> {/* 👈 Scroll target */}
+                <div ref={bottomRef} />
             </div>
 
             <div className={styles.chatBox}>

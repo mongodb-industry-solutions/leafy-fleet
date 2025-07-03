@@ -15,10 +15,10 @@ export const USER_MAP = [
         },
         {
             "_id": "671ff2451ec726b417352703",
-            "userName": "Vincent Van Gogh",
-            "name": "Vincent",
-            "surname": "Van Gogh",
-            "email": "vincent.vg@gmail.com",
+            "userName": "Kicho",
+            "name": "Kicho",
+            "surname": "Kicho",
+            "email": "kicho@gmail.com",
             "message": "Build your own fleet!"
 
         }

@@ -2,6 +2,7 @@
 
 import SideNavigation from '@/components/SideNav/SideNav';
 
+import ChartsComponent from '@/components/ChartsComponent/ChartsComponent';
 
 export default function Page() {
 
@@ -16,10 +17,10 @@ export default function Page() {
                     display: 'flex',
                     flexDirection: 'row',
                     marginLeft: '120px', // There should be a better way to do this
-                    height: '100vh',
+                    height: '90vh',
                 }}
             >
-                Charts
+                <ChartsComponent />
             </div>
 
 
