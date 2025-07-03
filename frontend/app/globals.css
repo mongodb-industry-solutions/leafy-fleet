@@ -9,7 +9,9 @@
     --foreground: #ffffff;
   }
 } */
-
+.main-content {
+  padding-top: 90px; /* Match your header's height */
+}
 html,
 body {
   max-width: 100vw;

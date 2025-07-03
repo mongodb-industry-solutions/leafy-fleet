@@ -5,6 +5,12 @@
   height: 90px;
   background-color: white;
   color: white;
+  position: fixed;    /* Add this */
+  top: 0;             /* Add this */
+  left: 0;            /* Add this */
+  width: 100%;        /* Add this */
+  z-index: 1000;      /* Add this */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Optional for effect */
 }
 
 /* Container for logo mark */
