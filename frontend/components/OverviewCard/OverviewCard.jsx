@@ -11,7 +11,7 @@ import { setSelectedType, setSelectedFleets, setGeoFences, setMaxDistance, setMi
 import CodeComponent from '../CodeComponet/CodeComponent.jsx';
 import Banner from '@leafygreen-ui/banner';
 import { NumberInput } from '@leafygreen-ui/number-input';
-
+import ResultsComponent from '../ResultsComponent/ResultsComponent';
 const OverviewCard = () => {
 
     // State to manage the selected option for the geospatial search
@@ -88,7 +88,7 @@ const OverviewCard = () => {
             {selectedType==="nearest" &&
             
             <Combobox
-                label="Geofencees"
+                label="Geofences"
                 description="Select the geofence to use for the search"
                 placeholder="Select the geofence"
                 multiselect={false}
@@ -145,9 +145,7 @@ const OverviewCard = () => {
                 <Banner> <strong>Nearest Vehicles</strong> <br /> Find vehicles closest to a specific point, ordered by distance</Banner>
                 ): (<Banner> <strong>Inside Geofence</strong> <br /> Find vehicles completely within a specified geofence boundary</Banner>)}
 
-          </Card>
-          
-
+          </Card> <br />
           </div>
   );
 };
