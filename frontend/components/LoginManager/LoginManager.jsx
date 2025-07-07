@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * This component manages all of the login and user selection logic
+ * The "traditional" user select as it appears on other demos is inside LoginComp.jsx
+ * This component also manages the fleet configuration modal that appears when the right user is selected
+ */
+
 import { useDispatch, useSelector } from "react-redux";
 import LoginComp from "../login/LoginComp";
 import styles from "./LoginManager.module.css";
@@ -14,6 +20,9 @@ import {
   setFleet1Capacity,
   setFleet2Capacity,
   setFleet3Capacity,
+  setFleet1Name,
+  setFleet2Name,
+  setFleet3Name,
 } from "@/redux/slices/UserSlice";
 import { Option, OptionGroup, Select, Size } from "@leafygreen-ui/select";
 import Button from "@leafygreen-ui/button";
@@ -25,38 +34,50 @@ const LoginManager = () => {
     (state) => state.User.selectedUser.userName
   );
 
-  // Dispatch actions based on user input or component logic  
-const dispatchFleetCapacity = (indexFleet, fleetCapacity) => {  
-  // console.log("Dispatching fleet capacity:", indexFleet, fleetCapacity);
-  if (indexFleet === 1) {  
-    dispatch(setFleet1Capacity(fleetCapacity));  
-  } else if (indexFleet === 2) {  
-    dispatch(setFleet2Capacity(fleetCapacity));  
-  } else if (indexFleet === 3) {  
-    dispatch(setFleet3Capacity(fleetCapacity));  
-  }  
-}; 
+  // Dispatch actions based on user input or component logic
+  const dispatchFleetCapacity = (indexFleet, fleetCapacity) => {
+    // console.log("Dispatching fleet capacity:", indexFleet, fleetCapacity);
+    if (indexFleet === 1) {
+      dispatch(setFleet1Capacity(fleetCapacity));
+    } else if (indexFleet === 2) {
+      dispatch(setFleet2Capacity(fleetCapacity));
+    } else if (indexFleet === 3) {
+      dispatch(setFleet3Capacity(fleetCapacity));
+    }
+  };
 
+  const handleFleetCapacityChange = (indexFleet, fleetCapacity) => {
+    dispatchFleetCapacity(indexFleet, fleetCapacity);
+  };
 
-
-const handleFleetCapacityChange = (indexFleet, fleetCapacity) => {  
-  dispatchFleetCapacity(indexFleet, fleetCapacity.target.value);  
-};  
+  // Save fleet name to redux
+  const dispatchFleetName = (indexFleet, fleetName) => {
+    if (indexFleet === 1) {
+      dispatch(setFleet1Name(fleetName));
+    } else if (indexFleet === 2) {
+      dispatch(setFleet2Name(fleetName));
+    } else if (indexFleet === 3) {
+      dispatch(setFleet3Name(fleetName));
+    }
+  };
+  const handleFleetNameChange = (indexFleet, fleetName) => {
+    dispatchFleetName(indexFleet, fleetName.target.value);
+  };
 
   const [open, setOpen] = useState(false);
   const [selectedFleets, setSelectedFleets] = useState(1);
 
+  // Show how many fleet boxes to render based on user selection in the fleet selector
   const handleFleetChange = (value) => {
     setSelectedFleets(parseInt(value, 10)); // Update state with the selected value
   };
 
-  // console.log("LoginManager isSelectedUser", isSelectedUser)
-
+  // Used to manage opening and closing the fleet configuration modal
   const modalObserver = () => {
     if (isSelectedUser === "Kicho") {
+      dispatch(setSelectedUser({ user: "Kicho" }));
       setOpen(true);
-    }
-    else {
+    } else {
       setOpen(false);
       dispatch(setSelectedUser({ user: "Frida" }));
       dispatch(setFleet1Capacity(50));
@@ -68,8 +89,6 @@ const handleFleetCapacityChange = (indexFleet, fleetCapacity) => {
   const handleClose = () => {
     setOpen(false);
   };
-
-  
 
   return (
     <>
@@ -233,18 +252,48 @@ session
             }}
           >
             {Array.from({ length: selectedFleets }).map((_, index) => (
-              <NumberInput
-                key={index}
-                data-lgid={`fleet-${index + 1}`}
-                label={`Fleet ${index + 1}`}
-                min={0}
-                max={100}
-                defaultValue={50}
-                unit="vehicles"
-                onChange={(value) => {
-                  handleFleetCapacityChange(index + 1, value);
-                }}
-              />
+              <div>
+                <Description>Fleet {index + 1} </Description>
+                <div class="input-group">
+                  <input
+                    type="text"
+                    aria-label="Fleet Name"
+                    class="form-control"
+                    placeholder="Fleet Name"
+                    onChange={(value) =>
+                      handleFleetNameChange(index + 1, value)
+                    }
+                  />
+                  <input
+                    type="number"
+                    aria-label="Fleet quantity"
+                    class="form-control"
+                    placeholder="Fleet quantity"
+                    min="0"
+                    max="100"
+                    onChange={(e) => {
+                      let value = parseInt(e.target.value, 10);
+                      // If the parsed value is greater than 100, set it back to 100
+                      if (value > 100) {
+                        value = 100;
+                        e.target.value = 100;
+                      }
+
+                      if (value < 0) {
+                        value = 0;
+                        e.target.value = 0;
+                      }
+
+                      // Handle cases where input is empty or not a valid number (e.g., after deleting all text)
+                      if (isNaN(value)) {
+                        value = 0; // Or null, depending on your desired default for empty
+                      }
+
+                      handleFleetCapacityChange(index + 1, value);
+                    }}
+                  />
+                </div>
+              </div>
             ))}
           </div>
           <br />
