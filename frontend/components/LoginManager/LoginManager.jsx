@@ -10,7 +10,11 @@ import { H1, H2, Subtitle, Description } from "@leafygreen-ui/typography";
 import { NumberInput } from "@leafygreen-ui/number-input";
 import Checkbox, { getTestUtils } from "@leafygreen-ui/checkbox";
 
-import { setFleet1Capacity, setFleet2Capacity, setFleet3Capacity } from "@/redux/slices/UserSlice";
+import {
+  setFleet1Capacity,
+  setFleet2Capacity,
+  setFleet3Capacity,
+} from "@/redux/slices/UserSlice";
 import { Option, OptionGroup, Select, Size } from "@leafygreen-ui/select";
 import Button from "@leafygreen-ui/button";
 import Code from "@leafygreen-ui/code";
@@ -21,15 +25,30 @@ const LoginManager = () => {
     (state) => state.User.selectedUser.userName
   );
 
-  const { fleet1Capacity, fleet2Capacity, fleet3Capacity } = useSelector(
-    (state) => ({
-      fleet1Capacity: state.User.fleet1Capacity,
-      fleet2Capacity: state.User.fleet2Capacity,
-      fleet3Capacity: state.User.fleet3Capacity,
-    })
-  );
+  // Dispatch actions based on user input or component logic  
+const dispatchFleetCapacity = (indexFleet, fleetCapacity) => {  
+  // console.log("Dispatching fleet capacity:", indexFleet, fleetCapacity);
+  if (indexFleet === 1) {  
+    dispatch(setFleet1Capacity(fleetCapacity));  
+  } else if (indexFleet === 2) {  
+    dispatch(setFleet2Capacity(fleetCapacity));  
+  } else if (indexFleet === 3) {  
+    dispatch(setFleet3Capacity(fleetCapacity));  
+  }  
+}; 
+
+
+
+const handleFleetCapacityChange = (indexFleet, fleetCapacity) => {  
+  dispatchFleetCapacity(indexFleet, fleetCapacity.target.value);  
+};  
 
   const [open, setOpen] = useState(false);
+  const [selectedFleets, setSelectedFleets] = useState(1);
+
+  const handleFleetChange = (value) => {
+    setSelectedFleets(parseInt(value, 10)); // Update state with the selected value
+  };
 
   // console.log("LoginManager isSelectedUser", isSelectedUser)
 
@@ -37,15 +56,20 @@ const LoginManager = () => {
     if (isSelectedUser === "Kicho") {
       setOpen(true);
     }
+    else {
+      setOpen(false);
+      dispatch(setSelectedUser({ user: "Frida" }));
+      dispatch(setFleet1Capacity(50));
+      dispatch(setFleet2Capacity(50));
+      dispatch(setFleet3Capacity(50));
+    }
   };
 
   const handleClose = () => {
     setOpen(false);
   };
 
-  const handleNumberPlacement = (value) => {
-    console.log("Number of vehicles per fleet:", value);
-  };
+  
 
   return (
     <>
@@ -96,12 +120,13 @@ const LoginManager = () => {
                   name="Fleet Selector"
                   size={Size.Default}
                   defaultValue="1"
+                  onChange={(value) => handleFleetChange(value)}
                 >
                   <Option value="2">2</Option>
                   <Option value="3">3</Option>
                 </Select>
                 <br />
-                <NumberInput
+                {/* <NumberInput
                   data-lgid="fleet-2"
                   label="Number of vehicles per fleet"
                   min={0}
@@ -110,7 +135,9 @@ const LoginManager = () => {
                   unit="vehicles"
                   style={{ width: "180px" }}
                   placeholder="Custom"
-                />
+                  onChange={(value) => console.log(`New value: ${value}`)}  
+                  onBlur={(value) => console.log(`Final value: ${value}`)}  
+                /> */}
                 <br />
               </div>
               <div className={styles.selectFleetContainer}>
@@ -205,35 +232,20 @@ session
               paddingRight: "40px",
             }}
           >
-            <NumberInput
-              data-lgid="fleet-1"
-              label="Fleet 1"
-              min={0}
-              max={100}
-              defaultValue={50}
-              unit="vehicles"
-              onChange={(value) => dispatch(setFleet1Capacity({ capacity: value }))}
-            />
-
-            <NumberInput
-              data-lgid="fleet-2"
-              label="Fleet 2"
-              min={0}
-              max={100}
-              defaultValue={50}
-              unit="vehicles"
-                onChange={(value) => dispatch(setFleet2Capacity({ capacity: value }))}
-            />
-
-            <NumberInput
-              data-lgid="fleet-3"
-              label="Fleet 3"
-              min={0}
-              max={100}
-              defaultValue={50}
-              unit="vehicles"
-              onChange={(value) => dispatch(setFleet3Capacity({ capacity: value }))}
-            />
+            {Array.from({ length: selectedFleets }).map((_, index) => (
+              <NumberInput
+                key={index}
+                data-lgid={`fleet-${index + 1}`}
+                label={`Fleet ${index + 1}`}
+                min={0}
+                max={100}
+                defaultValue={50}
+                unit="vehicles"
+                onChange={(value) => {
+                  handleFleetCapacityChange(index + 1, value);
+                }}
+              />
+            ))}
           </div>
           <br />
           <div className="d-flex justify-content-center">
