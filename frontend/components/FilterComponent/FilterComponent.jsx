@@ -5,8 +5,23 @@ import styles from './FilterComponent.module.css';
 import Code from '@leafygreen-ui/code';
 import { H1, H2, Subtitle, Body, InlineCode, InlineKeyCode, Disclaimer, Overline, Link, BackLink } from '@leafygreen-ui/typography';
 import { NumberInput } from '@leafygreen-ui/number-input';
-
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  setFleet1Capacity,
+  setFleet2Capacity,
+  setFleet3Capacity,
+} from "@/redux/slices/UserSlice";
 const FilterComponent = () => {
+
+  const dispatch = useDispatch();
+  const { fleet1Capacity, fleet2Capacity, fleet3Capacity } = useSelector(
+    (state) => ({
+      fleet1Capacity: state.User.fleet1Capacity,
+      fleet2Capacity: state.User.fleet2Capacity,
+      fleet3Capacity: state.User.fleet3Capacity,
+    })
+  );
+
 
 // Snippet taken from https://www.mongodb.design/component/code/live-example
   const jsSnippet = `
@@ -80,8 +95,9 @@ const FilterComponent = () => {
               label="Fleet 1"
               min={0}
               max={100}
-              defaultValue={50}
+              defaultValue={fleet1Capacity}
               unit="vehicles"
+              onChange={(value) => dispatch(setFleet1Capacity(value.target.value))}
             />
 
             <NumberInput
@@ -89,8 +105,9 @@ const FilterComponent = () => {
               label="Fleet 2"
               min={0}
               max={100}
-              defaultValue={50}
+              defaultValue={fleet2Capacity}
               unit="vehicles"
+              onChange={(value) => dispatch(setFleet2Capacity(value.target.value))}
             />
 
             <NumberInput
@@ -98,8 +115,9 @@ const FilterComponent = () => {
               label="Fleet 3"
               min={0}
               max={100}
-              defaultValue={50}
+              defaultValue={fleet3Capacity}
               unit="vehicles"
+              onChange={(value) => dispatch(setFleet3Capacity(value.target.value))}
             />
           </div>
         </ExpandableCard>
