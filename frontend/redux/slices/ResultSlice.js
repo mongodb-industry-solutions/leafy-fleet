@@ -20,5 +20,5 @@ const ResultSlice = createSlice({
     }
 });
 
-export const { setResults, setSelectedCar, setIsModalOpen, clearResults } = ResultSlice.actions;
+export const { setResults, setSelectedCar, setIsModalOpen } = ResultSlice.actions;
 export default ResultSlice.reducer;

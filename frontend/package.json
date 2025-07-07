@@ -27,7 +27,7 @@
     "@leafygreen-ui/select": "^16.0.0",
     "@leafygreen-ui/side-nav": "^17.0.1",
     "@leafygreen-ui/skeleton-loader": "^3.0.2",
-    "@leafygreen-ui/tabs": "^14.0.2",
+    "@leafygreen-ui/tabs": "^14.2.5",
     "@leafygreen-ui/text-input": "^14.0.13",
     "@leafygreen-ui/tooltip": "^13.0.4",
     "@leafygreen-ui/typography": "^20.1.9",

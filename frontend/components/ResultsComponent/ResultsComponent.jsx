@@ -18,8 +18,9 @@ const cars = [
   {
     id: "FL001",
     name: "Ford Transit",
+    year: 2002,
     fleet: "Delivery Fleet",
-    status: "active",
+    status: "Active",
     location: "Downtown",
     driver: "John Doe",
     fuel: 85,
@@ -30,12 +31,14 @@ const cars = [
     coordinates: [-74.006, 40.7128],
     zone: "Zone A - Downtown",
     distance: 0.5, // km from search point
+    licencePlate: "ABC1234",
   },
   {
     id: "FL002",
     name: "Mercedes Sprinter",
+    year: 2015,
     fleet: "Delivery Fleet",
-    status: "maintenance",
+    status: "Maintenance",
     location: "Garage A",
     driver: "Unassigned",
     fuel: 20,
@@ -46,12 +49,14 @@ const cars = [
     coordinates: [-74.01, 40.72],
     zone: "Zone B - Industrial",
     distance: 1.2,
+    licencePlate: "XYZ5678",
   },
   {
     id: "EX001",
     name: "BMW 7 Series",
+    year: 2020,
     fleet: "Executive Fleet",
-    status: "active",
+    status: "Active",
     location: "Airport",
     driver: "Mike Johnson",
     fuel: 65,
@@ -62,12 +67,14 @@ const cars = [
     coordinates: [-73.7781, 40.6413],
     zone: "Zone C - Airport",
     distance: 15.3,
+    licencePlate: "LMN9012",
   },
   {
     id: "EX002",
     name: "Audi A8",
+    year: 2021,
     fleet: "Executive Fleet",
-    status: "active",
+    status: "Active",
     location: "City Center",
     driver: "Sarah Wilson",
     fuel: 90,
@@ -78,12 +85,14 @@ const cars = [
     coordinates: [-74.0059, 40.7589],
     zone: "Zone A - Downtown",
     distance: 2.1,
+    licencePlate: "OPQ3456",
   },
   {
     id: "SV002",
     name: "Ford F-150",
+    year: 2018,
     fleet: "Service Fleet",
-    status: "active",
+    status: "Active",
     location: "Warehouse B",
     driver: "Lisa Davis",
     fuel: 75,
@@ -94,6 +103,7 @@ const cars = [
     coordinates: [-74.209, 40.7505],
     zone: "Zone D - Warehouse",
     distance: 8.7,
+    licencePlate: "RST6789",
   },
 ]
 
@@ -110,11 +120,11 @@ const ResultsComponent = ( ) => {
 
     const getStatusIcon = (status) => {
   switch (status) {
-    case "active":
+    case "Active":
       return <span className={`${styles.statusCircle} ${styles.statusActive}`} />;
-    case "maintenance":
+    case "Maintenance":
       return <span className={`${styles.statusCircle} ${styles.statusMaintenance}`} />;
-    case "issue":
+    case "Issue":
       return <span className={`${styles.statusCircle} ${styles.statusIssue}`} />;
     default:
       return <span className={`${styles.statusCircle} ${styles.statusDefault}`} />;
