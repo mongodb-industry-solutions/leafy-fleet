@@ -103,8 +103,8 @@ const ResultsComponent = ( ) => {
     
     const dispatch = useDispatch();
     const results = useSelector((state) => state.Result.results);
-    const selectedCar1 = useSelector((state) => state.Result.selectedCar);
-    const isModalOpen1 = useSelector((state) => state.Result.isModalOpen);
+    const selectedCar = useSelector((state) => state.Result.selectedCar);
+    const isModalOpen = useSelector((state) => state.Result.isModalOpen);
 
 
 
@@ -123,11 +123,11 @@ const ResultsComponent = ( ) => {
 
   const handleCarClick = (car) => {
     dispatch(setSelectedCar({ car }));
-    dispatch(setIsModalOpen({ isOpen: true }));
+    dispatch(setIsModalOpen({ isModalOpen: true }));
   }
 
   const handleCloseModal = () => {
-    dispatch(setIsModalOpen({ isOpen: false }));
+    dispatch(setIsModalOpen({ isModalOpen: false }));
     dispatch(setSelectedCar({ car: null }));
   }
   const handleOverlayClick = (e) => {
@@ -182,7 +182,7 @@ const ResultsComponent = ( ) => {
     {isModalOpen && (
         <div className={styles.modalOverlay} onClick={handleOverlayClick}>
           
-            <DetailsComponent car={selectedCar1} onClose={handleCloseModal}/>
+            <DetailsComponent car={selectedCar} onClose={handleCloseModal}/>
           
         </div>
       )}
