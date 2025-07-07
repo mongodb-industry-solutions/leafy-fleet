@@ -96,30 +96,3 @@
   background: #a3a3a3; /* gray */
 }
 
-/* Modal overlay */
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(30, 30, 30, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-/* Modal content */
-.modalContent {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-  padding: 2rem 1.5rem 1.5rem 1.5rem;
-  position: relative;
-  min-width: 50%;
-  max-width: 50%;
-  max-height: 100%;
-  overflow-y: auto;
-}
-

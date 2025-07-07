@@ -9,9 +9,11 @@ import Icon from '@leafygreen-ui/icon';
 import React from 'react';
 import styles from './ResultsComponent.module.css';
 import DetailsComponent from '../DetailsComponent/DetailsComponent.jsx';
-import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setResults, setSelectedCar, setIsModalOpen } from '@/redux/slices/ResultSlice.js';
 
 
+// On time, will replace this with real api call, use redux with setResults to populate the results
 const cars = [
   {
     id: "FL001",
@@ -98,8 +100,14 @@ const cars = [
 
 const ResultsComponent = ( ) => {
 
-    const [selectedCar, setSelectedCar] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const dispatch = useDispatch();
+    const results = useSelector((state) => state.Result.results);
+    const selectedCar1 = useSelector((state) => state.Result.selectedCar);
+    const isModalOpen1 = useSelector((state) => state.Result.isModalOpen);
+
+
+
     const getStatusIcon = (status) => {
   switch (status) {
     case "active":
@@ -114,13 +122,13 @@ const ResultsComponent = ( ) => {
 };
 
   const handleCarClick = (car) => {
-    setSelectedCar(car)
-    setIsModalOpen(true)
+    dispatch(setSelectedCar({ car }));
+    dispatch(setIsModalOpen({ isOpen: true }));
   }
 
   const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setSelectedCar(null)
+    dispatch(setIsModalOpen({ isOpen: false }));
+    dispatch(setSelectedCar({ car: null }));
   }
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -173,9 +181,9 @@ const ResultsComponent = ( ) => {
 
     {isModalOpen && (
         <div className={styles.modalOverlay} onClick={handleOverlayClick}>
-          <div className={styles.modalContent}>
-            <DetailsComponent car={selectedCar} />
-          </div>
+          
+            <DetailsComponent car={selectedCar1} onClose={handleCloseModal}/>
+          
         </div>
       )}
 

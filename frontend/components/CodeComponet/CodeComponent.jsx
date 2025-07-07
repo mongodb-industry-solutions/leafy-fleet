@@ -153,17 +153,18 @@ const CodeComponent = () => {
 };
 
     return (
-        <div className={styles.CodeContainer}>
-    <Code
-    label="MongoDB Query Example"
-      language="javascript"
-      showLineNumbers={true}
-      onCopy={() => {}}
-      darkMode={true}
-    >
-      {generateDynamicQuery()}
-    </Code>
-  </div>
+      <div className={styles.CodeContainer} style={{ maxHeight: '400px', overflow: 'auto' }}>
+        <Code
+          label="MongoDB Query Example"
+          language="javascript"
+          showLineNumbers={true}
+          onCopy={() => {}}
+          darkMode={true}
+          expandable={false}
+        >
+          {generateDynamicQuery()}
+        </Code>
+      </div>
     );
 };
 export default CodeComponent;
