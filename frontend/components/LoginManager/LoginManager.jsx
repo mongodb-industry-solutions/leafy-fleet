@@ -34,6 +34,9 @@ const LoginManager = () => {
     (state) => state.User.selectedUser.userName
   );
 
+  // Used to know if default value is needed
+  const fleet1Size = useSelector((state) => state.User.fleet1Capacity) === 0
+
   // Dispatch actions based on user input or component logic
   const dispatchFleetCapacity = (indexFleet, fleetCapacity) => {
     // console.log("Dispatching fleet capacity:", indexFleet, fleetCapacity);
@@ -88,6 +91,9 @@ const LoginManager = () => {
 
   const handleClose = () => {
     setOpen(false);
+    if (fleet1Size == 0) {
+      dispatch(setFleet1Capacity(20));
+    }
   };
 
   return (
@@ -292,10 +298,13 @@ session
                       handleFleetCapacityChange(index + 1, value);
                     }}
                   />
+                  
                 </div>
               </div>
             ))}
+            
           </div>
+          <Description style={{marginLeft: 50}}>If no value is selected, fleet 1 will have 20 vehicles</Description>
           <br />
           <div className="d-flex justify-content-center">
             <Button style={{ background: "#00ED64" }} onClick={handleClose}>
