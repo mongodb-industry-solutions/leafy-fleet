@@ -1,12 +1,17 @@
 "use client"
 
 import Card from '@leafygreen-ui/card';
-import { H2, H3 } from '@leafygreen-ui/typography';
+import { H2, H3 , Subtitle, Body} from '@leafygreen-ui/typography';
 
 
 import Button, { Variant, Size } from '@leafygreen-ui/button';
 import Icon from '@leafygreen-ui/icon';
 import React from 'react';
+import styles from './ResultsComponent.module.css';
+import DetailsComponent from '../DetailsComponent/DetailsComponent.jsx';
+import { useState } from 'react';
+
+
 const cars = [
   {
     id: "FL001",
@@ -73,23 +78,6 @@ const cars = [
     distance: 2.1,
   },
   {
-    id: "SV001",
-    name: "Chevrolet Silverado",
-    fleet: "Service Fleet",
-    status: "issue",
-    location: "Route 45",
-    driver: "Tom Brown",
-    fuel: 40,
-    mileage: 89200,
-    lastService: "2023-12-28",
-    efficiency: 14.3,
-    alerts: 3,
-    coordinates: [-74.1776, 40.7282],
-    zone: "Crossing: Zone B → Zone D",
-    distance: null,
-    crossing: { from: "Zone B - Industrial", to: "Zone D - Warehouse" },
-  },
-  {
     id: "SV002",
     name: "Ford F-150",
     fleet: "Service Fleet",
@@ -109,18 +97,21 @@ const cars = [
 
 
 const ResultsComponent = ( ) => {
-      const getStatusIcon = (status) => {
-    switch (status) {
-      case "active":
-        return <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-      case "maintenance":
-        return <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-      case "issue":
-        return <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-      default:
-        return <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-    }
+
+    const [selectedCar, setSelectedCar] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const getStatusIcon = (status) => {
+  switch (status) {
+    case "active":
+      return <span className={`${styles.statusCircle} ${styles.statusActive}`} />;
+    case "maintenance":
+      return <span className={`${styles.statusCircle} ${styles.statusMaintenance}`} />;
+    case "issue":
+      return <span className={`${styles.statusCircle} ${styles.statusIssue}`} />;
+    default:
+      return <span className={`${styles.statusCircle} ${styles.statusDefault}`} />;
   }
+};
 
   const handleCarClick = (car) => {
     setSelectedCar(car)
@@ -131,53 +122,63 @@ const ResultsComponent = ( ) => {
     setIsModalOpen(false)
     setSelectedCar(null)
   }
-    const [selectedCar, setSelectedCar] = React.useState(null);
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      handleCloseModal();
+    }
+  };
   return (
-    <Card className="p-0">
-                  <div className="space-y-0">
-                    {cars.map((car, index) => (
-                      <div key={car.id}>
-                        <div className="p-4 hover:bg-gray-50 transition-colors">
-                          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                {getStatusIcon(car.status)}
-                                <span className="font-semibold">{car.id}</span>
-                              </div>
-                            </div>
+    <Card className="card-styles" as="article">
+    <div className={styles.resultsCard}> 
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'left' ,  }}>
+            <H3 >Search Results </H3>
+        </div>
 
-                            <div>
-                              <p className="text-sm font-medium">{car.driver}</p>
-                              <p className="text-xs text-gray-500">{car.fleet}</p>
-                            </div>
+        <div className={styles.resultsContainer}>
+        {cars.slice(0, 10).map((car, index) => (
+            <div key={car.id}>
+            <div
+                className={styles.row}
+                tabIndex={0}
+            >
+                <div className={styles.grid}>
+                <div className={styles.statusAndId}>
+                    {getStatusIcon(car.status)}
+                    <Subtitle className={styles.carId}>{car.id}</Subtitle>
+                </div>
+                <div>
+                    <Body>{car.driver}</Body>
+                    <p className={styles.fleet}>{car.fleet}</p>
+                </div>
+                
+                {car.distance !== null && (
+                    <div className={styles.distanceBlock}>
+                    <p className={styles.distance}>{car.distance} km</p>
+                    <p className={styles.distanceLabel}>Distance</p>
+                    </div>
+                )}
+                <div className={styles.buttonBlock}>
+                    <Button size={Size.Small} variant={Variant.Outline} onClick={e => { e.stopPropagation(); handleCarClick(car); }}>
+                    View Details
+                    </Button>
+                </div>
+                </div>
+            </div>
+            {index < cars.length - 1 && <div className={styles.separator} />}
+            </div>
+        ))}
+        </div>
+                    
+    </div>  
 
-                            <div>
-                              <p className="text-sm font-medium">{car.zone}</p>
-                              {car.crossing && (
-                                <p className="text-xs text-orange-600">
-                                  Crossing: {car.crossing.from} → {car.crossing.to}
-                                </p>
-                              )}
-                            </div>
+    {isModalOpen && (
+        <div className={styles.modalOverlay} onClick={handleOverlayClick}>
+          <div className={styles.modalContent}>
+            <DetailsComponent car={selectedCar} />
+          </div>
+        </div>
+      )}
 
-                            {car.distance !== null && (
-                              <div className="text-center">
-                                <p className="text-sm font-medium">{car.distance} km</p>
-                                <p className="text-xs text-gray-500">Distance</p>
-                              </div>
-                            )}
-
-                            <div className="flex justify-end">
-                              <Button size="sm" variant="outline" onClick={() => handleCarClick(car)}>
-                                View Details
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                        {index < cars.length - 1 }
-                      </div>
-                    ))}
-                  </div>
     </Card>
   );
 }

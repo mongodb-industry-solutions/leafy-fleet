@@ -24,7 +24,7 @@ const OverviewCard = () => {
     const minDistance = useSelector(state => state.Overview.minDistance);
   return (
 <div> 
-<Card className="card-styles" as="article">
+<Card className={styles.overviewCard}>
             {/* You can put the form fields and the blue box/info inside here */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' ,  }}>
             <H3 >Geospatial Vehicle Search</H3>
@@ -146,7 +146,10 @@ const OverviewCard = () => {
                 ): (<Banner> <strong>Inside Geofence</strong> <br /> Find vehicles completely within a specified geofence boundary</Banner>)}
 
           </Card> <br />
-          </div>
+         
+          <br />
+          <ResultsComponent />
+        </div>
   );
 };
 
