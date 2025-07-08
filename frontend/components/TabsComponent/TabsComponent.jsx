@@ -15,46 +15,36 @@ return (
                 <div className={styles.topHalf}> 
                     <Subtitle >Performance</Subtitle> <br />
                     <Body weight='medium'> OEE: {car.efficiency*9}</Body>
-                    
                 </div>
                 <div className={styles.topHalf}>
                     <Subtitle >Usage</Subtitle> <br />
                     <Body weight='medium'> Distance current trip: {car.distance*20} miles</Body>
                     <Body weight='medium'> Oil level: {car.fuel-13} %</Body>
-                    </div>
+                </div>
 
             </div>
-
             <div className={styles.bottomHalf}> 
                 <Subtitle >Vehicle Document Model</Subtitle> 
                 <br />
                 <VehicleDataComponent/></div>
-
             </div>
-                
-
-                    
+          
         </Tab>
         
         <Tab name="Specs">
                             
-                            <H3>Specs</H3>
-                            <br />
-                            <Body weight='medium'> Make and Model</Body>
-                            <Subtitle>{car.year} {car.name}</Subtitle>
-                            <br />
-                            <Body weight='medium'> Fleet</Body>
-                            <Subtitle>{car.fleet}</Subtitle>
-                            <br />
-                            <Body weight='medium'> Licence Plate</Body>
-                            <Subtitle>{car.licencePlate}</Subtitle>
-
-                        
-                        
-                        </Tab>
-                            
-
-                        </Tabs>)
+            <H3>Specs</H3>
+            <br />
+            <Body weight='medium'> Make and Model</Body>
+            <Subtitle>{car.year} {car.name}</Subtitle>
+            <br />
+            <Body weight='medium'> Fleet</Body>
+            <Subtitle>{car.fleet}</Subtitle>
+            <br />
+            <Body weight='medium'> Licence Plate</Body>
+            <Subtitle>{car.licencePlate}</Subtitle> 
+        </Tab>
+    </Tabs>)
 
 };
 

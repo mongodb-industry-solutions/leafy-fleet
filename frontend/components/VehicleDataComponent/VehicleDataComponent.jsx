@@ -1,11 +1,17 @@
 import Code from "@leafygreen-ui/code";
 import { useSelector } from "react-redux";
-const VehicleDataComponent = ({  }) => {
+import styles from './VehicleDataComponent.module.css'
+
+const VehicleDataComponent = () => {
+    //using redux for car instead of props
     const car= useSelector((state) => state.Result.selectedCar);
+
   return (
-    <Code language="json" onCopy={() => {}}>
-      {JSON.stringify(car, null, 2)}
-    </Code>
+    <div className={styles.CodeCont}>
+        <Code language="json" onCopy={() => {}}>
+            {JSON.stringify(car, null, 2)}
+        </Code>
+    </div>
   );
 };
 

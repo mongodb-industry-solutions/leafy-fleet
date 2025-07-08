@@ -46,8 +46,8 @@ return (
                 <H3 darkMode={false}>{car.id} : {car.name}</H3>
                 <div className={styles.UnderCar}>
                     <div className={getStatusBadgeClass(car.status)}>
-  <Subtitle weight="medium">{car.status}</Subtitle>
-</div>
+                        <Subtitle weight="medium">{car.status}</Subtitle>
+                    </div>
                     <Body> {car.fleet}</Body>
                 </div>
                 
@@ -66,7 +66,7 @@ return (
                     <div className={styles.metricsBlock}>
                         <div className={styles.IconSubtitle}>
                             <Icon glyph="InfoWithCircle"></Icon>
-                        <Subtitle > Quick Metrics</Subtitle>
+                            <Subtitle > Quick Metrics</Subtitle>
                         </div>
                         <ul className={styles.metricsList}>
                             {quickMetrics.map((m) => (
