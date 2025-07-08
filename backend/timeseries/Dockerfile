@@ -1,7 +1,14 @@
-FROM python:3.10-slim
-WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
-EXPOSE 8002
+# Use a lightweight Python base image  
+FROM python:3-alpine3.15
+  
+# Set the working directory in the container  
+WORKDIR /app  
+  
+# Copy requirements file into the container  
+COPY requirements.txt .  
+  
+# Install Python dependencies globally in the container  
+RUN pip install --no-cache-dir -r requirements.txt  
+  
+# The entrypoint can be overridden in docker-compose.yml  
+CMD ["python"]  # Default command, runs `python` itself.  

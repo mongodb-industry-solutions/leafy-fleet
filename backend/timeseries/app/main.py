@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes.timeseries import router as timeseries_api
+from routes.timeseries import router as timeseries_api
+
+import logging  
+
 
 app = FastAPI()
 
@@ -9,4 +12,7 @@ app.add_middleware(
     allow_origins = ["*"]
 )
 
-app.include_router(timeseries_api, prefix="/v1")
+print("Starting Timeseries Post Microservice...")
+
+
+app.include_router(timeseries_api)

@@ -4,10 +4,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGODB_URL = os.getenv("MONGODB_URL")
-DATABASE_NAME = "fleet_management_2025"
-TIMESERIES_COLLECTION = "timeseries_data"
+print("Doing database connection...")
+
+MONGODB_URL = os.getenv("MONGODB_URI")
+DATABASE_NAME = "leafy_fleet"
+TIMESERIES_COLLECTION = "vehicleTelemetry"
+
 
 mdb_conn = MongoClient(MONGODB_URL)
-db_hostpital = mdb_conn[DATABASE_NAME]
-timeseries_coll = db_hostpital[TIMESERIES_COLLECTION]
+db_fleet = mdb_conn[DATABASE_NAME]
+timeseries_coll = db_fleet[TIMESERIES_COLLECTION]
