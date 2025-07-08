@@ -58,9 +58,9 @@ const LoginComp = ({ modalObserver }) => {
             Please select the user you would like to login as
           </Description>
           <br />
-          <div class="input-group mb-3">
+          <div className="input-group mb-3">
             <button
-              class="btn btn-outline-secondary"
+              className="btn btn-outline-secondary"
               type="button"
               id="button-addon1"
             >
@@ -68,7 +68,7 @@ const LoginComp = ({ modalObserver }) => {
             </button>
             <input
               type="text"
-              class="form-control"
+              className="form-control"
               aria-label="Example text with button addon"
               aria-describedby="button-addon1"
               placeholder="If you have a valid thread_id, you can restore your session here!"

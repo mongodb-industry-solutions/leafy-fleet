@@ -13,8 +13,7 @@ import { setSelectedUser } from "@/redux/slices/UserSlice";
 import React, { useState, useEffect } from "react";
 import { Modal, Container } from "react-bootstrap";
 import { H1, H2, Subtitle, Description } from "@leafygreen-ui/typography";
-import Checkbox, { getTestUtils } from "@leafygreen-ui/checkbox";
-
+import AttributesComponent from "../AttributesComponent/AttributesComponent";
 import {
   setFleet1Capacity,
   setFleet2Capacity,
@@ -22,16 +21,23 @@ import {
   setFleet1Name,
   setFleet2Name,
   setFleet3Name,
+  setSelectedFleets,
+  setEditFleet
 } from "@/redux/slices/UserSlice";
 import { Option, OptionGroup, Select, Size } from "@leafygreen-ui/select";
 import Button from "@leafygreen-ui/button";
 import Code from "@leafygreen-ui/code";
+import DocumentFleetComponent from "../DocumentFleetComponent/DocumentFleetComponent";
 
 const LoginManager = () => {
   const dispatch = useDispatch();
   const isSelectedUser = useSelector(
     (state) => state.User.selectedUser.userName
+
   );
+const editFleet = useSelector((state) => state.User.editFleet);
+
+  const selectedFleets = useSelector((state) =>state.User.selectedFleets);
 
   // Used to know if default value is needed
   const fleet1Size = useSelector((state) => state.User.fleet1Capacity) === 0
@@ -67,11 +73,10 @@ const LoginManager = () => {
   };
 
   const [open, setOpen] = useState(false);
-  const [selectedFleets, setSelectedFleets] = useState(1);
 
   // Show how many fleet boxes to render based on user selection in the fleet selector
   const handleFleetChange = (value) => {
-    setSelectedFleets(parseInt(value, 10)); // Update state with the selected value
+    dispatch(setSelectedFleets({selectedFleets: value}))
   };
 
   // Used to manage opening and closing the fleet configuration modal
@@ -82,6 +87,7 @@ const LoginManager = () => {
     } else {
       setOpen(false);
       dispatch(setSelectedUser({ user: "Frida" }));
+      dispatch(setSelectedFleets({selectedFleets: 3}))
       dispatch(setFleet1Capacity(50));
       dispatch(setFleet2Capacity(50));
       dispatch(setFleet3Capacity(50));
@@ -96,7 +102,7 @@ const LoginManager = () => {
   };
 
   return (
-    <>
+      <div>
       <LoginComp modalObserver={modalObserver} />
 
       <Modal
@@ -121,18 +127,21 @@ const LoginManager = () => {
                 <Select
                   label="Select your City"
                   description="Select in what city will this simulation take place"
-                  placeholder="Austin, TX"
                   name="City Selector"
                   size={Size.Default}
-                  defaultValue="1"
+                  defaultValue="Austin"
+                  allowDeselect={false}
                 >
-                  <Option value="New York" disabled="true">
+                  <Option value="Austin" disabled={false}>
+                    Austin
+                  </Option>
+                  <Option value="NYC" disabled="true">
                     New York, NY
                   </Option>
-                  <Option value="Mexico City" disabled="true">
+                  <Option value="CDMX" disabled="true">
                     Mexico City, MX
                   </Option>
-                  <Option value="Sao Paulo" disabled="true">
+                  <Option value="SPLO" disabled="true">
                     São Paulo, BR
                   </Option>
                 </Select>
@@ -140,16 +149,18 @@ const LoginManager = () => {
                 <Select
                   label="Select your number of fleets"
                   description="Select how many fleets will this simulation use"
-                  placeholder="1"
                   name="Fleet Selector"
                   size={Size.Default}
-                  defaultValue="1"
-                  onChange={(value) => handleFleetChange(value)}
+                  value={String(selectedFleets)}
+                  onChange={handleFleetChange}
+                  allowDeselect={false}
                 >
+                  <Option value="1">1</Option>
                   <Option value="2">2</Option>
                   <Option value="3">3</Option>
                 </Select>
                 <br />
+               
                 {/* <NumberInput
                   data-lgid="fleet-2"
                   label="Number of vehicles per fleet"
@@ -164,90 +175,14 @@ const LoginManager = () => {
                 /> */}
                 <br />
               </div>
+              <AttributesComponent/>
+             
               <div className={styles.selectFleetContainer}>
-                <Subtitle>Choose what parameters to report</Subtitle>
-                <br />
-                <div className={styles.selectGrid}>
-                  <Checkbox data-lgid="oil-level" label="Oil level" checked />
-                  <Checkbox data-lgid="gas-level" label="Gas level" checked />
-                  <Checkbox
-                    data-lgid="last-maintance"
-                    label="Last maintance"
-                    checked
-                  />
-                  <Checkbox
-                    data-lgid="ambient-temperature"
-                    label="Ambient temperature"
-                  />
-                  <Checkbox
-                    data-lgid="temperature"
-                    label="Temperature"
-                    checked
-                  />
-                  <Checkbox data-lgid="oee" label="OEE" checked />
-                  <Checkbox
-                    data-lgid="gas-efficiency"
-                    label="Gas efficiency"
-                    checked
-                  />
-                  <Checkbox
-                    data-lgid="distance-driven"
-                    label="Distance driven"
-                  />
-                  <Checkbox
-                    data-lgid="latitude"
-                    label="Latitude"
-                    disabled
-                    checked
-                  />
-                  <Checkbox
-                    data-lgid="performance"
-                    label="Performance"
-                    disabled
-                    checked
-                  />
-                  <Checkbox
-                    data-lgid="run-time"
-                    label="Run Time"
-                    disabled
-                    checked
-                  />
-                  <Checkbox
-                    data-lgid="longitude"
-                    label="Longitude"
-                    disabled
-                    checked
-                  />
-                  <Checkbox
-                    data-lgid="avaliability"
-                    label="Avaliability"
-                    disabled
-                    checked
-                  />
-                  <Checkbox
-                    data-lgid="quality"
-                    label="Quality"
-                    disabled
-                    checked
-                  />
-                </div>
-              </div>
-              <div className={styles.selectFleetContainer}>
-                <Code language="javascript">
-                  {`           
-session
-{
-"_id" ObjectId("64f8c1e2d4f3a5b6c7d8e9f0"), // Unique identifier for the session
-"thread_id" tread_2134543253
-"fleet": [[1,2,3],[10,111],[160,900]] // Each list in the array represents a fleet and each element in the lists represents the carID whose information this session is able to access
-"createdOn": ${Date.now()}
-"lastUsed": ${Date.now()} // The last time this session was used
-}
-                    `}
-                </Code>
+                <DocumentFleetComponent/>
               </div>
             </div>
           </div>
+          
           <div
             className={styles.selectGrid}
             style={{
@@ -257,25 +192,46 @@ session
             }}
           >
             {Array.from({ length: selectedFleets }).map((_, index) => (
-              <div>
-                <Description>Fleet {index + 1} </Description>
-                <div class="input-group">
+              <div onClick={() => {
+
+                if (index === 0) {
+                  dispatch(setEditFleet({ editFleet: 1 }));
+                } else if (index === 1) {
+                  dispatch(setEditFleet({ editFleet: 2 }));
+                } else {
+                  dispatch(setEditFleet({ editFleet: 3 }));
+                }
+              }}
+              className={
+                    editFleet === index + 1
+                      ? `${styles.selectedFleetBox}`
+                      : ""
+                  }
+              style={{ cursor: "pointer" }}
+              key={index}
+              >
+                <Description className={styles.Desc}>Fleet {index + 1} </Description>
+                <div className="input-group">
                   <input
                     type="text"
                     aria-label="Fleet Name"
-                    class="form-control"
+                    className="form-control"
                     placeholder="Fleet Name"
-                    onChange={(value) =>
-                      handleFleetNameChange(index + 1, value)
-                    }
+                    onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
+
+                    onChange={(value) =>{
+                      handleFleetNameChange(index + 1, value);
+                                       
+                    }}
                   />
                   <input
                     type="number"
                     aria-label="Fleet quantity"
-                    class="form-control"
+                    className="form-control"
                     placeholder="Fleet quantity"
                     min="0"
                     max="100"
+                    onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
                     onChange={(e) => {
                       let value = parseInt(e.target.value, 10);
                       // If the parsed value is greater than 100, set it back to 100
@@ -295,6 +251,7 @@ session
                       }
 
                       handleFleetCapacityChange(index + 1, value);
+                      
                     }}
                   />
                   
@@ -312,7 +269,7 @@ session
           </div>
         </Container>
       </Modal>
-    </>
+    </div>
   );
 };
 

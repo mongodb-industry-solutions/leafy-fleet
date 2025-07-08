@@ -112,7 +112,6 @@ const OverviewCard = () => {
                 unit="meters"
                 min={0}
                 onChange={e => {
-                    console.log('Min Distance changed:', e.target.value);
                     const num = Number(e.target.value);
                     if (!isNaN(num)) {
                     dispatch(setMinDistance({ minDistance: num }));
