@@ -3,43 +3,45 @@ import { H3,H2, Subtitle, Body } from '@leafygreen-ui/typography';
 import Button, { Variant, Size } from '@leafygreen-ui/button';
 import styles from './DetailsComponent.module.css';
 import Icon from '@leafygreen-ui/icon';
-import { Tabs, Tab } from '@leafygreen-ui/tabs';
-import VehicleDataComponent from '../VehicleDataComponent/VehicleDataComponent.jsx';
-
-
-const DetailsComponent = ({ car, onClose }) => {
+import TabsComponent from '../TabsComponent/TabsComponent';
+import { useSelector, useDispatch } from 'react-redux';
+import { setIsModalOpen, setSelectedCar } from '../../redux/slices/ResultSlice';
+const DetailsComponent = () => {
+    const dispatch = useDispatch();
+    const car = useSelector((state) => state.Result.selectedCar);
   // Example: You can extend this with more data as needed
-  const quickMetrics = [
+    const quickMetrics = [
     { label: "Fuel Level", value: `${car.fuel}%` },
     { label: "Mileage", value: `${car.mileage} km` },
     { label: "Efficiency", value: `${car.efficiency} km/l` },
     { label: "Alerts", value: car.alerts },
-  ];
+    ];
 
-const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-        onClose();
+    const handleClose = () => {
+        dispatch(setIsModalOpen({ isModalOpen: false }));
+        dispatch(setSelectedCar({ car: null }));
+  };
+
+
+
+    const getStatusBadgeClass = (status) => {
+    switch (status) {
+        case "Active":
+        return `${styles.statusBadge} ${styles.statusActive}`;
+        case "Maintenance":
+        return `${styles.statusBadge} ${styles.statusMaintenance}`;
+        case "Issue":
+        return `${styles.statusBadge} ${styles.statusIssue}`;
+        default:
+        return `${styles.statusBadge} ${styles.statusDefault}`;
     }
-};
-
-const getStatusBadgeClass = (status) => {
-  switch (status) {
-    case "Active":
-      return `${styles.statusBadge} ${styles.statusActive}`;
-    case "Maintenance":
-      return `${styles.statusBadge} ${styles.statusMaintenance}`;
-    case "Issue":
-      return `${styles.statusBadge} ${styles.statusIssue}`;
-    default:
-      return `${styles.statusBadge} ${styles.statusDefault}`;
-  }
-};
+    };
 
 return (
-    <div className={styles.modalOverlay} onClick={handleOverlayClick}>
+    <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) handleClose(); }}>
         <div className={styles.modalContent}>
             
-            <button className={styles.closeButton} onClick={onClose}>×</button>
+            <button className={styles.closeButton} onClick={handleClose}>×</button>
             <Card >
                 <H3 darkMode={false}>{car.id} : {car.name}</H3>
                 <div className={styles.UnderCar}>
@@ -78,38 +80,12 @@ return (
                     </div>
                     {/* Right: Overview/Specs */}
                     <div className={styles.rightSection}>
-                        <Tabs  aria-label="Details tabs">
-                        <Tab name="Overview" default>
-                            <div> {/*. separate div in 2 by width*/}</div>
-                            <div> <VehicleDataComponent>{car}</VehicleDataComponent></div>
-
-
-
-                        </Tab>
-                        <Tab name="Specs">
-                            
-                            <H3>Specs</H3>
-                            <br />
-                            <Body weight='medium'> Make and Model</Body>
-                            <Subtitle>{car.year} {car.name}</Subtitle>
-                            <br />
-                            <Body weight='medium'> Fleet</Body>
-                            <Subtitle>{car.fleet}</Subtitle>
-                            <br />
-                            <Body weight='medium'> Licence Plate</Body>
-                            <Subtitle>{car.licencePlate}</Subtitle>
-
                         
-                        
-                        </Tab>
-                            
-
-                        </Tabs>
-
-                                            </div>
+                        <TabsComponent />
+                    </div>
                 </div>
                 <div className={styles.actions}>
-                    <Button variant={Variant.Outline} size={Size.Default} onClick={onClose}>
+                    <Button variant={Variant.Outline} size={Size.Default} onClick={handleClose}>
                         Close
                     </Button>
                     

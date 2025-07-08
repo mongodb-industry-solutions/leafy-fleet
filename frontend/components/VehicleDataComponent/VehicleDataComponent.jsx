@@ -1,9 +1,10 @@
 import Code from "@leafygreen-ui/code";
-
-const VehicleDataComponent = ({ children }) => {
+import { useSelector } from "react-redux";
+const VehicleDataComponent = ({  }) => {
+    const car= useSelector((state) => state.Result.selectedCar);
   return (
     <Code language="json" onCopy={() => {}}>
-      {JSON.stringify(children, null, 2)}
+      {JSON.stringify(car, null, 2)}
     </Code>
   );
 };

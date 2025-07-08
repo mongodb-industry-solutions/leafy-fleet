@@ -133,6 +133,7 @@ const ResultsComponent = ( ) => {
 
   const handleCarClick = (car) => {
     dispatch(setSelectedCar({ car }));
+    console.log("Selected car:", car);
     dispatch(setIsModalOpen({ isModalOpen: true }));
   }
 
@@ -140,11 +141,7 @@ const ResultsComponent = ( ) => {
     dispatch(setIsModalOpen({ isModalOpen: false }));
     dispatch(setSelectedCar({ car: null }));
   }
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      handleCloseModal();
-    }
-  };
+  
   return (
     <Card className="card-styles" as="article">
     <div className={styles.resultsCard}> 
@@ -190,11 +187,10 @@ const ResultsComponent = ( ) => {
     </div>  
 
     {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={handleOverlayClick}>
           
-            <DetailsComponent car={selectedCar} onClose={handleCloseModal}/>
+            <DetailsComponent/>
           
-        </div>
+      
       )}
 
     </Card>

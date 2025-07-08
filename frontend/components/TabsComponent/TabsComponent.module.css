@@ -1,0 +1,49 @@
+.HorizontalCutHalf {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 320px;
+  gap: 1.5rem;
+  padding: 1.5rem 1rem 1rem 1rem;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.VerticalCutHalf {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.VerticalCutHalf > div {
+  flex: 1 1 0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  font-weight: 500;
+  font-size: 1.05rem;
+  min-width: 120px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottomHalf {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem 1rem;
+  min-height: 120px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  display: flex;
+  align-items: center;
+  flex-direction: column
+}
+
+.topHalf {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
