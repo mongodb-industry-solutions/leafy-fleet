@@ -70,7 +70,7 @@ const AttributesComponent = () => {
   return (
     <div className={styles.selectFleetContainer}>
       
-      <Subtitle>Choose what parameters to report</Subtitle>
+      <Subtitle>Choose the telemetry to report</Subtitle>
       <br />
       <div className={styles.selectGrid}>
         {ALL_ATTRIBUTES.map((attr) => (

@@ -125,8 +125,8 @@ const editFleet = useSelector((state) => state.User.editFleet);
               <div className={styles.selectFleetContainer}>
                 <Subtitle>Select your fleet</Subtitle>
                 <Select
-                  label="Select your City"
-                  description="Select in what city will this simulation take place"
+                  label="Select your city"
+                  description="Select in which city this simulation will take place."
                   name="City Selector"
                   size={Size.Default}
                   defaultValue="Austin"
@@ -148,7 +148,7 @@ const editFleet = useSelector((state) => state.User.editFleet);
                 <br />
                 <Select
                   label="Select your number of fleets"
-                  description="Select how many fleets will this simulation use"
+                  description="Select how many fleets this simulation will have."
                   name="Fleet Selector"
                   size={Size.Default}
                   value={String(selectedFleets)}
@@ -264,7 +264,7 @@ const editFleet = useSelector((state) => state.User.editFleet);
           <br />
           <div className="d-flex justify-content-center">
             <Button style={{ background: "#00ED64" }} onClick={handleClose}>
-              <Subtitle>Start Simulation!</Subtitle>
+              Start Simulation!
             </Button>
           </div>
         </Container>
