@@ -13,7 +13,6 @@ import { setSelectedUser } from "@/redux/slices/UserSlice";
 import React, { useState, useEffect } from "react";
 import { Modal, Container } from "react-bootstrap";
 import { H1, H2, Subtitle, Description } from "@leafygreen-ui/typography";
-import { NumberInput } from "@leafygreen-ui/number-input";
 import Checkbox, { getTestUtils } from "@leafygreen-ui/checkbox";
 
 import {
