@@ -58,9 +58,9 @@ const LoginComp = ({ modalObserver }) => {
             Please select the user you would like to login as
           </Description>
           <br />
-          <div class="input-group mb-3">
+          <div className="input-group mb-3">
             <button
-              class="btn btn-outline-secondary"
+              className="btn btn-outline-secondary"
               type="button"
               id="button-addon1"
             >
@@ -88,10 +88,7 @@ const LoginComp = ({ modalObserver }) => {
             is going on behind the scenes!
           </Banner>
           <Description className={`${styles.descriptionModal} mb-3`}>
-            Note: Each user has pre-loaded data, such as past orders and items
-            in their cart, with content unique to them. This variation is
-            designed to showcase different scenarios, providing a more dynamic
-            and realistic user experience for the demo.
+            Note: Demo to display MongoDb's use cases of time series with fleet managment.
           </Description>
         </div>
       </Container>

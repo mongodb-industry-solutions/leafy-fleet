@@ -1,0 +1,11 @@
+.Code{
+height: 24rem;
+overflow-y: scroll;
+border-radius: 20px;
+padding-top: 0.5rem;
+}
+.centerSub{
+align-items: center;
+text-align: center;
+
+}
