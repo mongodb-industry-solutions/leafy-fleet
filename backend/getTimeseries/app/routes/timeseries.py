@@ -29,6 +29,7 @@ async def get_timeseries_by_carID(carID: str, body: dict = Body(...)):
     print(f"User preferences: {body}")
 
     pipeline = [  
+    {"$match": {"vehicle.carID": carID}}, 
     {"$match": body}, 
     {"$sort": {"timestamp": -1}},  
     {"$limit": 100},               
