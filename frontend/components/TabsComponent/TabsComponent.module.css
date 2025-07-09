@@ -35,7 +35,8 @@
   background: white;
   border-radius: 8px;
   padding-top: 1rem;
-  height: 22rem;
+  padding-bottom: 1rem;
+  height: 22.5rem;
   box-shadow: 0 1px 4px rgba(0,0,0,0.03);
   display: flex;
   align-items: center;

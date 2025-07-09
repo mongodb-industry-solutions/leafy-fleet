@@ -25,7 +25,6 @@ const OverviewCard = () => {
   return (
 <div> 
 <Card className={styles.overviewCard}>
-            {/* You can put the form fields and the blue box/info inside here */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' ,  }}>
             <H3 >Geospatial Vehicle Search</H3>
             <Button
@@ -141,7 +140,7 @@ const OverviewCard = () => {
             }
             <CodeComponent/> <br />
             {selectedType === "nearest" ? (
-                <Banner> <strong>Nearest Vehicles</strong> <br /> Find vehicles closest to a specific point, ordered by distance</Banner>
+                <Banner> <strong>Nearest Vehicles</strong> <br /> Find vehicles closest to the center of a specific geofence, ordered by distance.</Banner>
                 ): (<Banner> <strong>Inside Geofence</strong> <br /> Find vehicles completely within a specified geofence boundary</Banner>)}
 
           </Card> <br />

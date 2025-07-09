@@ -68,7 +68,7 @@ const LoginComp = ({ modalObserver }) => {
             </button>
             <input
               type="text"
-              className="form-control"
+              class="form-control"
               aria-label="Example text with button addon"
               aria-describedby="button-addon1"
               placeholder="If you have a valid thread_id, you can restore your session here!"
@@ -88,10 +88,7 @@ const LoginComp = ({ modalObserver }) => {
             is going on behind the scenes!
           </Banner>
           <Description className={`${styles.descriptionModal} mb-3`}>
-            Note: Each user has pre-loaded data, such as past orders and items
-            in their cart, with content unique to them. This variation is
-            designed to showcase different scenarios, providing a more dynamic
-            and realistic user experience for the demo.
+            Note: Demo to display MongoDb's use cases of time series with fleet managment.
           </Description>
         </div>
       </Container>

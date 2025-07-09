@@ -1,28 +1,60 @@
 "use client";
 
 import styles from "./SideNav.module.css";
-
-import { SideNav, SideNavGroup, SideNavItem } from "@leafygreen-ui/side-nav";
-
+import { SideNav, SideNavItem } from "@leafygreen-ui/side-nav";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-const SideNavigation = ({ children }) => {
+const SideNavigation = () => {
+  const pathname = usePathname();
+
   return (
     <SideNav
       widthOverride={120}
       className={styles.sideNav}
       aria-label="Main navigation"
     >
-      <Link href={`chat`} className={styles.sideBarButton}>
+      <Link
+        href="/chat"
+        className={
+          pathname === "/chat"
+            ? `${styles.sideBarButton} ${styles.activeNavItem}`
+            : styles.sideBarButton
+        }
+      >
         <SideNavItem>Chat</SideNavItem>
       </Link>
-      <Link href={`charts`} className={styles.sideBarButton}>
+
+      <Link
+        href="/charts"
+        className={
+          pathname === "/charts"
+            ? `${styles.sideBarButton} ${styles.activeNavItem}`
+            : styles.sideBarButton
+        }
+      >
         <SideNavItem>Charts</SideNavItem>
       </Link>
-      <Link href={`overview`} className={styles.sideBarButton}>
+
+      <Link
+        href="/overview"
+        className={
+          pathname === "/overview"
+            ? `${styles.sideBarButton} ${styles.activeNavItem}`
+            : styles.sideBarButton
+        }
+      >
         <SideNavItem>Overview</SideNavItem>
       </Link>
-      <Link href={`docs`} className={styles.sideBarButton}>
+
+      <Link
+        href="/docs"
+        className={
+          pathname === "/docs"
+            ? `${styles.sideBarButton} ${styles.activeNavItem}`
+            : styles.sideBarButton
+        }
+      >
         <SideNavItem>Read the Docs</SideNavItem>
       </Link>
     </SideNav>
