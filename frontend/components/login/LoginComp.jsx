@@ -60,9 +60,10 @@ const LoginComp = ({ modalObserver }) => {
           <br />
           <div className="input-group mb-3">
             <button
-              className="btn btn-outline-secondary"
+              className="btn btn-outline-primary "
               type="button"
               id="button-addon1"
+
             >
               Restore!
             </button>
