@@ -34,28 +34,8 @@
   border-radius: 8px;
 }
 
-.htmlRender{
-    margin: unset;
-    font-family: 'Euclid Circular A', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #001E2B;
-    font-size: 13px;
-    line-height: 20px;
-    color: #001E2B;
-    font-weight: 400;
-}
-
-.htmlRender a{
-    color: green;
-    text-decoration: underline;
-}
-
-.htmlRender a:hover{
-    color: #00a35c;
-}
-
-.htmlRender mark {
-  background-color: rgb(216, 214, 214);
-  color: black;
+.banner{
+  margin-top: 10px;
 }
 
 @media (max-width: 768px) {

@@ -1,0 +1,67 @@
+.modalCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.leafyFeel :global(.modal-content) {
+  border-radius: 24px;
+}
+.centerText {
+  text-align: center;
+}
+.weightNormal {
+  font-weight: normal;
+}
+.usersContainer {
+  display: grid;
+  justify-content: center;
+
+  row-gap: 15px;
+  justify-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 350px));
+}
+.descriptionModal {
+  font-size: 14px;
+  display: inline-flex;
+}
+.customRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.modalMainCOntent {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+/* Remove border-radius when modal is fullscreen */
+@media (max-width: 767.98px) {
+  /* Corresponds to md-down */
+  .leafyFeel :global(.modal-content) {
+    border-radius: 0px;
+  }
+}
+
+.selectFleetContainer {
+  /* border: 1px solid #ccc; */
+  height: 100%;
+  width: 100%;
+  /* justify-content: center; */
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.selectGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.selectedFleetBox {
+  background-color: #00ED64; /* mongo */
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.Desc{
+  padding-left: 0.4rem;
+}

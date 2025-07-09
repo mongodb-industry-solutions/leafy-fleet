@@ -1,0 +1,18 @@
+
+.selectFleetContainer {
+  /* border: 1px solid #ccc; */
+  height: 100%;
+  width: 100%;
+  /* justify-content: center; */
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  columns: 2;
+}
+
+.selectGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 2rem; /* row gap, column gap */
+  width: 100%;
+}

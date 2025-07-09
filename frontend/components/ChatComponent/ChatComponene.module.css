@@ -1,4 +1,18 @@
 .chatComponent {
-    background-color: #aba9a9;
+    background-color: #ffffff;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chatBox {
+    width: 100%;
+    margin-top: auto;
+    padding: 10px 20px 50px 20px;
+}
+    
+.messagesContainer{
+    overflow-y: auto;
+    height: 100%;
+    border: 1px solid #ccc;
 }

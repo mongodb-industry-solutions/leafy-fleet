@@ -1,0 +1,30 @@
+.userCard{
+    max-width: 160px;
+    min-width: 160px;
+    width: 100%;
+    height: 200px;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.userCard img{
+    width: 90%;
+    height: auto;
+}
+.userName{
+    margin-top: -10px;
+}
+.userSelected{
+    background-color: rgba(235, 235, 235, 0.868);
+}
+/* .userCard:hover{
+    cursor: pointer;
+} */
+.message{
+    font-size: 0.8rem;
+    color: #666;
+    text-align: center;
+    margin-top: 3px;
+}

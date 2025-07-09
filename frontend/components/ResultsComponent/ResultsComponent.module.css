@@ -1,0 +1,98 @@
+.resultsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 32rem;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.row {
+  padding: 1rem;
+  transition: background 0.2s;
+}
+
+.row:hover {
+  background: #f6f6f6;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 2fr 1.5fr 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.statusAndId {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.carId {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+
+.fleet {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.zone {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.crossing {
+  font-size: 0.85rem;
+  color: #d97706;
+}
+
+.distanceBlock {
+  text-align: center;
+}
+
+.distance {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.distanceLabel {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.buttonBlock {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.separator {
+  height: 1px;
+  background: #eee;
+  margin: 0 1rem;
+}
+
+.statusCircle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+.statusActive {
+  background: #22c55e; /* green */
+}
+.statusMaintenance {
+  background: #eab308; /* yellow */
+}
+.statusIssue {
+  background: #ef4444; /* red */
+}
+.statusDefault {
+  background: #a3a3a3; /* gray */
+}
+
