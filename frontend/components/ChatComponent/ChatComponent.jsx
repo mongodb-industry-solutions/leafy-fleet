@@ -1,27 +1,23 @@
 "use client";
 
 import styles from "./ChatComponene.module.css";
-import Button from "@leafygreen-ui/button";
-import Icon from "@leafygreen-ui/icon";
 
 import ChatInput from '@/components/ChatInput/ChatInput';
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import TextBubbleComponent from '@/components/TextBubbleComponent/TextBubbleComponent';
 import { useDispatch, useSelector } from 'react-redux';
 import { pushMessageHistory, setIsChatbotThinking } from '@/redux/slices/MessageSlice';
-
-let nextId = 1;
 
 const ChatComponent = () => {
     const bottomRef = useRef(null);
     const lastMessageId = useSelector(state => state.Message.lastMessageId);
     const dispatch = useDispatch()
     const messages = useSelector(state => state.Message.messageHistory)
-    const user = useSelector(state => state.User.name)
-    const isLoadingAnswer = useSelector(state => state.Message.chatbotIsThinking);
+
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
     const handleSendMessage = async (userMessageText) => {
         const newUserMessage = {
             id: lastMessageId + 1,

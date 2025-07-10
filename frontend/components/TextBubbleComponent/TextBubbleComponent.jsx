@@ -16,12 +16,10 @@ const TextBubbleComponent = ({ user, text, id }) => {
   return (
     <div className={`${styles.chatContainer}`}>
       <div
-        className={`${styles.speechBubble} ${
-          user === "user" ? styles.userBubble : styles.answerBubble
-        }`}
+        className={`${styles.speechBubble} ${user === "user" ? styles.userBubble : styles.answerBubble}`}
         style={isSelected.id === id ? { background: "#F9EBFF" } : {}}
       >
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        <div className={user === "bot" ? styles.botHeader : styles.userHeader}>
           <img
             src={
               user === "bot"
@@ -47,7 +45,7 @@ const TextBubbleComponent = ({ user, text, id }) => {
         ) : (
           <Typewriter text={text} role={user} />
         )}
-        {user === "bot" && (
+        {(user === "bot" && id !== 0) && (
           <Tooltip
             trigger={
               <IconButton
@@ -57,7 +55,7 @@ const TextBubbleComponent = ({ user, text, id }) => {
                 }}
               >
                 {/* There are all the avaliable glyphs https://github.com/mongodb/leafygreen-ui/tree/ee7d80d450b652836d18edbf5682518fafc57d14/packages/icon/src/glyphs */}
-                <Icon glyph={"Cursor"} />
+                <Icon glyph={"Visibility"} />
               </IconButton>
             }
           >
