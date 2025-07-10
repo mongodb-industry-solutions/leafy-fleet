@@ -17,13 +17,13 @@
   font-size: 13px;
   border-radius: 20px;
 }
-/* Speech bubble alignment */
+
 .userBubble {
-  margin-left: auto; /* Aligns the bubble to the right */
+  margin-left: auto; 
   background-color: #e0fbf6;
-  text-align: right; /* Aligns text to the right */
-  display: flex; /* Ensures the content is aligned properly */
-  justify-content: flex-end; /* Justifies the content to the right */
+  text-align: right;
+  display: flex; 
+  justify-content: flex-end; 
   word-wrap: break-word;
   display: inline-block;
   max-width: 90%;
@@ -33,7 +33,7 @@
 .answerBubble {
   background-color: white;
   box-shadow: 0px 5px 4px rgba(0, 0, 0, 0.06);
-  transition: opacity 0.5s ease-in-out; /* Fade effect */
+  transition: opacity 0.5s ease-in-out;
   color: #001e2b;
   
 }
@@ -42,16 +42,16 @@
 }
 .loadingOverlay {
   background-color: rgba(0, 163, 92, 0.037);
-  position: absolute; /* Position the overlay absolutely */
-  top: 107px; /* Cover from the top */
-  left: 0; /* Cover from the left */
-  right: 0; /* Cover to the right */
-  bottom: 0; /* Cover to the bottom */
-  color: white; /* Text color for "LOADING..." */
-  display: flex; /* Center the text */
-  align-items: center; /* Center vertically */
-  justify-content: center; /* Center horizontally */
-  z-index: 10; /* Place it above other elements */
+  position: absolute; 
+  top: 107px; 
+  left: 0; 
+  right: 0;
+  bottom: 0;
+  color: white; 
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+  z-index: 10;
   border-radius: 0 0 24px 24px;
 }
 

@@ -10,43 +10,27 @@ import TextBubbleComponent from '@/components/TextBubbleComponent/TextBubbleComp
 import { useDispatch, useSelector } from 'react-redux';
 import { pushMessageHistory, setIsChatbotThinking } from '@/redux/slices/MessageSlice';
 
+let nextId = 1;
 
 const ChatComponent = () => {
-
-
-
     const bottomRef = useRef(null);
-
     const lastMessageId = useSelector(state => state.Message.lastMessageId);
-    
-    
     const dispatch = useDispatch()
     const messages = useSelector(state => state.Message.messageHistory)
     const user = useSelector(state => state.User.name)
-
     const isLoadingAnswer = useSelector(state => state.Message.chatbotIsThinking);
-
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
-
     const handleSendMessage = async (userMessageText) => {
-        
-        // console.log("user", user)
         const newUserMessage = {
             id: lastMessageId + 1,
             text: userMessageText,
             sender: 'user',
             completed: true
         };
-
-        // console.log("newUserMessage", newUserMessage)
-
         dispatch(pushMessageHistory({message: newUserMessage, id: newUserMessage.id}));
-        
-
         dispatch(setIsChatbotThinking(true));
-        
         const botResponseMessage = {
             id: lastMessageId + 2,
             text: "This is a placeholder response from the bot.",
@@ -54,13 +38,10 @@ const ChatComponent = () => {
             completed: false
         };
         setTimeout(() => {
-            dispatch(pushMessageHistory({ message: botResponseMessage, id: botResponseMessage.id }));
-            
+            dispatch(pushMessageHistory({ message: botResponseMessage, id: botResponseMessage.id }));    
         }, 1000); // 1000 milliseconds = 1 second delay
         dispatch(setIsChatbotThinking(false));
     }
-
-
     return (
         <div className={styles.chatComponent}>
             <div className={styles.messagesContainer}>
@@ -71,7 +52,6 @@ const ChatComponent = () => {
                 ))}
                 <div ref={bottomRef} />
             </div>
-
             <div className={styles.chatBox}>
                 <ChatInput onSendMessage={handleSendMessage} />
             </div>
