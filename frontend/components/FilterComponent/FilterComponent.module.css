@@ -4,10 +4,6 @@
   height: 100%;
   padding: 10px;
   box-sizing: border-box;
-<<<<<<< HEAD
-=======
-  border-left: gray 1px solid;
->>>>>>> c50fdae5d49a9fa72e2ee0075cf6a2246efbea07
 }
 
 .cardWrapper {
@@ -27,11 +23,7 @@
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, auto);
   gap: 12px;
-<<<<<<< HEAD
   align-content: start;
-=======
-align-content: start; /* 👈 forces content to stick to top */
->>>>>>> c50fdae5d49a9fa72e2ee0075cf6a2246efbea07
 
 }
 
