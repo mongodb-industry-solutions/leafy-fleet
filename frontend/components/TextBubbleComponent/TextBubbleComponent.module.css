@@ -1,29 +1,71 @@
 .botBubble {
-    background-color: #f0f0f0;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 5px 0 5px 15px;
-    max-width: 70%;
-    border: black 1px solid;
-
-}
-
-.userBubble {
-    background-color: #E3FCF7;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 5px 15px 5px 0;
-    max-width: 70%;
-    align-self: flex-end;
-    border: black 1px solid;
-
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-
+  background-color: #f0f0f0;
+  
+  margin: 5px 0 5px 15px;
+  max-width: 70%;
+  border: black 1px solid;
 }
 
 .chatContainer {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
+}
+
+.speechBubble {
+  background-color: #e0fbf6;
+  color: #001e2b;
+  padding: 0px 10px 5px 10px;
+  margin: 5px 0px 5px 10px;
+  display: inline-block;
+  max-width: 90%;
+  word-wrap: break-word;
+  box-shadow: 0px 5px 4px rgba(0, 0, 0, 0.06);
+  font-size: 13px;
+  border-radius: 20px;
+}
+/* Speech bubble alignment */
+.userBubble {
+  margin-left: auto; /* Aligns the bubble to the right */
+  background-color: #e0fbf6;
+  text-align: right; /* Aligns text to the right */
+  max-width: fit-content;
+  display: flex; /* Ensures the content is aligned properly */
+  justify-content: flex-end; /* Justifies the content to the right */
+  word-wrap: break-word;
+  max-width: 90%;
+  display: inline-block;
+  box-shadow: 0px 5px 4px rgba(0, 0, 0, 0.06);
+}
+
+.answerBubble {
+  background-color: white;
+  box-shadow: 0px 5px 4px rgba(0, 0, 0, 0.06);
+  transition: opacity 0.5s ease-in-out; /* Fade effect */
+  color: #001e2b;
+}
+.answerBubble.appear {
+  opacity: 1;
+}
+.loadingOverlay {
+  background-color: rgba(0, 163, 92, 0.037);
+  position: absolute; /* Position the overlay absolutely */
+  top: 107px; /* Cover from the top */
+  left: 0; /* Cover from the left */
+  right: 0; /* Cover to the right */
+  bottom: 0; /* Cover to the bottom */
+  color: white; /* Text color for "LOADING..." */
+  display: flex; /* Center the text */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+  z-index: 10; /* Place it above other elements */
+  border-radius: 0 0 24px 24px;
+}
+
+.imageStyling {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 20%;
+  object-position: top;
+  margin-bottom: 10px;
 }
