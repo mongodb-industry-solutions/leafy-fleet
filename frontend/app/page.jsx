@@ -43,7 +43,7 @@ export default function HomePage() {
   const runAgent = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/run-agent?query_reported=${encodeURIComponent(query)}`);
+      const res = await fetch(`http://localhost:8000/run-agent?query_reported=${encodeURIComponent(query)}`);
       const text = await res.text(); // Read raw response as text
       // console.log("Raw Response:", text);
       const data = JSON.parse(text); // Parse JSON if valid
@@ -59,7 +59,7 @@ export default function HomePage() {
     if (!threadId) return;
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resume-agent?thread_id=${encodeURIComponent(threadId)}`);
+      const res = await fetch(`http://localhost:3000/resume-agent?thread_id=${encodeURIComponent(threadId)}`);
       const data = await res.json();
       setWorkflow(data);
     } catch (err) {
@@ -84,7 +84,7 @@ export default function HomePage() {
     if (workflow && workflow.thread_id) {
       const fetchRunDocs = async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-run-documents?thread_id=${encodeURIComponent(workflow.thread_id)}`);
+          const res = await fetch(`http://localhost:8000/get-run-documents?thread_id=${encodeURIComponent(workflow.thread_id)}`);
           const data = await res.json();
           setRunDocuments(data);
         } catch (err) {

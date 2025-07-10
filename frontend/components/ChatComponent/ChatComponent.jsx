@@ -27,9 +27,16 @@ const ChatComponent = () => {
         };
         dispatch(pushMessageHistory({message: newUserMessage, id: newUserMessage.id}));
         dispatch(setIsChatbotThinking(true));
+
+        const res = await fetch(`http://localhost:8000/run-agent?query_reported=${encodeURIComponent(userMessageText)}`)
+        const text = await res.text();
+        const data = JSON.parse(text); // Parse JSON if valid
+        console.log("Received data:", data); // Log the received data
+        dispatch(setIsChatbotThinking(false));
+
         const botResponseMessage = {
             id: lastMessageId + 2,
-            text: "This is a placeholder response from the bot.",
+            text: data.chain_of_thought,
             sender: 'bot',
             completed: false
         };
