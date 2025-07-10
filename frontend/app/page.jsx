@@ -45,7 +45,7 @@ export default function HomePage() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/run-agent?query_reported=${encodeURIComponent(query)}`);
       const text = await res.text(); // Read raw response as text
-      console.log("Raw Response:", text);
+      // console.log("Raw Response:", text);
       const data = JSON.parse(text); // Parse JSON if valid
       setWorkflow(data);
     } catch (err) {

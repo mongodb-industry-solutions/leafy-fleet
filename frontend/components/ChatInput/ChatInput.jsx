@@ -6,7 +6,7 @@ import TextInput from '@leafygreen-ui/text-input';
 import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
 import FollowUpQuestionsComponent from '@/components/FollowUpQuestionsComponent/FollowUpQuestionsComponent';
-
+import { useDispatch, useSelector } from 'react-redux';
 import { useState, useRef } from 'react';
 
 
@@ -21,6 +21,7 @@ import { useState, useRef } from 'react';
 const ChatInput = ({ onSendMessage }) => {
     const [value, setValue] = useState('');
 
+    const isLoadingAnswer = useSelector(state => state.Message.chatbotIsThinking);
 
     const sendMessage = (text) => {
         // console.log("Sending message:", text);
@@ -76,8 +77,8 @@ const ChatInput = ({ onSendMessage }) => {
                     value={value}
                     className={styles.inputText}>
                 </TextInput>
-                <Button style={{ width: '100px' }} onClick={handleSubmit} >
-                    Send!
+                <Button style={{ width: '100px' }} onClick={handleSubmit} variant="baseGreen" disabled={!askInputRef.current?.value.length === 0 || isLoadingAnswer}>
+                    {isLoadingAnswer ? "Asking..." : "Ask"}
                 </Button>
 
 

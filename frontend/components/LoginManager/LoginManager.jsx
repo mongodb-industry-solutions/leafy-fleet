@@ -31,9 +31,8 @@ import DocumentFleetComponent from "../DocumentFleetComponent/DocumentFleetCompo
 
 const LoginManager = () => {
   const dispatch = useDispatch();
-  const isSelectedUser = useSelector(
-    (state) => state.User.selectedUser.userName
-
+  const selectedUser = useSelector(
+    (state) => state.User.selectedUser
   );
 const editFleet = useSelector((state) => state.User.editFleet);
 
@@ -81,13 +80,10 @@ const editFleet = useSelector((state) => state.User.editFleet);
 
   // Used to manage opening and closing the fleet configuration modal
   const modalObserver = () => {
-    if (isSelectedUser === "Kicho") {
-      dispatch(setSelectedUser({ user: "Kicho" }));
+    if (selectedUser.name === "Kicho") {   
       setOpen(true);
     } else {
       setOpen(false);
-      dispatch(setSelectedUser({ user: "Frida" }));
-      dispatch(setSelectedFleets({selectedFleets: 3}))
       dispatch(setFleet1Capacity(50));
       dispatch(setFleet2Capacity(50));
       dispatch(setFleet3Capacity(50));

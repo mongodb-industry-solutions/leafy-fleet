@@ -40,11 +40,6 @@ const FilterComponent = () => {
     fleet3Name: state.User.fleet3Name,
   }));
 
-  console.log("Fleet capacities from Redux state:", {
-    fleet1Capacity,
-    fleet2Capacity,
-    fleet3Capacity,
-  });
 
   // Snippet taken from https://www.mongodb.design/component/code/live-example
   const jsSnippet = `
