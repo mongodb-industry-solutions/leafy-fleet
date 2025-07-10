@@ -11,7 +11,7 @@ import styles from './ResultsComponent.module.css';
 import DetailsComponent from '../DetailsComponent/DetailsComponent.jsx';
 import { useDispatch, useSelector } from 'react-redux';
 import { setResults, setSelectedCar, setIsModalOpen } from '@/redux/slices/ResultSlice.js';
-
+import { Spinner } from '@leafygreen-ui/loading-indicator'; //cuando haga llamada a api
 
 // On time, will replace this with real api call, use redux with setResults to populate the results
 const cars = [
