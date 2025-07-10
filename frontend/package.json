@@ -18,11 +18,7 @@
     "@leafygreen-ui/combobox": "^12.0.2",
     "@leafygreen-ui/expandable-card": "^5.0.2",
     "@leafygreen-ui/icon": "^14.1.0",
-<<<<<<< HEAD
     "@leafygreen-ui/icon-button": "^16.0.12",
-=======
-    "@leafygreen-ui/icon-button": "^16.0.3",
->>>>>>> c50fdae5d49a9fa72e2ee0075cf6a2246efbea07
     "@leafygreen-ui/leafygreen-provider": "^4.0.2",
     "@leafygreen-ui/loading-indicator": "^4.0.3",
     "@leafygreen-ui/logo": "^11.0.1",
@@ -33,11 +29,7 @@
     "@leafygreen-ui/skeleton-loader": "^3.0.2",
     "@leafygreen-ui/tabs": "^14.2.5",
     "@leafygreen-ui/text-input": "^14.0.13",
-<<<<<<< HEAD
     "@leafygreen-ui/tooltip": "^13.0.13",
-=======
-    "@leafygreen-ui/tooltip": "^13.0.4",
->>>>>>> c50fdae5d49a9fa72e2ee0075cf6a2246efbea07
     "@leafygreen-ui/typography": "^20.1.9",
     "@reduxjs/toolkit": "^2.8.2",
     "bootstrap": "^5.3.7",
