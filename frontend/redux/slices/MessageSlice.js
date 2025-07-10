@@ -12,7 +12,7 @@ const MessageSlice = createSlice({
             sender: 'bot',
             completed: false,
         }],
-        selectedMessage: null,
+        selectedMessage: 0,
         chatbotIsThinking: false,
         chatbotError: null,
 
@@ -25,7 +25,7 @@ const MessageSlice = createSlice({
             state.lastMessageId = action.payload.message.id;
         },
         setSelectedMessage: (state, action) => {
-            state.selectedMessage = { ...action.payload.message }
+            state.selectedMessage = action.payload.message;
         },
         setIsChatbotThinking: (state, action) => {
             state.chatbotIsThinking = action.payload;

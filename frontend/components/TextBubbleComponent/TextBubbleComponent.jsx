@@ -56,7 +56,8 @@ const TextBubbleComponent = ({ user, text, id }) => {
                   dispatch(setSelectedMessage({ message: { user, text, id } }));
                 }}
               >
-                <Icon glyph={"Wizard"} />
+                {/* There are all the avaliable glyphs https://github.com/mongodb/leafygreen-ui/tree/ee7d80d450b652836d18edbf5682518fafc57d14/packages/icon/src/glyphs */}
+                <Icon glyph={"Cursor"} />
               </IconButton>
             }
           >
