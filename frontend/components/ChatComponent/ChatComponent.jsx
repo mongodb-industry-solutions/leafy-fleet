@@ -12,52 +12,7 @@ import { pushMessageHistory, setIsChatbotThinking } from '@/redux/slices/Message
 
 
 const ChatComponent = () => {
-  const bottomRef = useRef(null);
 
-  const dispatch = useDispatch();
-  const messages = useSelector((state) => state.Message.messageHistory);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSendMessage = async (userMessageText) => {
-    const newUserMessage = {
-      id: nextId++,
-      text: userMessageText,
-      sender: "user",
-    };
-    const botResponseMessage = {
-      id: nextId++,
-      text: "This is a placeholder response from the bot.",
-      sender: "bot",
-    };
-    dispatch(pushMessageHistory({ message: newUserMessage }));
-    dispatch(pushMessageHistory({ message: botResponseMessage })); // testing response
-    // console.log("User message added:", newUserMessage);
-  };
-
-  return (
-    <div className={styles.chatComponent}>
-      <div className={styles.messagesContainer}>
-        {messages.map((msg) => (
-          <div key={msg.id}>
-            <TextBubbleComponent
-              user={msg.sender}
-              text={msg.text}
-              id={msg.id}
-            />
-          </div>
-        ))}
-        <div ref={bottomRef} />
-      </div>
-
-      <div className={styles.chatBox}>
-        <ChatInput onSendMessage={handleSendMessage} />
-      </div>
-    </div>
-  );
-};
 
 
     const bottomRef = useRef(null);
@@ -77,7 +32,7 @@ const ChatComponent = () => {
 
     const handleSendMessage = async (userMessageText) => {
         
-        console.log("user", user)
+        // console.log("user", user)
         const newUserMessage = {
             id: lastMessageId + 1,
             text: userMessageText,
@@ -85,7 +40,7 @@ const ChatComponent = () => {
             completed: true
         };
 
-        console.log("newUserMessage", newUserMessage)
+        // console.log("newUserMessage", newUserMessage)
 
         dispatch(pushMessageHistory({message: newUserMessage, id: newUserMessage.id}));
         
