@@ -10,7 +10,7 @@ const FollowUpQuestionsComponent = ({ handleSuggestion, questions }) => {
     return (
 
         <div className={styles.suggestedQuestions}>
-            <Body onClick={() => console.log(messages)}>Suggested Questions:</Body>
+            <Body>Suggested Questions:</Body>
             {
                 questions.map((suggestion, index) =>
                     <button key={`sug-${index}`} className={styles.suggestion} onClick={() => handleSuggestion(index)}>

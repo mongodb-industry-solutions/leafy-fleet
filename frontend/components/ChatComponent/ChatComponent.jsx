@@ -7,47 +7,55 @@ import ChatInput from '@/components/ChatInput/ChatInput';
 import { useState, useRef, useEffect } from 'react';
 import TextBubbleComponent from '@/components/TextBubbleComponent/TextBubbleComponent';
 import { useDispatch, useSelector } from 'react-redux';
-import { pushMessageHistory } from '@/redux/slices/MessageSlice';
+import { pushMessageHistory, setIsChatbotThinking } from '@/redux/slices/MessageSlice';
 
 
-const initialMessage = {
-    id: 'initial',
-    text: 'Hello! I am your AI assistant. How can I help you today?',
-    sender: 'bot'
-};
-
-let nextId = 1;
 
 const ChatComponent = () => {
 
     const bottomRef = useRef(null);
+
+    const lastMessageId = useSelector(state => state.Message.lastMessageId);
     
     
     const dispatch = useDispatch()
     const messages = useSelector(state => state.Message.messageHistory)
-    
+    const user = useSelector(state => state.User.name)
+
+    const isLoadingAnswer = useSelector(state => state.Message.chatbotIsThinking);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-
     const handleSendMessage = async (userMessageText) => {
-
+        
+        console.log("user", user)
         const newUserMessage = {
-            id: nextId++,
+            id: lastMessageId + 1,
             text: userMessageText,
             sender: 'user',
+            completed: true
         };
+
+        console.log("newUserMessage", newUserMessage)
+
+        dispatch(pushMessageHistory({message: newUserMessage, id: newUserMessage.id}));
+        
+
+        dispatch(setIsChatbotThinking(true));
+        
         const botResponseMessage = {
-            id: nextId++,
+            id: lastMessageId + 2,
             text: "This is a placeholder response from the bot.",
             sender: 'bot',
+            completed: false
         };
-        dispatch(pushMessageHistory({message: newUserMessage}));
-        dispatch(pushMessageHistory({message: botResponseMessage})); // testing response
-        // console.log("User message added:", newUserMessage);
-
+        setTimeout(() => {
+            dispatch(pushMessageHistory({ message: botResponseMessage, id: botResponseMessage.id }));
+            
+        }, 1000); // 1000 milliseconds = 1 second delay
+        dispatch(setIsChatbotThinking(false));
     }
 
 

@@ -30,8 +30,8 @@ import Code from "@leafygreen-ui/code";
 
 const LoginManager = () => {
   const dispatch = useDispatch();
-  const isSelectedUser = useSelector(
-    (state) => state.User.selectedUser.userName
+  const selectedUser = useSelector(
+    (state) => state.User.selectedUser
   );
 
   // Used to know if default value is needed
@@ -77,12 +77,10 @@ const LoginManager = () => {
 
   // Used to manage opening and closing the fleet configuration modal
   const modalObserver = () => {
-    if (isSelectedUser === "Kicho") {
-      dispatch(setSelectedUser({ user: "Kicho" }));
+    if (selectedUser.name === "Kicho") {   
       setOpen(true);
     } else {
       setOpen(false);
-      dispatch(setSelectedUser({ user: "Frida" }));
       dispatch(setFleet1Capacity(50));
       dispatch(setFleet2Capacity(50));
       dispatch(setFleet3Capacity(50));
