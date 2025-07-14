@@ -33,7 +33,6 @@ class PyObjectId(ObjectId):
 # Nested Class for the Telemetry/Timeseries Model
 class VehicleModel(BaseModel):  
     # _id: PyObjectId = Field(default_factory=PyObjectId) # Mongo assignes a unique ID to each document
-    carID: str
     currentGeozone: str
     hasDriver: bool
     isOilLeak: bool
@@ -52,6 +51,7 @@ class TimeseriesModel(BaseModel):
     """
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     # _id: PyObjectId = Field(default_factory=PyObjectId)
+    vehicle_number : int
     vehicle: VehicleModel
     gasLevel: float # In ml
     maxGasLevel: float # In ml
