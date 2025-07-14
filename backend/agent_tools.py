@@ -19,6 +19,10 @@ from mdb_vector_search_idx_creator import VectorSearchIDXCreator
 
 from dotenv import load_dotenv
 
+import asyncio  
+import websockets 
+
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -233,7 +237,6 @@ class AgentTools(MongoDBConnector):
         CHAIN_OF_THOUGHTS_PROMPT = (f"""Just provide an answer to the user query: {query_reported}. """)
         logger.info("Chain-of-Thought Reasoning Prompt:")
         logger.info(CHAIN_OF_THOUGHTS_PROMPT)
-
         try:
             # Instantiate the chat completion model
             chat_completions = BedrockAnthropicChatCompletions(model_id=self.chatcompletions_model_id)

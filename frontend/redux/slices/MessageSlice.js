@@ -8,11 +8,12 @@ const MessageSlice = createSlice({
             id: 0,
             text: 'Hello! I am your AI assistant. How can I help you today?',
             sender: 'bot',
-            completed: false,
+            completed: true,
         }],
         selectedMessage: 0,
         chatbotIsThinking: false,
         chatbotError: null,
+        currentThought: "",
 
     },
     reducers: {
@@ -32,10 +33,13 @@ const MessageSlice = createSlice({
             state.messageHistory = state.messageHistory.map((msg) =>
                 msg.id === action.payload.id ? { ...msg, completed: action.payload.completed } : msg
             );
+        },
+        setLatestThought: (state, action) => {
+            state.currentThought = action.payload.thought;
         }
     },
 
 })
 
-export const { pushMessageHistory, setSelectedMessage, setIsChatbotThinking, setAnimationMessage } = MessageSlice.actions
+export const { pushMessageHistory, setSelectedMessage, setIsChatbotThinking, setAnimationMessage, setLatestThought } = MessageSlice.actions
 export default MessageSlice.reducer

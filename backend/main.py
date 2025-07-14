@@ -2,6 +2,9 @@ from db.mdb import MongoDBConnector
 
 import logging
 import datetime
+import asyncio  
+import websockets 
+import asyncio
 
 import json
 from bson import ObjectId
@@ -11,6 +14,7 @@ from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter
+from fastapi import WebSocket, WebSocketDisconnect
 
 from config.config_loader import ConfigLoader
 from utils import convert_objectids, format_document
@@ -144,6 +148,49 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         except Exception as db_error:
                 logger.info(f"[MongoDB] Error storing session error state: {db_error}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    print("Client connected.")
+    
+    try:
+        logger.info("WebSocket connection established.")
+        while True:
+            data = await websocket.receive_json()
+            if data.get("type") == "run_agent":
+                query = data.get("query", "")
+                
+                # --- FAKE AGENT LOGIC STARTS HERE ---
+                
+                # 1. Acknowledge the request
+                await websocket.send_json({"type": "status", "message": f"Processing query: '{query}'..."})
+                await asyncio.sleep(0.5)
+
+                # 2. Define the pre-canned "thoughts"
+                fake_thoughts = [
+                    "Analyzing query structure...",
+                    "Identifying keywords and intent...",
+                    "Fetching relevant data from vector store...",
+                    "Cross-referencing historical data...",
+                    "Synthesizing findings into a coherent answer."
+                ]
+
+                # 3. Stream the fake thoughts
+                for thought in fake_thoughts:
+                    await websocket.send_json({"type": "thought", "message": thought})
+                    await asyncio.sleep(0.7) # Simulate the time it takes to "think"
+
+                # 4. Create and send the final fake answer
+                fake_answer = f"Based on the analysis of '{query}', the outlook is positive."
+                await websocket.send_json({"type": "result", "message": fake_answer})
+                
+                # --- FAKE AGENT LOGIC ENDS HERE ---
+
+    except WebSocketDisconnect:
+        print("Client disconnected.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 @app.get("/resume-agent")

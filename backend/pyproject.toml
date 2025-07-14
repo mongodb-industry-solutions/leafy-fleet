@@ -21,6 +21,7 @@ langgraph = "^0.3.5"
 grandalf = "^0.8"
 langgraph-checkpoint-mongodb = "^0.1.1"
 annotated-types = "^0.7.0"
+websockets = "^15.0.0"
 
 
 [build-system]
