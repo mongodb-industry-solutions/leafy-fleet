@@ -1,7 +1,7 @@
 {
     "CSV_DATA": "data/csv/macro_indicators_data.csv",
-    "MDB_DATABASE_NAME": "agentic_framework",
-    "MDB_TIMESERIES_COLLECTION": "macro_indicators_data",
+    "MDB_DATABASE_NAME": "leafy_fleet",
+    "MDB_TIMESERIES_COLLECTION": "vehicle_telemetry",
     "DEFAULT_TIMESERIES_DATA": [
         {
             "timestamp": "2025-03-21T13:15:00Z",
@@ -18,7 +18,7 @@
         "vix": {"threshold": 20, "condition": ">", "message": "High market volatility (VIX): {value}"}
     },
     "MDB_TIMESERIES_TIMEFIELD": "timestamp",
-    "MDB_TIMESERIES_GRANULARITY": "minutes",
+    "MDB_TIMESERIES_GRANULARITY": "seconds",
     "MDB_EMBEDDINGS_COLLECTION": "queries",
     "MDB_EMBEDDINGS_COLLECTION_VS_FIELD": "query_embedding",
     "MDB_VS_INDEX": "agentic_framework_queries_vs_idx",
@@ -59,8 +59,14 @@
             {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"}
         ],
         "edges": [
+            {"from": "reasoning_node", "to": "data_from_csv"},
+            {"from": "data_from_csv", "to": "process_data"},
+            {"from": "process_data", "to": "embedding_node"},
+            {"from": "embedding_node", "to": "vector_search"},
+            {"from": "vector_search", "to": "process_vector_search"},
+            {"from": "process_vector_search", "to": "persistence_node"},
+            {"from": "persistence_node", "to": "recommendation_node"},
             {"from": "recommendation_node", "to": "END"}
-            
         ],
         "entry_point": "reasoning_node"
     }
