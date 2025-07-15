@@ -74,7 +74,7 @@ for (id1, lat1, lon1), (id2, lat2, lon2) in pairs:
     distance_data.append(((id1, id2), dist))
 
 # Filter by distance ? 
-filtered_pairs = [((id1, id2), dist) for ((id1, id2), dist) in distance_data if dist >= 2.5]
+filtered_pairs = [((id1, id2), dist) for ((id1, id2), dist) in distance_data if dist >= 2.4]
 
 # Remove reverse duplicates
 seen_keys = set()
@@ -86,7 +86,7 @@ for (id1, id2), dist in filtered_pairs:
         seen_keys.add(key)
 
 # Limit connections per coordinate (looks better ig)
-MAX_CONNECTIONS = 15  
+MAX_CONNECTIONS = 6 
 connection_count = defaultdict(int)
 selected_routes = []
 
@@ -98,12 +98,12 @@ for (id1, id2), dist in unique_filtered:
         selected_routes.append({"From_ID": id1, "To_ID": id2, "Distance_miles": round(dist, 3)})
         connection_count[id1] += 1
         connection_count[id2] += 1
-    if len(selected_routes) >= 300:
+    if len(selected_routes) >= 150:
         break
 
 # Create DataFrame
 limited_df = pd.DataFrame(selected_routes)
-limited_df.to_csv("random_300_routes.csv", index=False)
+limited_df.to_csv("random_150_routes.csv", index=False)
 
 # Create map centered in Austin (not necesaary)
 #m = folium.Map(location=[30.2672, -97.7431], zoom_start=10)
@@ -126,4 +126,4 @@ limited_df.to_csv("random_300_routes.csv", index=False)
    # ).add_to(m)
 
 #m.save("map.html")
-print("  CSV saved as random_300_routes.csv")
+print("  CSV saved as random_150_routes.csv")

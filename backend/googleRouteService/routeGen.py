@@ -3,7 +3,7 @@ import json
 import requests
 import pandas as pd
 from dotenv import load_dotenv
-
+import itertools
 coordinates = {
     1: (30.296986, -97.832127),
     2: (30.221040, -97.681799),
@@ -69,7 +69,7 @@ def compute_route(origin, destination):
     url = f"https://routes.googleapis.com/directions/v2:computeRoutes?key={api_key}"
     headers = {
         "Content-Type": "application/json",
-        "X-Goog-FieldMask": "routes.legs.steps.startLocation,routes.legs.steps.endLocation,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration"
+        "X-Goog-FieldMask": "routes.staticDuration,routes.distanceMeters,routes.polyline.encodedPolyline"
     }
     payload = {
         "origin": {
@@ -78,59 +78,109 @@ def compute_route(origin, destination):
         "destination": {
             "location": {"latLng": {"latitude": destination[0], "longitude": destination[1]}}
         },
-        "travelMode": "DRIVE"
+        "travelMode": "DRIVE",
+        "polylineQuality": "HIGH_QUALITY",
+        "polylineEncoding": "ENCODED_POLYLINE"
     }
 
-    response = requests.post(url, headers=headers, json=payload)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        route = data["routes"][0]
+        return {
+            "distance_meters": route["distanceMeters"],
+            "duration_seconds": float(route["staticDuration"].replace("s", "")),
+            "encoded_polyline": route["polyline"]["encodedPolyline"]
+        }
+    except requests.exceptions.RequestException as e:
+        print("API request failed:", e)
+        return None
+    except (KeyError, IndexError) as e:
+        print("Unexpected response format:", e)
+        return None
+
+
 
 # --- Process only the first row (for testing) ---
-def process_first_route(csv_file="random_300_routes.csv"):
+def process_first_route(csv_file="random_150_routes.csv", output_file="route_test_2.json"):
     df = pd.read_csv(csv_file)
-    first_row = df.iloc[0]
+    first_row = df.iloc[1]
 
     from_id, to_id = int(first_row["From_ID"]), int(first_row["To_ID"])
     origin = coordinates[from_id]
     destination = coordinates[to_id]
-
-    print(f" Testing route from {from_id} → {to_id}")
+    route_data = {}
     result_ab = compute_route(origin, destination)
+    if result_ab:
+        route_data[f"{from_id}_{to_id}"] = result_ab
+
     result_ba = compute_route(destination, origin)
+    if result_ba:
+        route_data[f"{to_id}_{from_id}"] = result_ba
 
-    print(" Route A → B:")
-    print(json.dumps(result_ab, indent=2))
+    if route_data:
+        with open(output_file, "w") as f:
+            json.dump(route_data, f, indent=2)
+        print(f" Saved routes to {output_file}")
+    else:
+        print(" error saving routes :o.  check to avoid using api calls unsuccesfully")
 
-    print(" Route B → A:")
-    print(json.dumps(result_ba, indent=2))
 
-# --- Process all 300 routes ---
-def process_all_routes(csv_file="random_300_routes.csv", output_dir="results"):
-    os.makedirs(output_dir, exist_ok=True)
+# --- Process all 300 routes --- update
+def process_all_routes(csv_file="random_150_routes.csv", output_file="encoded_routes_2.json"):
     df = pd.read_csv(csv_file)
 
-    for i, row in df.iterrows():
+    all_routes = {}
+    #un array de routes fallidas
+    failed_routes = []
+    limit = 2 
+    #  islice to limit the number of rows processed while testing
+    rows = itertools.islice(df.iterrows(), limit) if limit else df.iterrows()
+
+
+    for i, row in rows:
         from_id, to_id = int(row["From_ID"]), int(row["To_ID"])
-        origin = coordinates[from_id]
-        destination = coordinates[to_id]
+        origin = coordinates.get(from_id)
+        destination = coordinates.get(to_id)
 
-        try:
-            print(f"[{i+1}/300] {from_id} → {to_id}")
-            result_ab = compute_route(origin, destination)
-            result_ba = compute_route(destination, origin)
+        if not origin or not destination:
+            print(f"[{i+1}] Skipping invalid coordinates: {from_id} → {to_id}")
+            failed_routes.append((from_id, to_id, "Invalid coordinates"))
+            continue
 
-            # Save each result pair
-            with open(f"{output_dir}/route_{from_id}_to_{to_id}.json", "w") as f_ab:
-                json.dump(result_ab, f_ab, indent=2)
+        #print(f"[{i+1}/{len(df)}] Processing route {from_id} → {to_id} ...")
 
-            with open(f"{output_dir}/route_{to_id}_to_{from_id}.json", "w") as f_ba:
-                json.dump(result_ba, f_ba, indent=2)
+        result_ab = compute_route(origin, destination)
+        result_ba = compute_route(destination, origin)
 
-        except Exception as e:
-            print(f"Error processing {from_id} → {to_id}: {e}")
+        if result_ab:
+            all_routes[f"{from_id}_{to_id}"] = result_ab
+        else:
+            print(f" {from_id} → {to_id} failed")
+            failed_routes.append((from_id, to_id, " request failed"))
+
+        if result_ba:
+            all_routes[f"{to_id}_{from_id}"] = result_ba
+            
+        else:
+            print(f"{to_id} → {from_id} failed")
+            failed_routes.append((to_id, from_id, " request failed"))
+
+    # Save combined JSON file with all successful routes
+    with open(os.path.join( output_file), "w") as f:
+        json.dump(all_routes, f, indent=2)
+    print(f"\n All saved to {output_file}")
+
+    #  print failed ones
+    if failed_routes:
+        print("\n Failed Routes:")
+        for from_id, to_id, reason in failed_routes:
+            print(f"- {from_id} → {to_id}: {reason}")
+
 
 # --- Main trigger ---
 if __name__ == "__main__":
     # Only test first route while editing
-    process_first_route()
-    # process_all_routes() will have to change, to maybe save to csv with time for each step
+    #process_first_route()
+    process_all_routes() #will have to change, to maybe save to csv with time for each step
