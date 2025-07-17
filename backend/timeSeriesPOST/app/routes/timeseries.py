@@ -14,30 +14,34 @@ async def create_timeseries_entry(entry: TimeseriesModel):
     print("Creating timeseries entry...")
     print("Received data:", entry)
 
-    vehicle = VehicleModel(  
-        carID=entry.vehicle.carID,  
-        currentGeozone=entry.vehicle.currentGeozone,  
-        hasDriver=entry.vehicle.hasDriver,  
-        isOilLeak=entry.vehicle.isOilLeak,  
-        isEngineRunning=entry.vehicle.isEngineRunning,  
-        isCrashed=entry.vehicle.isCrashed,  
-        currentRoute=entry.vehicle.currentRoute  
-    )  
-    
-
-    entry = TimeseriesModel(  
-        # timestamp=datetime.fromisoformat("2023-10-27T10:30:00").astimezone(timezone.utc),
-        vehicle=vehicle,  
-        gasLevel=entry.gasLevel,
-        maxGasLevel=entry.maxGasLevel,
-        oilTemperature=entry.oilTemperature,
-        oilLevel=entry.oilLevel,
-        distanceTraveled=entry.distanceTraveled,
+    entry = TimeseriesModel(
+        timestamp=entry.timestamp,
+        VIN=entry.VIN,
+        FuelLevel=entry.FuelLevel,
+        maxFuelLevel=entry.maxFuelLevel,
+        OilTemperature=entry.OilTemperature,
+        EngineOilLevel=entry.EngineOilLevel,
+        TraveledDistance=entry.TraveledDistance,
+        TraveledDistanceSinceStart=entry.TraveledDistanceSinceStart,
         performanceScore=entry.performanceScore,
         avaliabilityScore=entry.avaliabilityScore,
-        runTime=entry.runTime,
-        qualityScore=entry.qualityScore
+        RunTime=entry.RunTime,
+        qualityScore=entry.qualityScore,
+        isOilLeak=entry.isOilLeak,
+        isEngineRunning=entry.isEngineRunning,
+        isCrashed=entry.isCrashed,
+        currentRoute=entry.currentRoute,
+        # Latitude and longitude come in entry, but will only be used for coordinates
+        Speed=entry.Speed,
+        AverageSpeed=entry.AverageSpeed,
+        IsMoving=entry.IsMoving,
+        currentGeozone=entry.currentGeozone
     )
+    # Convert coordinates to GeoJSON format
+    entry.coordinates = {
+        "type": "Point",
+        "coordinates": [round(entry.Longitude, 6), round(entry.Latitude,6)]  
+    }
     print("Prepared entry for insertion:", entry)
 
     try:  

@@ -59,12 +59,13 @@ class TimeseriesModel(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     # _id: PyObjectId = Field(default_factory=PyObjectId)
     VIN: int 
+    carID: int
     FuelLevel: float # In ml
     maxFuelLevel: float # In ml, no creo que se ocupe
     OilTemperature: float # In Celsius
     EngineOilLevel: float # In ml
-    TraveledDistance : float = Field(default=31220.0, description="Total distance traveled by the vehicle in km")
-    TraveledDistanceSinceStart: float = Field(default=0.0, description="Distance traveled since the start of the route in km")
+    TraveledDistance : float # Field(default=31220.0, description="Total distance traveled by the vehicle in km")
+    TraveledDistanceSinceStart: float # Field(default=0.0, description="Distance traveled since the start of the route in km")
     performanceScore: float # From 0 to 100, used to check whether the vehicle is achieving its objective, visiting all needed keypoints
     avaliabilityScore: float # From 0 to 100, also for OEE, run time vs planned time, in our case run time of a route with traffic vs a planned route without traffic
     RunTime: float # is Used to measure type:"sensor". datatype:"float" deprecation:"v5.0 OBD-branch is deprecated." description:"PID 1F - Engine run time" unit:"s"
@@ -73,9 +74,10 @@ class TimeseriesModel(BaseModel):
     isEngineRunning: bool
     isCrashed: bool
     currentRoute: int
-    Latitude: float = Field(default=0.0, description="Current latitude of the vehicle")
-    Longitude: float = Field(default=0.0, description="Current longitude of the vehicle")
-    Speed: float = Field(default=0.0, description="Average speed of the vehicle in km/h")
-    AverageSpeed: float = Field(default=0.0, description="Average speed of the vehicle in km/h over the route")
-    IsMoving: bool = Field(default=True, description="Indicates if the vehicle is currently moving")
+    Latitude: float 
+    Longitude: float 
+    Speed: float # Field(default=0.0, description="Average speed of the vehicle in km/h")
+    AverageSpeed: float # Field(default=0.0, description="Average speed of the vehicle in km/h over the route")
+    IsMoving: bool # Field(default=True, description="Indicates if the vehicle is currently moving")
+    currentGeozone: str # will update every 10 steps
     
