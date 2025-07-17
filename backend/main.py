@@ -22,8 +22,11 @@ from utils import convert_objectids, format_document
 from db.mdb import MongoDBConnector
 
 from agent_workflow_graph import create_workflow_graph
+from async_workflow_runner import create_async_workflow
 from agent_state import AgentState
 from agent_checkpointer import AgentCheckpointer
+
+from websocketServer import manager 
 
 import os
 from dotenv import load_dotenv
@@ -98,22 +101,27 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         "updates": [],
         "thread_id": ""
     }
+    await manager.broadcast("Agent started with query: " + query_reported)
     thread_id = f"thread_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
     initial_state["thread_id"] = thread_id
     config = {"configurable": {"thread_id": thread_id}}
     try:
         logger.info(f"Running agent for thread ID: {thread_id}")
-        mongodb_saver = AgentCheckpointer(database_name=MDB_DATABASE_NAME, collection_name=MDB_CHECKPOINTER_COLLECTION).create_mongodb_saver()
-        if mongodb_saver:
-            with mongodb_saver as checkpointer:
-                workflow = create_workflow_graph(checkpointer=checkpointer)
-                final_state = workflow.invoke(initial_state, config=config)
-                final_state = convert_objectids(final_state)
-        else:
-            workflow = create_workflow_graph()
-            final_state = workflow.invoke(initial_state, config=config)
-            final_state = convert_objectids(final_state)
+        
+        # Use custom async workflow runner
+        await manager.broadcast("🚀 Starting agent workflow execution...")
+        workflow = await create_async_workflow()
+        final_state = await workflow.ainvoke(initial_state, config=config)
+        await manager.broadcast("✅ Workflow execution completed, processing results...")
+        logger.info(f"Agent run completed for thread ID: {thread_id}")
+        
+        final_state = convert_objectids(final_state)
+        logger.info(f"Final state for thread ID {thread_id}: {final_state}")
         final_state["thread_id"] = thread_id
+        
+        # Broadcast completion with recommendation
+        recommendation_text = final_state.get("recommendation_text", "No recommendation generated")
+        await manager.broadcast(f"Agent workflow completed")
         
         try:
             with MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME) as mdb_connector: 
@@ -131,6 +139,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             logger.info(f"[MongoDB] Error storing session metadata: {e}")
             return final_state
     except Exception as e:
+        await manager.broadcast(f"Error occurred: {str(e)}")
         logger.info(f"[Error] An error occurred during execution: {e}")
         logger.info(f"You can resume this session later using thread ID: {thread_id}")
         try:
@@ -151,46 +160,26 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    print("Client connected.")
-    
+    """
+    WebSocket endpoint. Handles connection, disconnection, and keeps the connection alive.
+    """
+    await manager.connect(websocket)
     try:
-        logger.info("WebSocket connection established.")
+        # This loop is essential. It keeps the connection open.
+        # You could also receive messages from the client here if needed.
         while True:
-            data = await websocket.receive_json()
-            if data.get("type") == "run_agent":
-                query = data.get("query", "")
-                
-                # --- FAKE AGENT LOGIC STARTS HERE ---
-                
-                # 1. Acknowledge the request
-                await websocket.send_json({"type": "status", "message": f"Processing query: '{query}'..."})
-                await asyncio.sleep(0.5)
-
-                # 2. Define the pre-canned "thoughts"
-                fake_thoughts = [
-                    "Analyzing query structure...",
-                    "Identifying keywords and intent...",
-                    "Fetching relevant data from vector store...",
-                    "Cross-referencing historical data...",
-                    "Synthesizing findings into a coherent answer."
-                ]
-
-                # 3. Stream the fake thoughts
-                for thought in fake_thoughts:
-                    await websocket.send_json({"type": "thought", "message": thought})
-                    await asyncio.sleep(0.7) # Simulate the time it takes to "think"
-
-                # 4. Create and send the final fake answer
-                fake_answer = f"Based on the analysis of '{query}', the outlook is positive."
-                await websocket.send_json({"type": "result", "message": fake_answer})
-                
-                # --- FAKE AGENT LOGIC ENDS HERE ---
-
+            # We wait for a message from the client. If they disconnect,
+            # a WebSocketDisconnect exception will be raised.
+            await websocket.receive_text()
+            # Note: In a real app, you might want to process the received text.
+            # For this example, we just keep the connection alive.
+            
     except WebSocketDisconnect:
-        print("Client disconnected.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        manager.disconnect(websocket) 
+    
+    
+    
+
 
 
 @app.get("/resume-agent")

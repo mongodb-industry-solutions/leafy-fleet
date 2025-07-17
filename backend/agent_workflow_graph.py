@@ -19,7 +19,7 @@ def resolve_tool(tool_path):
     return getattr(module, function_name)
 
 
-def create_workflow_graph(checkpointer=None):
+async def create_workflow_graph(checkpointer=None):
     """
     Create the LangGraph StateGraph for the agent workflow based on the JSON config file.
 

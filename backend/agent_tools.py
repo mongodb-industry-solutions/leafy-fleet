@@ -11,6 +11,8 @@ from bedrock.anthropic_chat_completions import BedrockAnthropicChatCompletions
 from loader import CSVLoader
 import csv
 
+from websocketServer import manager
+
 from agent_state import AgentState
 from embedder import Embedder
 from agent_profiles import AgentProfiles
@@ -427,63 +429,85 @@ class AgentTools(MongoDBConnector):
 
 
 # Define tools
-def get_data_from_csv_tool(state: dict) -> dict:
-    "Reads data from a CSV file."
+async def get_data_from_csv_tool(state: dict) -> dict:
+    """Reads data from a CSV file."""
+    await manager.broadcast("Reading seed data from CSV file")
     agent_tools = AgentTools()
-    return agent_tools.get_data_from_csv(state=state)
+    result = agent_tools.get_data_from_csv(state=state)
+    data_count = len(result.get("timeseries_data", []))
+    return result
 
-def get_data_from_mdb_tool(state: dict) -> dict:
-    "Reads data from a MongoDB collection."
+async def get_data_from_mdb_tool(state: dict) -> dict:
+    """Reads data from a MongoDB collection."""
+    await manager.broadcast("Retrieving data from MongoDB")
     # Load configuration
     config = ConfigLoader()
     # Get the MongoDB collection name
     mdb_timeseries_collection = config.get("MDB_TIMESERIES_COLLECTION")
     # Instantiate the AgentTools class
     agent_tools = AgentTools(collection_name=mdb_timeseries_collection)
-    return agent_tools.get_data_from_mdb(state)
+    result = agent_tools.get_data_from_mdb(state)
+    await manager.broadcast("MongoDB data retrieved successfully")
+    return result
 
-def vector_search_tool(state: dict) -> dict:
+async def vector_search_tool(state: dict) -> dict:
     """Performs a vector search in a MongoDB collection."""
+    await manager.broadcast("Performing vector search for historical recommendations")
     # Load configuration
     config = ConfigLoader()
     # Get the MongoDB collection name
     mdb_embeddings_collection = config.get("MDB_EMBEDDINGS_COLLECTION")
     # Instantiate the AgentTools class
     agent_tools = AgentTools(collection_name=mdb_embeddings_collection)
-    return agent_tools.vector_search(state=state)
+    result = agent_tools.vector_search(state=state)
+    search_results = len(result.get("historical_recommendations_list", []))
+    return result
 
-def generate_chain_of_thought_tool(state: AgentState) -> AgentState:
+async def generate_chain_of_thought_tool(state: AgentState) -> AgentState:
     """Generates the chain of thought for the agent."""
     agent_tools = AgentTools()
-    return agent_tools.generate_chain_of_thought(state=state)
+    result = agent_tools.generate_chain_of_thought(state=state)
+    return result
 
-def process_data_tool(state: AgentState) -> AgentState:
+async def process_data_tool(state: AgentState) -> AgentState:
     """Processes the data."""
+    await manager.broadcast("Processing and analyzing data")
     agent_tools = AgentTools()
-    return agent_tools.process_data(state=state)
+    result = agent_tools.process_data(state=state)
+    return result
 
-def get_query_embedding_tool(state: AgentState) -> AgentState:
+async def get_query_embedding_tool(state: AgentState) -> AgentState:
     """Generates the query embedding."""
+    await manager.broadcast("Generating query embedding vector")
     agent_tools = AgentTools()
-    return agent_tools.get_query_embedding(state=state)
+    result = agent_tools.get_query_embedding(state=state)
+    embedding_size = len(result.get("embedding_vector", []))
+    await manager.broadcast(f"Generated {embedding_size}-dimensional embedding")
+    return result
 
-def process_vector_search_tool(state: AgentState) -> AgentState:
+async def process_vector_search_tool(state: AgentState) -> AgentState:
     """Processes the vector search results."""
+    await manager.broadcast("Processing vector search results")
     agent_tools = AgentTools()
-    return agent_tools.process_vector_search(state=state)
+    result = agent_tools.process_vector_search(state=state)
+    return result
 
-def persist_data_tool(state: AgentState) -> AgentState:
+async def persist_data_tool(state: AgentState) -> AgentState:
     """Persists the data into MongoDB."""
+    await manager.broadcast("Saving data to MongoDB")
     # Instantiate the AgentTools class
     agent_tools = AgentTools()
-    return agent_tools.persist_data(state=state)
+    result = agent_tools.persist_data(state=state)
+    return result
 
-def get_llm_recommendation_tool(state: AgentState) -> AgentState:
+async def get_llm_recommendation_tool(state: AgentState) -> AgentState:
     """Generates the LLM recommendation."""
+    await manager.broadcast("Generating AI recommendation...")
     # Load configuration
     config = ConfigLoader()
     # Get the MongoDB collection name
     mdb_historical_recommendations_collection = config.get("MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION")
     # Instantiate the AgentTools class
     agent_tools = AgentTools(collection_name=mdb_historical_recommendations_collection)
-    return agent_tools.get_llm_recommendation(state=state)
+    result = agent_tools.get_llm_recommendation(state=state)
+    return result

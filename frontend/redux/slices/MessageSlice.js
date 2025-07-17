@@ -36,10 +36,15 @@ const MessageSlice = createSlice({
         },
         setLatestThought: (state, action) => {
             state.currentThought = action.payload.thought;
-        }
+        },
+        updateMessageText: (state, action) => {
+            state.messageHistory = state.messageHistory.map((msg) =>
+                msg.id === action.payload.id ? { ...msg, text: action.payload.text } : msg
+            );
+        },
     },
 
 })
 
-export const { pushMessageHistory, setSelectedMessage, setIsChatbotThinking, setAnimationMessage, setLatestThought } = MessageSlice.actions
+export const { pushMessageHistory, setSelectedMessage, setIsChatbotThinking, setAnimationMessage, setLatestThought, updateMessageText } = MessageSlice.actions
 export default MessageSlice.reducer

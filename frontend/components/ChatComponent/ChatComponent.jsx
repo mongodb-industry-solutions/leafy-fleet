@@ -10,13 +10,19 @@ import {
   pushMessageHistory,
   setIsChatbotThinking,
   setLatestThought,
+  updateMessageText
 } from "@/redux/slices/MessageSlice";
+import { Body } from "@leafygreen-ui/typography";
 
 const ChatComponent = () => {
   // useRef to hold the WebSocket instance
   const socketRef = useRef(null);
-
   const [connectionStatus, setConnectionStatus] = useState("Not Connected");
+
+  
+  const chatbotIsThinking = useSelector(
+      (state) => state.Message.chatbotIsThinking
+    );
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
@@ -30,13 +36,9 @@ const ChatComponent = () => {
 
     // 2. Set up the onmessage event listener
     socketRef.current.onmessage = (event) => {
-      const receivedData = event.data;
+      console.log("WebSocket message received:", event);
       try {
-        const parsedData = JSON.parse(receivedData);
-        console.log("Received WebSocket data:", parsedData);
-
-        // Store or process incoming WebSocket updates
-        dispatch(setLatestThought({ thought: parsedData.message }));
+        dispatch(setLatestThought({ thought: event.data }));
       } catch (error) {
         console.error("Error parsing WebSocket data:", error);
       }
@@ -68,23 +70,6 @@ const ChatComponent = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  async function fetchLLMResponse(userMessageText) {
-    const response = await fetch(
-      `http://localhost:8000/run-agent?query_reported=${encodeURIComponent(
-        userMessageText
-      )}`
-    );
-    const data = await response.json();
-    return data;
-  }
-
-  async function sendMessageOverWebSocket(message) {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(message));
-    } else {
-      console.error("WebSocket is not open. Unable to send message.");
-    }
-  }
 
   const handleSendMessage = async (userMessageText) => {
     const newUserMessage = {
@@ -137,6 +122,19 @@ const ChatComponent = () => {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
+      const botResponseMessage = {
+      id: lastMessageId + 2,
+      text: "",
+      sender: "bot",
+      completed: false,
+      };
+      dispatch(
+        pushMessageHistory({
+          message: botResponseMessage,
+          id: botResponseMessage.id,
+        })
+      );
+
       const text = await res.text();
       try {
         data = JSON.parse(text); // Parse JSON if valid
@@ -147,38 +145,34 @@ const ChatComponent = () => {
         }; // Fallback
       }
 
+      
+
       console.log("Received data:", data);
       dispatch(setIsChatbotThinking(false));
+      dispatch(updateMessageText({ id: botResponseMessage.id, text: data.chain_of_thought }));
+
+
     } catch (error) {
       console.error("Error fetching data:", error);
       dispatch(setIsChatbotThinking(false));
       // Already set default fallback data
     }
-    const botResponseMessage = {
-      id: lastMessageId + 2,
-      text: data.chain_of_thought,
-      sender: "bot",
-      completed: false,
-    };
-    dispatch(
-      pushMessageHistory({
-        message: botResponseMessage,
-        id: botResponseMessage.id,
-      })
-    );
+    
   };
   return (
     <div className={styles.chatComponent}>
       <div className={styles.messagesContainer}>
         {messages.map((msg) => (
-          <div key={msg.id}>
-            <TextBubbleComponent
-              user={msg.sender}
-              text={msg.text}
-              id={msg.id}
-            />
+          <div key={msg.id}>       
+              <TextBubbleComponent
+                user={msg.sender}
+                text={msg.text}
+                id={msg.id}
+                thinkingMessageId = {msg.id}
+              />    
           </div>
         ))}
+        
         <div ref={bottomRef} />
       </div>
       <div className={styles.chatBox}>
