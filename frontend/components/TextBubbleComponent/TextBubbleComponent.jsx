@@ -7,7 +7,6 @@ import { Body } from "@leafygreen-ui/typography";
 import Tooltip from "@leafygreen-ui/tooltip";
 import IconButton from "@leafygreen-ui/icon-button";
 import Icon from "@leafygreen-ui/icon";
-
 const TextBubbleComponent = ({ user, text, id }) => {
   const userID = useSelector((state) => state.User.selectedUser);
   const dispatch = useDispatch();
@@ -15,9 +14,17 @@ const TextBubbleComponent = ({ user, text, id }) => {
   const chatbotIsThinking = useSelector(
     (state) => state.Message.chatbotIsThinking
   );
-  
+
   const latestThought = useSelector((state) => state.Message.currentThought);
+  console.log(latestThought);
   const lastMessageId = useSelector((state) => state.Message.lastMessageId);
+  const message = useSelector((state) =>
+    state.Message.messageHistory.find((msg) => msg.id === id)
+  );
+
+  const thinkingMessageId = useSelector((state) => state.Message.thinkingMessageId);
+
+  console.log("Message ID:", id, "ThinkingMessageId:", thinkingMessageId, "ChatbotIsThinking:", chatbotIsThinking, "Latest Thought:", latestThought);
 
   return (
     <div className={`${styles.chatContainer}`}>
@@ -56,10 +63,13 @@ const TextBubbleComponent = ({ user, text, id }) => {
         <hr style={{ margin: "0px" }} />
         {user === "user" ? (
           <Body>{text}</Body>
-        ) : chatbotIsThinking && latestThought && id === lastMessageId ? (
+        ) : id === thinkingMessageId && chatbotIsThinking && latestThought ? (
           <Body>thoughts: {latestThought}</Body>
+        ) : id === thinkingMessageId && !chatbotIsThinking && message?.text ? (
+          <Typewriter text={message.text} role={user} id={id} />
         ) : (
-          <Typewriter text={text} role={user} id={id} />
+          // For all other bot messages, just show the text
+          <Body>{message?.text}</Body>
         )}
         {user === "bot" && id !== 0 && (
           <Tooltip

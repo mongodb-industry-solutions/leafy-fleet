@@ -10,7 +10,8 @@ import {
   pushMessageHistory,
   setIsChatbotThinking,
   setLatestThought,
-  updateMessageText
+  updateMessageText,
+  setThinkingMessageId
 } from "@/redux/slices/MessageSlice";
 import { Body } from "@leafygreen-ui/typography";
 
@@ -19,10 +20,11 @@ const ChatComponent = () => {
   const socketRef = useRef(null);
   const [connectionStatus, setConnectionStatus] = useState("Not Connected");
 
-  
   const chatbotIsThinking = useSelector(
-      (state) => state.Message.chatbotIsThinking
-    );
+    (state) => state.Message.chatbotIsThinking
+  );
+
+  const thinkingMessageId = useSelector((state) => state.Message.thinkingMessageId);
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
@@ -70,7 +72,6 @@ const ChatComponent = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-
   const handleSendMessage = async (userMessageText) => {
     const newUserMessage = {
       id: lastMessageId + 1,
@@ -81,59 +82,48 @@ const ChatComponent = () => {
     dispatch(
       pushMessageHistory({ message: newUserMessage, id: newUserMessage.id })
     );
-    dispatch(setIsChatbotThinking(true));
-
+    
+    
     let data = {
       chain_of_thought:
-        "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
+      "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
     }; // Default fallback
+    
+    const botResponseMessage = {
+      id: lastMessageId + 2,
+      text: "",
+      sender: "bot",
+      completed: false,
+    };
+    dispatch(setIsChatbotThinking(true));
+    dispatch(setThinkingMessageId(lastMessageId + 2));
+    dispatch(
+      pushMessageHistory({
+        message: botResponseMessage,
+        id: botResponseMessage.id,
+      })
+    );
 
     try {
-      if (
-        socketRef.current &&
-        socketRef.current.readyState === WebSocket.OPEN
-      ) {
-        const command = {
-          type: "run_agent",
-          query: userMessageText,
-        };
-        socketRef.current.send(JSON.stringify(command));
-      } else {
-        console.error("WebSocket is not open!");
-      }
-
       const res = await fetch(
         `http://localhost:8000/run-agent?query_reported=${encodeURIComponent(
           userMessageText
         )}`
       );
 
-    //   const res = {
-    //     ok: true,
-    //     status: 200,
-    //     text: async () =>
-    //       JSON.stringify({
-    //         chain_of_thought: `This is a simulated response for the query: "${userMessageText}". Replace this with actual LLM response.`,
-    //       }),
-    //   }
+      //   const res = {
+      //     ok: true,
+      //     status: 200,
+      //     text: async () =>
+      //       JSON.stringify({
+      //         chain_of_thought: `This is a simulated response for the query: "${userMessageText}". Replace this with actual LLM response.`,
+      //       }),
+      //   }
 
       // Check if the response is OK (status 200)
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-
-      const botResponseMessage = {
-      id: lastMessageId + 2,
-      text: "",
-      sender: "bot",
-      completed: false,
-      };
-      dispatch(
-        pushMessageHistory({
-          message: botResponseMessage,
-          id: botResponseMessage.id,
-        })
-      );
 
       const text = await res.text();
       try {
@@ -145,34 +135,34 @@ const ChatComponent = () => {
         }; // Fallback
       }
 
-      
-
       console.log("Received data:", data);
       dispatch(setIsChatbotThinking(false));
-      dispatch(updateMessageText({ id: botResponseMessage.id, text: data.chain_of_thought }));
-
-
+      dispatch(
+        updateMessageText({
+          id: botResponseMessage.id,
+          text: data.chain_of_thought,
+        })
+      );
     } catch (error) {
       console.error("Error fetching data:", error);
       dispatch(setIsChatbotThinking(false));
       // Already set default fallback data
     }
-    
   };
   return (
     <div className={styles.chatComponent}>
       <div className={styles.messagesContainer}>
         {messages.map((msg) => (
-          <div key={msg.id}>       
-              <TextBubbleComponent
-                user={msg.sender}
-                text={msg.text}
-                id={msg.id}
-                thinkingMessageId = {msg.id}
-              />    
+          <div key={msg.id}>
+            <TextBubbleComponent
+              user={msg.sender}
+              text={msg.text}
+              id={msg.id}
+              thinkingMessageId={msg.id}
+            />
           </div>
         ))}
-        
+
         <div ref={bottomRef} />
       </div>
       <div className={styles.chatBox}>
