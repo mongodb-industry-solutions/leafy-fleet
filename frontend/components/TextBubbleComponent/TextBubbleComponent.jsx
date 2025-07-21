@@ -28,12 +28,6 @@ const TextBubbleComponent = ({ user, text, id }) => {
 
   return (
     <div className={`${styles.chatContainer}`}>
-      {chatbotIsThinking && user === "bot" && (
-        <div className={styles.thinkingIndicator}>
-          <Body>...</Body>
-        </div>
-      )}
-      {/* Speech Bubble */}
       <div
         className={`${styles.speechBubble} ${
           user === "user" ? styles.userBubble : styles.answerBubble

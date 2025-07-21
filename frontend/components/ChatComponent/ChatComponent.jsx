@@ -84,10 +84,7 @@ const ChatComponent = () => {
     );
     
     
-    let data = {
-      chain_of_thought:
-      "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
-    }; // Default fallback
+    
     
     const botResponseMessage = {
       id: lastMessageId + 2,
@@ -122,6 +119,10 @@ const ChatComponent = () => {
 
       // Check if the response is OK (status 200)
       if (!res.ok) {
+        let data = {
+        chain_of_thought:
+        "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
+      }; // Default fallback
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
