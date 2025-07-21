@@ -14,37 +14,15 @@ async def create_timeseries_entry(entry: TimeseriesModel):
     print("Creating timeseries entry...")
     print("Received data:", entry)
 
-    entry = TimeseriesModel(
-        timestamp=entry.timestamp,
-        VIN=entry.vin,
-        FuelLevel=entry.fuel_level,
-        OilTemperature=entry.oil_temperature,
-        EngineOilLevel=entry.engine_oil_level,
-        TraveledDistance=entry.traveled_distance,
-        TraveledDistanceSinceStart=entry.traveled_distance_since_start,
-        performanceScore=entry.performance_score,
-        avaliabilityScore=entry.avaliability_score,
-        RunTime=entry.run_time,
-        qualityScore=entry.quality_score,
-        isOilLeak=entry.is_oil_leak,
-        isEngineRunning=entry.is_engine_running,
-        isCrashed=entry.is_crashed,
-        currentRoute=entry.current_route,
-        # Latitude and longitude come in entry, but will only be used for coordinates
-        Speed=entry.speed,
-        AverageSpeed=entry.average_speed,
-        IsMoving=entry.is_moving,
-        currentGeozone=entry.current_geozone
-    )
+    if entry.timestamp is None:
+        entry.timestamp = datetime.utcnow()
     # Convert coordinates to GeoJSON format
-    entry.coordinates = {
-        "type": "Point",
-        "coordinates": [round(entry.longitude, 6), round(entry.latitude,6)]  
-    }
+    
     print("Prepared entry for insertion:", entry)
 
     try:  
         result = timeseries_coll.insert_one(entry.dict())  
+        print("Insert result:", result)
         return {"message": "Timeseries entry created successfully", "id": str(result.inserted_id)}  
     except Exception as e:  
         print(f"Error: {e}")  # Log the error for debugging  

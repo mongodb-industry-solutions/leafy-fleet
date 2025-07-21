@@ -4,9 +4,15 @@ from dataclasses import dataclass
 from datetime import datetime
 import random
 import asyncio
-#import aiohttp
+import aiohttp
+import logging
+import signal
 
 ROUTES = {}  # Global route map: {route_id: {"steps": np.array, "distancePerStep": float, "timePerStep": float}}
+
+HTTP_SESSION: aiohttp.ClientSession = None
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Car:
@@ -66,32 +72,33 @@ class Car:
 
     def to_document(self):
         doc = {
-            "timestamp": datetime.utcnow().isoformat(),
             "car_id": self.car_id,
-            "fuel_level": round(self.fuel_level, 1),
-            "engine_oil_level": round(self.engine_oil_level, 1),
-            "traveled_distance": round(self.traveled_distance, 4),
-            "run_time": self.run_time,
-            "performance_score": self.performance_score,
-            "quality_score": self.quality_score,
-            "availability_score": self.availability_score,
-            "max_fuel_level": self.max_fuel_level,
-            "oil_temperature": self.oil_temperature,
+            "fuel_level": float(round(self.fuel_level, 1)),
+            "engine_oil_level": float(round(self.engine_oil_level, 1)),
+            "traveled_distance": float(round(self.traveled_distance, 4)),
+            "run_time": float(self.run_time),
+            "performance_score": float(self.performance_score),
+            "quality_score": float(self.quality_score),
+            "availability_score": float(self.availability_score),
+            "max_fuel_level": float(self.max_fuel_level),
+            "oil_temperature": float(self.oil_temperature),
             "is_oil_leak": self.is_oil_leak,
             "is_engine_running": self.is_engine_running,
             "is_crashed": self.is_crashed,
             "current_route": self.current_route,
-            "speed": round(self.speed, 2),
-            "average_speed": round(self.average_speed, 2),
+            "speed": float(round(self.speed, 2)),
+            "average_speed": float(round(self.average_speed, 2)),
             "is_moving": self.is_moving,
             "current_geozone": self.current_geozone,
             "vin": self.vin,
             "coordinates": {
-                "type": "Point",
-                "coordinates": [round(self.longitude, 6), round(self.latitude, 6)]
-            }
+            "type": "Point",
+            "coordinates": [float(round(self.longitude, 6)), float(round(self.latitude, 6))]
+        }
+            
         }
         return doc
+
 
     async def run(self):
         while True:
@@ -100,16 +107,39 @@ class Car:
             while self.step_index < len(steps):
                 self.latitude, self.longitude = steps[self.step_index]
                 self.update(dist_per_step, time_per_step)
+
+                
                 #will add logging here instead of print
-                print(f"📤 Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | Distance this: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
+                print(f"📤 Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | total distance: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
 
                 if self.step_index % 10 == 0:
-                    self.current_geozone = f"Geofence {self.step_index // 10 + 1}" if self.step_index // 10 < 5 else "No Geofence found"
-                    print(f"🚧 Car {self.car_id} updated geozone: {self.current_geozone}")
+                    try:
+                        async with HTTP_SESSION.get(
+                            "http://localhost:9004/geofences/check",
+                            json={'coordinates': [float(self.longitude), float(self.latitude)]}
+                        ) as response:
+                            if response.status == 200:
+                                data = await response.json()
+                                self.current_geozone = (
+                                    f"Geofence {data['geofence_id']} active"
+                                    if data.get("geofence_id")
+                                    else "No active geofence"
+                                )
+                            else:
+                                self.current_geozone = "Geofence check error"
+                    except Exception as e:
+                        logger.warning(f"⚠️ Geofence check error: {e}")
+                        self.current_geozone = "Error checking geofence"
 
-                # Simulate sending telemetry data to a database
-                doc = self.to_document()
-
+                    logger.info(f"Car {self.car_id} updated geozone: {self.current_geozone}")
+                # Send timeseries data every step
+                try:
+                    await HTTP_SESSION.post(
+                        "http://localhost:9002/timeseries",
+                        json=self.to_document()
+                    )
+                except Exception as e:
+                    logger.warning(f"🚫 Error sending timeseries for Car {self.car_id}: {e}")
                 self.step_index += 1
                 await asyncio.sleep(time_per_step)
             print(f" Car {self.car_id} finished route {self.current_route}")
@@ -173,13 +203,37 @@ def create_cars(num_cars=4):
         )
         cars.append(car)
     return cars
-    
+
+
+async def shutdown_signal_handler():
+        logger.info("Shutdown signal received, cleaning up...")
+        await HTTP_SESSION.close()
+        logger.info("Session closed. Exiting.")   
 
 
 async def main():
+    global HTTP_SESSION
+    HTTP_SESSION = aiohttp.ClientSession()
+
     load_routes()
     cars = create_cars()
-    await asyncio.gather(*(car.run() for car in cars))
+
+    loop = asyncio.get_running_loop()
+    stop_event = asyncio.Event()
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, stop_event.set)
+
+    tasks = [asyncio.create_task(car.run()) for car in cars]
+
+    try:
+        await stop_event.wait()
+        logger.info("Stop signal received, cancelling tasks...")
+    finally:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        await shutdown_signal_handler()
 
 
 if __name__ == "__main__":
