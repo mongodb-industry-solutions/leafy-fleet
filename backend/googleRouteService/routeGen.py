@@ -59,12 +59,12 @@ coordinates = {
     52: ( 30.316821, -97.793624),
 }
 
+# load environment outisde of functions to avoid reloading
+load_dotenv()
+api_key = os.getenv("GOOGLE_ROUTES_API_KEY")
+
 # --- Google API call function ---
 def compute_route(origin, destination):
-    load_dotenv()
-    api_key = os.getenv("GOOGLE_ROUTES_API_KEY")
-    if not api_key:
-        raise EnvironmentError("Missing GOOGLE_ROUTES_API_KEY in .env")
 
     url = f"https://routes.googleapis.com/directions/v2:computeRoutes?key={api_key}"
     headers = {
@@ -103,7 +103,7 @@ def compute_route(origin, destination):
 
 
 # --- Process only the first row (for testing) ---
-def process_first_route(csv_file="random_150_routes.csv", output_file="route_test_2.json"):
+def process_first_route(csv_file: str, output_file: str = "encoded_route.json"):
     df = pd.read_csv(csv_file)
     first_row = df.iloc[1]
 
@@ -128,7 +128,7 @@ def process_first_route(csv_file="random_150_routes.csv", output_file="route_tes
 
 
 # --- Process all 300 routes --- update
-def process_all_routes(csv_file="random_150_routes.csv", output_file="encoded_routes_2.json"):
+def process_all_routes(csv_file :str, output_file: str ):
     df = pd.read_csv(csv_file)
 
     all_routes = {}
@@ -148,8 +148,6 @@ def process_all_routes(csv_file="random_150_routes.csv", output_file="encoded_ro
             print(f"[{i+1}] Skipping invalid coordinates: {from_id} → {to_id}")
             failed_routes.append((from_id, to_id, "Invalid coordinates"))
             continue
-
-        #print(f"[{i+1}/{len(df)}] Processing route {from_id} → {to_id} ...")
 
         result_ab = compute_route(origin, destination)
         result_ba = compute_route(destination, origin)
@@ -181,6 +179,8 @@ def process_all_routes(csv_file="random_150_routes.csv", output_file="encoded_ro
 
 # --- Main trigger ---
 if __name__ == "__main__":
-    # Only test first route while editing
     #process_first_route()
-    process_all_routes() #will have to change, to maybe save to csv with time for each step
+    if not os.getenv("GOOGLE_ROUTES_API_KEY"):
+        print(" GOOGLE_ROUTES_API_KEY not set in .env")
+    else:
+        process_all_routes("random_150_routes.csv", "routes_final.json") 

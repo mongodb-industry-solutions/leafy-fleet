@@ -1,11 +1,14 @@
 import json
 import polyline
+import logging
 
-def process_routes(input_file="encoded_routes_2.json", output_file="processed_routes_2.json"):
+def process_routes(input_file="routes_final.json", output_file="processed_routes.json"):
     with open(input_file, "r") as f:
         raw_data = json.load(f)
 
-    print(f" Loaded {len(raw_data)} routes from {input_file}")
+    logging.basicConfig(filename='myapp.log', level=logging.INFO)
+    logger = logging.getLogger("decodeJson")
+    logger.info(f"Processing {len(raw_data)} routes from {input_file}")
 
     processed = {}
     counter = 1
@@ -13,16 +16,16 @@ def process_routes(input_file="encoded_routes_2.json", output_file="processed_ro
         #print(f"\n Processing route: {route_id}")
         encoded = data.get("encoded_polyline")
         if not encoded:
-            print(f"Route {route_id} missing polyline")
+            logger.info(f"Route {route_id} missing polyline")
             continue
         try:
             points = polyline.decode(encoded)
-            print(f" Decoded {len(points)} points")
+            logger.info(f" Decoded {len(points)} points")
         except Exception as e:
-            print(f" Decode failed for {route_id}: {e}")
+            logger.info(f" Decode failed for {route_id}: {e}")
             continue
         if len(points) < 2:
-            print(f" Route {route_id} has too few points")
+            logger.info(f" Route {route_id} has too few points")
             continue
 
         distance = data.get("distance_meters", 0)
@@ -40,14 +43,14 @@ def process_routes(input_file="encoded_routes_2.json", output_file="processed_ro
         }
         counter += 1
 
-        print(f" distancePerStep: {distance_per_step:.2f}, ⏱ timePerStep: {time_per_step:.2f}")
+        logger.info(f" distancePerStep: {distance_per_step:.2f}, ⏱ timePerStep: {time_per_step:.2f}")
 
     if processed:
         with open(output_file, "w") as f:
             json.dump(processed, f, indent=2)
-        print(f"\n Saved {len(processed)} routes to {output_file}")
+        logger.info(f"\n Saved {len(processed)} routes to {output_file}")
     else:
-        print(" No valid routes were processed.")
+        logger.info(" No valid routes were processed.")
 
-# Run it
+# Run, can add input and output file names if needed
 process_routes()

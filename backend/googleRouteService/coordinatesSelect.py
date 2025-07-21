@@ -1,7 +1,6 @@
 import pandas as pd
 import itertools
 from geopy.distance import geodesic
-import folium
 import random
 from collections import defaultdict
 
@@ -105,25 +104,5 @@ for (id1, id2), dist in unique_filtered:
 limited_df = pd.DataFrame(selected_routes)
 limited_df.to_csv("random_150_routes.csv", index=False)
 
-# Create map centered in Austin (not necesaary)
-#m = folium.Map(location=[30.2672, -97.7431], zoom_start=10)
 
-# Add lines
-#for _, row in limited_df.iterrows():
- #   loc1 = coordinates[row["From_ID"]]
-  #  loc2 = coordinates[row["To_ID"]]
-   # folium.PolyLine([loc1, loc2], color='blue', weight=2, opacity=0.6).add_to(m)
-
-# Add markers
-#for cid, (lat, lon) in coordinates.items():
- #   folium.CircleMarker(
-  #      location=[lat, lon],
-   #     radius=3,
-    #    popup=f"ID: {cid}",
-     #   color='red',
-      #  fill=True,
-       # fill_color='red'
-   # ).add_to(m)
-
-#m.save("map.html")
 print("  CSV saved as random_150_routes.csv")
