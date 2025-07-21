@@ -1,56 +1,43 @@
-"use client"
+"use client";
 
-import styles from './ChatComponene.module.css'
-import Button from "@leafygreen-ui/button";
-import Icon from "@leafygreen-ui/icon";
+import styles from "./ChatComponene.module.css";
+
 import ChatInput from '@/components/ChatInput/ChatInput';
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import TextBubbleComponent from '@/components/TextBubbleComponent/TextBubbleComponent';
 import { useDispatch, useSelector } from 'react-redux';
-import { pushMessageHistory } from '@/redux/slices/MessageSlice';
-
-
-const initialMessage = {
-    id: 'initial',
-    text: 'Hello! I am your AI assistant. How can I help you today?',
-    sender: 'bot'
-};
-
-let nextId = 1;
+import { pushMessageHistory, setIsChatbotThinking } from '@/redux/slices/MessageSlice';
 
 const ChatComponent = () => {
-
     const bottomRef = useRef(null);
-    
-    
+    const lastMessageId = useSelector(state => state.Message.lastMessageId);
     const dispatch = useDispatch()
     const messages = useSelector(state => state.Message.messageHistory)
-    
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-
     const handleSendMessage = async (userMessageText) => {
-
         const newUserMessage = {
-            id: nextId++,
+            id: lastMessageId + 1,
             text: userMessageText,
             sender: 'user',
+            completed: true
         };
+        dispatch(pushMessageHistory({message: newUserMessage, id: newUserMessage.id}));
+        dispatch(setIsChatbotThinking(true));
         const botResponseMessage = {
-            id: nextId++,
+            id: lastMessageId + 2,
             text: "This is a placeholder response from the bot.",
             sender: 'bot',
+            completed: false
         };
-        dispatch(pushMessageHistory({message: newUserMessage}));
-        dispatch(pushMessageHistory({message: botResponseMessage})); // testing response
-        // console.log("User message added:", newUserMessage);
-
+        setTimeout(() => {
+            dispatch(pushMessageHistory({ message: botResponseMessage, id: botResponseMessage.id }));    
+        }, 1000); // 1000 milliseconds = 1 second delay
+        dispatch(setIsChatbotThinking(false));
     }
-
-
     return (
         <div className={styles.chatComponent}>
             <div className={styles.messagesContainer}>
@@ -61,7 +48,6 @@ const ChatComponent = () => {
                 ))}
                 <div ref={bottomRef} />
             </div>
-
             <div className={styles.chatBox}>
                 <ChatInput onSendMessage={handleSendMessage} />
             </div>

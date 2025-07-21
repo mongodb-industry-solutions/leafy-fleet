@@ -40,11 +40,6 @@ const FilterComponent = () => {
     fleet3Name: state.User.fleet3Name,
   }));
 
-  console.log("Fleet capacities from Redux state:", {
-    fleet1Capacity,
-    fleet2Capacity,
-    fleet3Capacity,
-  });
 
   // Snippet taken from https://www.mongodb.design/component/code/live-example
   const jsSnippet = `
@@ -77,28 +72,29 @@ const FilterComponent = () => {
       <div className={styles.cardWrapper}>
         <ExpandableCard
           title="Filters"
-          description=""
+          description="This filters will apply to the conversation with the Leafy Fleet assistant."
           flagText=""
           darkMode={false}
         >
           <div className={styles.filterGrid}>
             <div className={styles.checkboxGroup}>
-              <h3 className={styles.groupTitle}>Geofencing</h3>
+              <h3 className={styles.groupTitle}>Geofences</h3>
               <Checkbox data-lgid="cb-1" label="Geofence 1" />
               <Checkbox data-lgid="cb-2" label="Geofence 2" />
               <Checkbox data-lgid="cb-3" label="Downtown " />
               <Checkbox data-lgid="cb-4" label="Norths" />
             </div>
             <div className={styles.checkboxGroup}>
-              <h3 className={styles.groupTitle}>Fleet Filter</h3>
+              <h3 className={styles.groupTitle}>Fleets</h3>
               <Checkbox data-lgid="cb-5" label="Fleet 1" />
               <Checkbox data-lgid="cb-6" label="Fleet 2" />
               <Checkbox data-lgid="cb-7" label="Fleet 3" />
             </div>
             <div className={styles.checkboxGroup}>
               <h3 className={styles.groupTitle}>Time</h3>
-              <Checkbox data-lgid="cb-8" label="All time" />
+              <Checkbox data-lgid="cb-8" label="Last 30 min" />
               <Checkbox data-lgid="cb-9" label="Last hour" />
+              <Checkbox data-lgid="cb-9" label="Last 24 hrs" />
             </div>
           </div>
         </ExpandableCard>
@@ -108,7 +104,7 @@ const FilterComponent = () => {
       <div className={styles.cardWrapper}>
         <ExpandableCard
           title="Fleet Overview"
-          description=""
+          description="Here you can customize your current fleet."
           flagText=""
           darkMode={false}
         >
@@ -156,37 +152,44 @@ const FilterComponent = () => {
       <div className={styles.cardWrapper}>
         <ExpandableCard
           title="Agent Run Documents"
-          description=""
+          description="This contains detailed information of the entire workflow performed by the agent to generate a specific response. Feel free to try out, and discover how we use AI inside of MongoDB to empower the user."
           flagText=""
           darkMode={false}
         >
           <div style={{ overflowY: "auto", maxHeight: "500px" }}>
             <div>
-              <Body baseFontSize={16}>agent_sessions</Body>
+                <Body baseFontSize={16}><strong>Agent Sessions</strong></Body>
+                <Body baseFontSize={14}>Contains session metadata and the thread ID.</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
-              <Body baseFontSize={16}>historial recommendations</Body>
+              <Body baseFontSize={16}>Historial Recommendations</Body>
+               <Body baseFontSize={14}>Contains ...</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
-              <Body baseFontSize={16}>agent profile</Body>
+              <Body baseFontSize={16}>Agent Profile</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
-              <Body baseFontSize={16}>telemetry_data</Body>
+              <Body baseFontSize={16}>Telemetry Data</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
-              <Body baseFontSize={16}>queries</Body>
+              <Body baseFontSize={16}>Queries</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
-              <Body baseFontSize={16}>logs</Body>
+              <Body baseFontSize={16}>Logs</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
-              <Body baseFontSize={16}>last_checkpoint</Body>
+              <Body baseFontSize={16}>Last Checkpoint</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
           </div>

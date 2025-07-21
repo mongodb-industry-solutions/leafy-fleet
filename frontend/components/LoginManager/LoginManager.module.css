@@ -57,3 +57,11 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
+.selectedFleetBox {
+  background-color: #00ED64; /* mongo */
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.Desc{
+  padding-left: 0.4rem;
+}

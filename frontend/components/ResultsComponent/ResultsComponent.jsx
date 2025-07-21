@@ -9,15 +9,18 @@ import Icon from '@leafygreen-ui/icon';
 import React from 'react';
 import styles from './ResultsComponent.module.css';
 import DetailsComponent from '../DetailsComponent/DetailsComponent.jsx';
-import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setResults, setSelectedCar, setIsModalOpen } from '@/redux/slices/ResultSlice.js';
+import { Spinner } from '@leafygreen-ui/loading-indicator'; //cuando haga llamada a api
 
-
+// On time, will replace this with real api call, use redux with setResults to populate the results
 const cars = [
   {
     id: "FL001",
     name: "Ford Transit",
+    year: 2002,
     fleet: "Delivery Fleet",
-    status: "active",
+    status: "Active",
     location: "Downtown",
     driver: "John Doe",
     fuel: 85,
@@ -28,12 +31,14 @@ const cars = [
     coordinates: [-74.006, 40.7128],
     zone: "Zone A - Downtown",
     distance: 0.5, // km from search point
+    licencePlate: "ABC1234",
   },
   {
     id: "FL002",
     name: "Mercedes Sprinter",
+    year: 2015,
     fleet: "Delivery Fleet",
-    status: "maintenance",
+    status: "Maintenance",
     location: "Garage A",
     driver: "Unassigned",
     fuel: 20,
@@ -44,12 +49,14 @@ const cars = [
     coordinates: [-74.01, 40.72],
     zone: "Zone B - Industrial",
     distance: 1.2,
+    licencePlate: "XYZ5678",
   },
   {
     id: "EX001",
     name: "BMW 7 Series",
+    year: 2020,
     fleet: "Executive Fleet",
-    status: "active",
+    status: "Active",
     location: "Airport",
     driver: "Mike Johnson",
     fuel: 65,
@@ -60,12 +67,14 @@ const cars = [
     coordinates: [-73.7781, 40.6413],
     zone: "Zone C - Airport",
     distance: 15.3,
+    licencePlate: "LMN9012",
   },
   {
     id: "EX002",
     name: "Audi A8",
+    year: 2021,
     fleet: "Executive Fleet",
-    status: "active",
+    status: "Active",
     location: "City Center",
     driver: "Sarah Wilson",
     fuel: 90,
@@ -76,12 +85,14 @@ const cars = [
     coordinates: [-74.0059, 40.7589],
     zone: "Zone A - Downtown",
     distance: 2.1,
+    licencePlate: "OPQ3456",
   },
   {
     id: "SV002",
     name: "Ford F-150",
+    year: 2018,
     fleet: "Service Fleet",
-    status: "active",
+    status: "Active",
     location: "Warehouse B",
     driver: "Lisa Davis",
     fuel: 75,
@@ -92,21 +103,28 @@ const cars = [
     coordinates: [-74.209, 40.7505],
     zone: "Zone D - Warehouse",
     distance: 8.7,
+    licencePlate: "RST6789",
   },
 ]
 
 
 const ResultsComponent = ( ) => {
 
-    const [selectedCar, setSelectedCar] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const dispatch = useDispatch();
+    const results = useSelector((state) => state.Result.results);
+    const selectedCar = useSelector((state) => state.Result.selectedCar);
+    const isModalOpen = useSelector((state) => state.Result.isModalOpen);
+
+
+
     const getStatusIcon = (status) => {
   switch (status) {
-    case "active":
+    case "Active":
       return <span className={`${styles.statusCircle} ${styles.statusActive}`} />;
-    case "maintenance":
+    case "Maintenance":
       return <span className={`${styles.statusCircle} ${styles.statusMaintenance}`} />;
-    case "issue":
+    case "Issue":
       return <span className={`${styles.statusCircle} ${styles.statusIssue}`} />;
     default:
       return <span className={`${styles.statusCircle} ${styles.statusDefault}`} />;
@@ -114,19 +132,16 @@ const ResultsComponent = ( ) => {
 };
 
   const handleCarClick = (car) => {
-    setSelectedCar(car)
-    setIsModalOpen(true)
+    dispatch(setSelectedCar({ car }));
+    console.log("Selected car:", car);
+    dispatch(setIsModalOpen({ isModalOpen: true }));
   }
 
   const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setSelectedCar(null)
+    dispatch(setIsModalOpen({ isModalOpen: false }));
+    dispatch(setSelectedCar({ car: null }));
   }
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      handleCloseModal();
-    }
-  };
+  
   return (
     <Card className="card-styles" as="article">
     <div className={styles.resultsCard}> 
@@ -172,11 +187,10 @@ const ResultsComponent = ( ) => {
     </div>  
 
     {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={handleOverlayClick}>
-          <div className={styles.modalContent}>
-            <DetailsComponent car={selectedCar} />
-          </div>
-        </div>
+          
+            <DetailsComponent/>
+          
+      
       )}
 
     </Card>

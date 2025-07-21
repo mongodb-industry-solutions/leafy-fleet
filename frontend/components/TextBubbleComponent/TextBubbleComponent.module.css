@@ -1,29 +1,79 @@
-.botBubble {
-    background-color: #f0f0f0;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 5px 0 5px 15px;
-    max-width: 70%;
-    border: black 1px solid;
 
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.speechBubble {
+  background-color: #e0fbf6;
+  color: #001e2b;
+  padding: 0px 10px 5px 10px;
+  margin: 5px 0px 5px 10px;
+  display: inline-block;
+  max-width: 90%;
+  word-wrap: break-word;
+  word-break: break-word;
+  box-shadow: 0px 5px 4px rgba(0, 0, 0, 0.06);
+  font-size: 13px;
+  border-radius: 20px;
 }
 
 .userBubble {
-    background-color: #E3FCF7;
-    border-radius: 10px;
-    padding: 10px;
-    margin: 5px 15px 5px 0;
-    max-width: 70%;
-    align-self: flex-end;
-    border: black 1px solid;
-
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
-
+  margin-left: auto; 
+  background-color: #e0fbf6;
+  text-align: right;
+  display: flex; 
+  justify-content: flex-end; 
+  word-wrap: break-word;
+  display: inline-block;
+  max-width: 90%;
+  box-shadow: 0px 5px 4px rgba(0, 0, 0, 0.06);
 }
 
-.chatContainer {
-    display: flex;
-    flex-direction: column;
+.answerBubble {
+  background-color: white;
+  box-shadow: 0px 5px 4px rgba(0, 0, 0, 0.06);
+  transition: opacity 0.5s ease-in-out;
+  color: #001e2b;
+  
+}
+.answerBubble.appear {
+  opacity: 1;
+}
+.loadingOverlay {
+  background-color: rgba(0, 163, 92, 0.037);
+  position: absolute; 
+  top: 107px; 
+  left: 0; 
+  right: 0;
+  bottom: 0;
+  color: white; 
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+  z-index: 10;
+  border-radius: 0 0 24px 24px;
+}
+
+.imageStyling {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 20%;
+  object-position: top;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.botHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.userHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
 }

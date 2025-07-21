@@ -6,13 +6,17 @@ const UserSlice = createSlice({
   initialState: {
     list: USER_MAP || [],
     selectedUser: USER_MAP[0],
-    selectedFleets: 0,
+    selectedFleets: 1,
     fleet1Name: "Fleet 1",
     fleet2Name: "Fleet 2",
     fleet3Name: "Fleet 3",
     fleet1Capacity: null,
     fleet2Capacity: null,
     fleet3Capacity: null,
+    fleet1Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality"],
+    fleet2Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality",],
+    fleet3Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality",],
+    editFleet: 1
   },
   reducers: {
     setSelectedUser: (state, action) => {
@@ -36,7 +40,21 @@ const UserSlice = createSlice({
     setFleet3Name: (state, action) => {
       state.fleet3Name = action.payload;
     },
-  },
+    setSelectedFleets: (state,action) =>{
+      state.selectedFleets = action.payload.selectedFleets;
+    },
+    setFleet1Attributes: (state, action) => {
+      state.fleet1Attributes = action.payload;
+    },
+    setFleet2Attributes: (state, action) => {
+      state.fleet2Attributes = action.payload;
+    },
+    setFleet3Attributes: (state, action) => {
+      state.fleet3Attributes = action.payload;
+    },
+    setEditFleet:(state, action) => {
+      state.editFleet = action.payload.editFleet;
+  },}
 });
 
 export const {
@@ -47,6 +65,11 @@ export const {
   setFleet1Name,
   setFleet2Name,
   setFleet3Name,
+  setSelectedFleets,
+  setFleet1Attributes,
+  setFleet2Attributes,
+  setFleet3Attributes,
+  setEditFleet
 } = UserSlice.actions;
 
 export default UserSlice.reducer;

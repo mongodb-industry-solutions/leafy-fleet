@@ -1,39 +1,41 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { act } from "react";
 
 const MessageSlice = createSlice({
     name: "MessageStatus",
     initialState: {
-        messageId: null,
-        isSelected: false,
-
+        lastMessageId: 0,
         messageHistory: [{
-            id: 'initial',
+            id: 0,
             text: 'Hello! I am your AI assistant. How can I help you today?',
-            sender: 'bot'
+            sender: 'bot',
+            completed: false,
         }],
-        selectedMessage: null,
+        selectedMessage: 0,
         chatbotIsThinking: false,
-        chatbotError: null
+        chatbotError: null,
 
     },
     reducers: {
-        setState: (state, action) => {
-            state.messageId = action.payload.messageId;
-            state.isSelected = true;
-        },
         pushMessageHistory: (state, action) => {
             state.messageHistory = [...state.messageHistory, { ...action.payload.message }]
             state.chatbotIsThinking = false;
             state.chatbotError = null
+            state.lastMessageId = action.payload.message.id;
         },
         setSelectedMessage: (state, action) => {
-            state.selectedMessage = { ...action.payload.message }
-
+            state.selectedMessage = action.payload.message;
         },
+        setIsChatbotThinking: (state, action) => {
+            state.chatbotIsThinking = action.payload;
+        },
+        setAnimationMessage: (state, action) => {
+            state.messageHistory = state.messageHistory.map((msg) =>
+                msg.id === action.payload.id ? { ...msg, completed: action.payload.completed } : msg
+            );
+        }
     },
 
 })
 
-export const { setState, pushMessageHistory, setSelectedMessage } = MessageSlice.actions
+export const { pushMessageHistory, setSelectedMessage, setIsChatbotThinking, setAnimationMessage } = MessageSlice.actions
 export default MessageSlice.reducer

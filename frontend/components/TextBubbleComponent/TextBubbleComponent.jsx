@@ -1,56 +1,70 @@
 "use client";
-
-import { useRef, useEffect, useState } from 'react';
-
-import styles from './TextBubbleComponent.module.css'
-import { setSelectedMessage } from '@/redux/slices/MessageSlice';
-import { useDispatch, useSelector } from 'react-redux';
-
+import styles from "./TextBubbleComponent.module.css";
+import { setSelectedMessage } from "@/redux/slices/MessageSlice";
+import Typewriter from "./Typewriter";
+import { useDispatch, useSelector } from "react-redux";
+import { Body } from "@leafygreen-ui/typography";
+import Tooltip from "@leafygreen-ui/tooltip";
+import IconButton from "@leafygreen-ui/icon-button";
+import Icon from "@leafygreen-ui/icon";
 const TextBubbleComponent = ({ user, text, id }) => {
+  const userID = useSelector((state) => state.User.selectedUser);
+  // console.log("userID", userID);
+  const dispatch = useDispatch();
+  const isSelected = useSelector((state) => state.Message.selectedMessage);
 
-    const bubbleRef = useRef(null);
-    const dispatch = useDispatch()
-    const isSelected = useSelector(state => state.Message.selectedMessage?.id) == id
-
-    return (
-        <div className={`${styles.chatContainer}`}>
-
-            <img
-                src={user === 'bot' ? '/MongoDBLeafy.svg' : '/MongoDBLeafy.svg'}
-                style={user === 'bot' ? { alignSelf: 'flex-start' } : { alignSelf: 'flex-end' }}
-                alt="PFP"
-                width="50px"
-                height="50px"
-            />
-            <div style={{backgroundColor: isSelected ? '#00ED64': ''}} className={`${user === 'bot' ? styles.botBubble : styles.userBubble}`} ref={bubbleRef}>
-                {text}
-            </div>
-            <img
-                src="/Eye_icon.png"
-                width={'50px'}
-                height={'50px'}
-                alt="Eye icon"
-                style={user === 'bot' ? { alignSelf: 'flex-start', marginLeft: '10px', cursor: 'pointer' } : { display: 'none' }}
-                onClick={() => {
-                    dispatch(setSelectedMessage({message: { user, text, id }}))
-
-                }}
-
-            />
-
+  return (
+    <div className={`${styles.chatContainer}`}>
+      <div
+        className={`${styles.speechBubble} ${user === "user" ? styles.userBubble : styles.answerBubble}`}
+        style={isSelected.id === id ? { background: "#F9EBFF" } : {}}
+      >
+        <div className={user === "bot" ? styles.botHeader : styles.userHeader}>
+          <img
+            src={
+              user === "bot"
+                ? "/coachGTM_Headshot.png"
+                : `/rsc/users/${userID._id}.png`
+            }
+            style={
+              user === "bot"
+                ? { alignSelf: "flex-start" }
+                : { alignSelf: "flex-end" }
+            }
+            className={styles.imageStyling}
+            alt="PFP"
+          />
+          <Body weight="medium">
+            {user === "bot" ? "Assistant Bot" : userID.name}
+          </Body>
         </div>
-    );
 
-
-
-
-
-
-
-
-
-
-}
-
+        <hr style={{ margin: "0px" }} />
+        {user === "user" ? (
+          <Body>{text}</Body>
+        ) : (
+          <Typewriter text={text} role={user} />
+        )}
+        {(user === "bot" && id !== 0) && (
+          <Tooltip
+            trigger={
+              <IconButton
+                aria-label="Select message"
+                onClick={() => {
+                  dispatch(setSelectedMessage({ message: { user, text, id } }));
+                }}
+              >
+                {/* There are all the avaliable glyphs https://github.com/mongodb/leafygreen-ui/tree/ee7d80d450b652836d18edbf5682518fafc57d14/packages/icon/src/glyphs */}
+                <Icon glyph={"Visibility"} />
+              </IconButton>
+            }
+          >
+            Select this message to see whats going on behind the scenes!
+          </Tooltip>
+        )}
+      </div>
+    </div>
+  );
+};
 
 module.exports = TextBubbleComponent;
