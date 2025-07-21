@@ -78,7 +78,7 @@ async def read_root(request: Request):
 
 
 @app.get("/run-agent")
-async def run_agent(query_reported: str = Query("Default query reported by the user", description="Query reported text")):
+async def run_agent(query_reported: str = Query("Default query reported by the user", description="Query reported text"), thread_id: str = Query(..., description="Thread ID for the session")):
     """Run the agent with the given query.
 
     Args:
@@ -99,30 +99,32 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         "recommendation_text": "",
         "next_step": "reasoning_node",
         "updates": [],
-        "thread_id": ""
+        "thread_id": thread_id
     }
-    await manager.broadcast("Agent started with query: " + query_reported)
-    thread_id = f"thread_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    await manager.send_to_thread("Agent started with query: " + query_reported, thread_id=thread_id)
+    # thread_id = f"thread_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}" # Old definition of thread_id, this was moved to the session microservice
     initial_state["thread_id"] = thread_id
     config = {"configurable": {"thread_id": thread_id}}
     try:
-        logger.info(f"Running agent for thread ID: {thread_id}")
+        # logger.info(f"Running agent for thread ID: {thread_id}")
         
         # Use custom async workflow runner
-        await manager.broadcast("🚀 Starting agent workflow execution...")
+        await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
+        logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
         workflow = await create_async_workflow()
-        final_state = await workflow.ainvoke(initial_state, config=config)
-        await manager.broadcast("✅ Workflow execution completed, processing results...")
-        logger.info(f"Agent run completed for thread ID: {thread_id}")
-        
+        logger.info(f"Workflow created for thread ID: {thread_id}")
+        final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
+        await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
+        # logger.info(f"Agent run completed for thread ID: {thread_id}")
+
         final_state = convert_objectids(final_state)
-        logger.info(f"Final state for thread ID {thread_id}: {final_state}")
+        # logger.info(f"Final state for thread ID {thread_id}: {final_state}")
         final_state["thread_id"] = thread_id
         
         # Broadcast completion with recommendation
         recommendation_text = final_state.get("recommendation_text", "No recommendation generated")
-        await manager.broadcast(f"Agent workflow completed")
-        
+        await manager.send_to_thread(f"Agent workflow completed", thread_id=thread_id)
+
         try:
             with MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME) as mdb_connector: 
                 session_metadata = {
@@ -159,11 +161,11 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, thread_id: str = Query(..., description="Thread ID for the session")):
     """
     WebSocket endpoint. Handles connection, disconnection, and keeps the connection alive.
     """
-    await manager.connect(websocket)
+    await manager.connect(websocket, thread_id=thread_id)
     try:
         # This loop is essential. It keeps the connection open.
         # You could also receive messages from the client here if needed.

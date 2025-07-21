@@ -60,14 +60,16 @@ class AsyncWorkflowRunner:
             execution_order.append(current_node)
             
         return execution_order
-    
-    async def ainvoke(self, initial_state: Dict[str, Any], config: Dict[str, Any] = None) -> Dict[str, Any]:
+
+    async def ainvoke(self, initial_state: Dict[str, Any], config: Dict[str, Any] = None, thread_id: str = None, **kwargs) -> Dict[str, Any]:
         """
         Asynchronously execute the workflow with WebSocket broadcasting.
         
         Args:
             initial_state (Dict[str, Any]): Initial state for the workflow.
             config (Dict[str, Any], optional): Configuration for the workflow.
+            thread_id (str, optional): Thread ID for WebSocket messaging.
+            **kwargs: Additional keyword arguments (like query_reported) that will be ignored.
             
         Returns:
             Dict[str, Any]: Final state after workflow execution.
@@ -77,8 +79,8 @@ class AsyncWorkflowRunner:
         total_steps = len(execution_order)
         
         # Broadcast workflow start
-        await manager.broadcast(f"Starting workflow with {total_steps} steps...")
-        
+        await manager.send_to_thread(f"Starting workflow with {total_steps} steps...", thread_id=thread_id)
+
         # Create node tools mapping
         node_tools = {}
         for node in self.graph_config["nodes"]:
@@ -101,14 +103,14 @@ class AsyncWorkflowRunner:
                     
                     # Broadcast step completion
                 else:
-                    await manager.broadcast(f"Node {node_id} not found in tools")
-                    
+                    await manager.send_to_thread(f"Node {node_id} not found in tools", thread_id=thread_id)
+
             except Exception as e:
-                await manager.broadcast(f"Error in step {i}/{total_steps} ({node_id}): {str(e)}")
+                await manager.send_to_thread(f"Error in step {i}/{total_steps} ({node_id}): {str(e)}", thread_id=thread_id)
                 raise e
         
         # Broadcast workflow completion
-        await manager.broadcast(f"All {total_steps} steps completed successfully!")
+        await manager.send_to_thread(f"All {total_steps} steps completed successfully!", thread_id=thread_id)
         return state
 
 

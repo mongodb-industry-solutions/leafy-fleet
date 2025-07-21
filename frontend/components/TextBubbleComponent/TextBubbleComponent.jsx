@@ -58,7 +58,7 @@ const TextBubbleComponent = ({ user, text, id }) => {
         {user === "user" ? (
           <Body>{text}</Body>
         ) : id === thinkingMessageId && chatbotIsThinking && latestThought ? (
-          <Body>thoughts: {latestThought}</Body>
+          <Body style={{ color: "#aaaaaa" }}>thoughts: {latestThought}</Body>
         ) : id === thinkingMessageId && !chatbotIsThinking && message?.text ? (
           <Typewriter text={message.text} role={user} id={id} />
         ) : (

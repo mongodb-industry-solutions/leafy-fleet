@@ -28,7 +28,7 @@ const ChatComponent = () => {
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
-    const socket = new WebSocket("ws://localhost:8000/ws");
+    const socket = new WebSocket("ws://localhost:8000/ws?thread_id=123");
     socketRef.current = socket; // Store it in the ref
 
     socket.onopen = () => {
@@ -84,7 +84,10 @@ const ChatComponent = () => {
     );
     
     
-    
+    let data = {
+        chain_of_thought:
+        "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
+      }; // Default fallback
     
     const botResponseMessage = {
       id: lastMessageId + 2,
@@ -105,7 +108,7 @@ const ChatComponent = () => {
       const res = await fetch(
         `http://localhost:8000/run-agent?query_reported=${encodeURIComponent(
           userMessageText
-        )}`
+        )}&thread_id=123`
       );
 
       //   const res = {
@@ -119,10 +122,6 @@ const ChatComponent = () => {
 
       // Check if the response is OK (status 200)
       if (!res.ok) {
-        let data = {
-        chain_of_thought:
-        "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
-      }; // Default fallback
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
