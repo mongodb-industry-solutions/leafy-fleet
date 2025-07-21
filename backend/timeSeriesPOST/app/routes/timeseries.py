@@ -16,31 +16,30 @@ async def create_timeseries_entry(entry: TimeseriesModel):
 
     entry = TimeseriesModel(
         timestamp=entry.timestamp,
-        VIN=entry.VIN,
-        FuelLevel=entry.FuelLevel,
-        maxFuelLevel=entry.maxFuelLevel,
-        OilTemperature=entry.OilTemperature,
-        EngineOilLevel=entry.EngineOilLevel,
-        TraveledDistance=entry.TraveledDistance,
-        TraveledDistanceSinceStart=entry.TraveledDistanceSinceStart,
-        performanceScore=entry.performanceScore,
-        avaliabilityScore=entry.avaliabilityScore,
-        RunTime=entry.RunTime,
-        qualityScore=entry.qualityScore,
-        isOilLeak=entry.isOilLeak,
-        isEngineRunning=entry.isEngineRunning,
-        isCrashed=entry.isCrashed,
-        currentRoute=entry.currentRoute,
+        VIN=entry.vin,
+        FuelLevel=entry.fuel_level,
+        OilTemperature=entry.oil_temperature,
+        EngineOilLevel=entry.engine_oil_level,
+        TraveledDistance=entry.traveled_distance,
+        TraveledDistanceSinceStart=entry.traveled_distance_since_start,
+        performanceScore=entry.performance_score,
+        avaliabilityScore=entry.avaliability_score,
+        RunTime=entry.run_time,
+        qualityScore=entry.quality_score,
+        isOilLeak=entry.is_oil_leak,
+        isEngineRunning=entry.is_engine_running,
+        isCrashed=entry.is_crashed,
+        currentRoute=entry.current_route,
         # Latitude and longitude come in entry, but will only be used for coordinates
-        Speed=entry.Speed,
-        AverageSpeed=entry.AverageSpeed,
-        IsMoving=entry.IsMoving,
-        currentGeozone=entry.currentGeozone
+        Speed=entry.speed,
+        AverageSpeed=entry.average_speed,
+        IsMoving=entry.is_moving,
+        currentGeozone=entry.current_geozone
     )
     # Convert coordinates to GeoJSON format
     entry.coordinates = {
         "type": "Point",
-        "coordinates": [round(entry.Longitude, 6), round(entry.Latitude,6)]  
+        "coordinates": [round(entry.longitude, 6), round(entry.latitude,6)]  
     }
     print("Prepared entry for insertion:", entry)
 

@@ -83,7 +83,6 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
     Returns:
         _type_: _description_
     """
-    print
     initial_state: AgentState = {
         "query_reported": query_reported,
         "chain_of_thought": "",

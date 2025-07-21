@@ -4,151 +4,123 @@ from dataclasses import dataclass
 from datetime import datetime
 import random
 import asyncio
-import aiohttp
+#import aiohttp
 
 ROUTES = {}  # Global route map: {route_id: {"steps": np.array, "distancePerStep": float, "timePerStep": float}}
 
 @dataclass
 class Car:
-    Brand: str
-    Model: str
-    LicensePlate: str
-    driverName: str
-    VIN: int
-    Year: int
-    Length: float 
-    BodyType: str
-    VehicleExteriorColor: str
-    WMI: str
-    Weight: float
-    carID: int
+    brand: str
+    model: str
+    license_plate: str
+    driver_name: str
+    vin: int
+    year: int
+    length: float 
+    body_type: str
+    vehicle_exterior_color: str
+    wmi: str
+    weight: float
+    car_id: int
     
-    # Dynamic state, all items from timeseries model minus timestamop
-    currentGeozone: str
+    # Dynamic state, all items from timeseries model minus timestamp
+    current_geozone: str
 
-
-    # right now variables follow names of Covesa (VSS) standard, can rewrite so that only follows that in document
-    #model, and has snake_case while in python
-      
-    FuelLevel: float # In ml
-    maxFuelLevel: float # In ml, no creo que se ocupe
-    OilTemperature: float # In Celsius
-    EngineOilLevel: float # In ml
-    TraveledDistance : float # Field(default=31220.0, description="Total distance traveled by the vehicle in km")
-    TraveledDistanceSinceStart: float # Field(default=0.0, description="Distance traveled since the start of the route in km")
-    performanceScore: float # From 0 to 100, used to check whether the vehicle is achieving its objective, visiting all needed keypoints
-    avaliabilityScore: float # From 0 to 100, also for OEE, run time vs planned time, in our case run time of a route with traffic vs a planned route without traffic
-    RunTime: float # is Used to measure type:"sensor". datatype:"float" deprecation:"v5.0 OBD-branch is deprecated." description:"PID 1F - Engine run time" unit:"s"
-    qualityScore: float # From 0 to 100, for example that the package was delivered on to the correct house instead of the neighbours house, in our simulation this can be also always 100% correct
-    isEngineRunning: bool
-    isCrashed: bool
-    currentRoute: int
-    Latitude: float 
-    Longitude: float 
-    Speed: float # Field(default=0.0, description="Average speed of the vehicle in km/h")
-    AverageSpeed: float # Field(default=0.0, description="Average speed of the vehicle in km/h over the route")
-    IsMoving: bool # Field(default=True, description="Indicates if the vehicle is currently moving")
-    currentGeozone: str # will update every 10 steps
+    fuel_level: float # In ml
+    max_fuel_level: float # In ml
+    oil_temperature: float # In Celsius
+    engine_oil_level: float # In ml
+    traveled_distance: float # Total distance traveled by the vehicle in km
+    traveled_distance_since_start: float # Distance traveled since the start of the route in m
+    performance_score: float # From 0 to 100
+    availability_score: float # From 0 to 100
+    run_time: float # Engine run time in s
+    quality_score: float # From 0 to 100
+    is_engine_running: bool
+    is_crashed: bool
+    current_route: int
+    latitude: float 
+    longitude: float 
+    speed: float # Average speed of the vehicle in km/h
+    average_speed: float # Average speed of the vehicle in km/h over the route
+    is_moving: bool #  if the vehicle is currently moving
 
     # Internal state
     step_index: int = 0
     route_index: int = 0  # 0 or 1
-    isOilLeak: bool = False
-    hasDriver: bool = True  
+    is_oil_leak: bool = False
+    has_driver: bool = True  
 
     def __post_init__(self):
-        # Car uses route pair (carID, carID+1)
-        # IF carID is even, (1, 3, 5...), just follow next(carID, carID+1)= (1,2), else its (carID, carID-1)= (2,1)
-        self.route_ids = [self.carID, self.carID + 1] if self.carID % 2 == 1 else [self.carID, self.carID - 1]
+        self.route_ids = [self.car_id, self.car_id + 1] if self.car_id % 2 == 1 else [self.car_id, self.car_id - 1]
 
-    def update(self, move_distance_m: float,time_per_step: float ):
-        self.TraveledDistance +=  move_distance_m / 1000 # km 
-        self.TraveledDistanceSinceStart += move_distance_m  # m
-        self.FuelLevel = max(self.FuelLevel - move_distance_m * 0.00009, 0)
-        self.EngineOilLevel = max(self.EngineOilLevel - move_distance_m * 0.00005, 0)
-        self.RunTime += time_per_step
-        self.Speed = move_distance_m / (time_per_step*1000) + random.uniform(-0.5, 0.5)  # Simulate speed variation, have to be in km/h
-        self.AverageSpeed = (self.TraveledDistance / self.RunTime) * 3600  # Convert km/s to km/h
-        self.IsMoving = self.Speed > 0
-        
+    def update(self, move_distance_m: float, time_per_step: float):
+        self.traveled_distance += move_distance_m / 1000 # km 
+        self.traveled_distance_since_start += move_distance_m  # m
+        self.fuel_level = max(self.fuel_level - move_distance_m * 0.00009, 0)
+        self.engine_oil_level = max(self.engine_oil_level - move_distance_m * 0.00005, 0)
+        self.run_time += time_per_step
+        self.speed = move_distance_m / (time_per_step * 1000) + random.uniform(-0.5, 0.5)  # Simulate speed variation
+        self.average_speed = (self.traveled_distance / self.run_time) * 3600  # Convert km/s to km/h
+        self.is_moving = self.speed > 0
 
-
-
-
-    #para el time series
     def to_document(self):
         doc = {
             "timestamp": datetime.utcnow().isoformat(),
-            "carID": self.carID,
-            "FuelLevel": round(self.FuelLevel, 1),
-            "EngineOilLevel": round(self.EngineOilLevel, 1),
-            "TraveledDistance": round(self.TraveledDistance, 4),
-            "RunTime": self.RunTime,
-            "PerformanceScore": self.performanceScore,
-            "qualityScore": self.qualityScore,
-            "AvalabilityScore": self.avaliabilityScore,
-            "maxFuelLevel": self.maxFuelLevel,
-            "oilTemperature": self.OilTemperature,
-            "isOilLeak": self.isOilLeak,
-            "isEngineRunning": self.isEngineRunning,
-            "isCrashed": self.isCrashed,
-            "currentRoute": self.currentRoute,
-            "Speed": round(self.Speed, 2),
-            "AverageSpeed": round(self.AverageSpeed, 2),
-            "IsMoving": self.IsMoving,
-            "currentGeozone": self.currentGeozone,
-            "VIN": self.VIN,
+            "car_id": self.car_id,
+            "fuel_level": round(self.fuel_level, 1),
+            "engine_oil_level": round(self.engine_oil_level, 1),
+            "traveled_distance": round(self.traveled_distance, 4),
+            "run_time": self.run_time,
+            "performance_score": self.performance_score,
+            "quality_score": self.quality_score,
+            "availability_score": self.availability_score,
+            "max_fuel_level": self.max_fuel_level,
+            "oil_temperature": self.oil_temperature,
+            "is_oil_leak": self.is_oil_leak,
+            "is_engine_running": self.is_engine_running,
+            "is_crashed": self.is_crashed,
+            "current_route": self.current_route,
+            "speed": round(self.speed, 2),
+            "average_speed": round(self.average_speed, 2),
+            "is_moving": self.is_moving,
+            "current_geozone": self.current_geozone,
+            "vin": self.vin,
             "coordinates": {
                 "type": "Point",
-                "coordinates": [round(self.Longitude, 6), round(self.Latitude, 6)] # mongo es long lat
+                "coordinates": [round(self.longitude, 6), round(self.latitude, 6)]
             }
         }
         return doc
 
     async def run(self):
-        
         while True:
-            
-            self.currentRoute = self.route_ids[self.route_index]
-            steps, dist_per_step, time_per_step = ROUTES[self.currentRoute]
-            # Global route map: {route_id: {"steps": np.array, "distancePerStep": float, "timePerStep": float}}
+            self.current_route = self.route_ids[self.route_index]
+            steps, dist_per_step, time_per_step = ROUTES[self.current_route]
             while self.step_index < len(steps):
-                self.Latitude, self.Longitude = steps[self.step_index]
+                self.latitude, self.longitude = steps[self.step_index]
                 self.update(dist_per_step, time_per_step)
-                print(f"📤 Car {self.carID} moved to ({self.Latitude:.5f}, {self.Longitude:.5f}) | Distance this: {self.TraveledDistanceSinceStart:.1f}m |  {self.step_index}" )
+                #will add logging here instead of print
+                print(f"📤 Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | Distance this: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
 
-                
-                self.step_index += 1
-                
                 if self.step_index % 10 == 0:
-                    async with aiohttp.ClientSession() as session:
-                        params = {"lng": self.Longitude, "lat": self.Latitude}
-                        async with session.get("http://localhost:9003/geofences/check", params=params) as resp:
-                            if resp.status == 200:
-                                data = await resp.json()
-                                self.currentGeozone = data.get("geofence_name")
-                            else:
-                                self.currentGeozone = "No Geofence found"
-                    # GET GEOWITHIN ZONE, should be None or ZOne1, dtwn, etc
-                
-                #send to timeseries
-                async with aiohttp.ClientSession() as session:
-                    async with session.post("http://localhost:9000/timeseries", json=self.to_document()) as resp:
-                        if resp.status != 200:
-                            print(f"⚠️ Error sending data for car {self.carID}: {resp.status}")
+                    self.current_geozone = f"Geofence {self.step_index // 10 + 1}" if self.step_index // 10 < 5 else "No Geofence found"
+                    print(f"🚧 Car {self.car_id} updated geozone: {self.current_geozone}")
+
+                # Simulate sending telemetry data to a database
+                doc = self.to_document()
+
+                self.step_index += 1
                 await asyncio.sleep(time_per_step)
-
-            print(f" Car {self.carID} finished route {self.currentRoute}")
+            print(f" Car {self.car_id} finished route {self.current_route}")
             await asyncio.sleep(10)
-            self.route_index = 1 - self.route_index # if indx is 0, is 1, else 1-1= 0
-            self.step_index = 0 # starts returning to start of route
+            self.route_index = 1 - self.route_index
+            self.step_index = 0
 
-
-def load_routes(filepath="processed_routes_2.json"): #este json tiene 4 rutas, despuest quitar el _2
+def load_routes(filepath="processed_routes_2.json"):
     global ROUTES
     with open(filepath, "r") as f:
         raw = json.load(f)
-
     for key, val in raw.items():
         ROUTES[int(key)] = (
             np.array([(s["lat"], s["lng"]) for s in val["steps"]], dtype=np.float32),
@@ -157,7 +129,6 @@ def load_routes(filepath="processed_routes_2.json"): #este json tiene 4 rutas, d
         )
     print(f" Loaded {len(ROUTES)} routes")
 
-
 def create_cars(num_cars=4):
     cars = []
     for car_id in range(1, num_cars + 1):
@@ -165,45 +136,44 @@ def create_cars(num_cars=4):
         if route_id not in ROUTES:
             print(f"⚠️ Skipping car {car_id}: no starting route {route_id}")
             continue
-        lat, lng = ROUTES[route_id][0][0]  # First coord of starting route
+        lat, lng = ROUTES[route_id][0][0]
         car = Car(
-            carID=car_id,
-            Brand=random.choice(["Toyota", "Ford", "Honda", "Chevrolet", "Nissan", "Aston Martin"]),
-            Model=random.choice(["Model A", "Model B", "Model C"]),
-            driverName=f"Driver {car_id}",
-            currentRoute=route_id,
-            Latitude=lat,
-            Longitude=lng,
-            # Static properties
-            LicensePlate=f"ABC-{car_id:03d}",
-            VIN=random.randint(1000000000, 9999999999),  # Random 10-digit VIN
-            Year=random.randint(2000, 2023),
-            Length=random.uniform(3.5, 5.0),  # Random length in
-            BodyType=random.choice(["Sedan", "SUV", "Truck", "Coupe"]),
-            VehicleExteriorColor=random.choice(["Red", "Blue", "Green", "Black"]),
-            WMI=random.choice(["1HG", "1FTR", "1GNE", "1C4", "1N4"]),
-            Weight=random.uniform(1000, 3000),  # Random weight in kg
-            TraveledDistance= random.uniform(0, 10000),  # Random initial distance
-            TraveledDistanceSinceStart=0.0,
-            FuelLevel=random.uniform(1000, 5000),  # Random initial fuel level
-            maxFuelLevel=5000.0,  # Assuming max fuel level is 500
-            OilTemperature=random.uniform(70, 120),  # Random oil temperature in Celsius
-            EngineOilLevel=random.uniform(500, 2000),  # Random initial engine oil
-            performanceScore=random.uniform(80, 100),  # Random performance score
-            avaliabilityScore=random.uniform(80, 100),  # Random availability score
-            RunTime=0.0,  # Initial run time in seconds
-            qualityScore=90.0,  # Assuming perfect quality for simulation
-            isOilLeak=False,  # No oil leak at start
-            isEngineRunning=True,  # Engine starts running
-            isCrashed=False,  # No crash at start
-            Speed=0.0,  # Initial speed in km/h
-            AverageSpeed=0.0,  # Initial average speed in km/h
-            IsMoving=False,  # Initially not moving
-            currentGeozone="No Geofence found"  # Initial geozone
-
+            car_id=car_id,
+            brand=random.choice(["Toyota", "Ford", "Honda", "Chevrolet", "Nissan", "Aston Martin"]),
+            model=random.choice(["Model A", "Model B", "Model C"]),
+            driver_name=f"Driver {car_id}",
+            current_route=route_id,
+            latitude=lat,
+            longitude=lng,
+            license_plate=f"ABC-{car_id:03d}",
+            vin=random.randint(1000000000, 9999999999),
+            year=random.randint(2000, 2023),
+            length=random.uniform(3.5, 5.0),
+            body_type=random.choice(["Sedan", "SUV", "Truck", "Coupe"]),
+            vehicle_exterior_color=random.choice(["Red", "Blue", "Green", "Black"]),
+            wmi=random.choice(["1HG", "1FTR", "1GNE", "1C4", "1N4"]),
+            weight=random.uniform(1000, 3000),
+            traveled_distance=random.uniform(0, 10000),
+            traveled_distance_since_start=0.0,
+            fuel_level=random.uniform(1000, 5000),
+            max_fuel_level=5000.0,
+            oil_temperature=random.uniform(70, 120),
+            engine_oil_level=random.uniform(500, 2000),
+            performance_score=random.uniform(80, 100),
+            availability_score=random.uniform(80, 100),
+            run_time=0.0,
+            quality_score=90.0,
+            is_oil_leak=False,
+            is_engine_running=True,
+            is_crashed=False,
+            speed=0.0,
+            average_speed=0.0,
+            is_moving=False,
+            current_geozone="No Geofence found"
         )
         cars.append(car)
     return cars
+    
 
 
 async def main():
