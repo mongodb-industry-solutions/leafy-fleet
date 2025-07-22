@@ -3,19 +3,19 @@ import createTalktrackSection from "../components/talktrackComponent.js.js";
 
 export default function chatTalktrackSection() {
   return createTalktrackSection({
-    heading: "Chat Talktrack",
-    content: [
-      bodyComponent("Purpose", "This is the demo purpose."),
-      htmlBodyComponent(
-        "Flexible Data Model",
-        `<div>MongoDB's <a href="https://www.mongodb.com/resources/basics/databases/document-databases" target="_blank">document-oriented architecture</a> allows you to store varied data
-          (such as <i>timeseries logs, agent profiles, and recommendation outputs</i>)
-          in a <strong>single unified format</strong>. This flexibility means you don't have to redesign your database <mark>schema</mark> every time your data requirements evolve.</div>`,
-      ),
-      bodyComponent(
-        "Extra Info",
-        "MongoDB's document-oriented architecture allows you to store varied data in a single unified format."
-      ),
-    ],
-  });
+      heading: "Instructions and Talk Track",
+      content: [
+        htmlBodyComponent(
+          "Solution Overview",
+          "The Agentic Framework serves as a versatile AI-driven recommendation assistant capable of comprehending your data, performing a multi-step diagnostic workflow using LangGraph, and generating actionable recommendations. The framework integrates several key technologies. It reads timeseries data from a CSV file or MongoDB (simulating various data inputs), generates text embeddings using the Cohere English V3 model, performs vector searches to identify similar past queries from MongoDB, persists session and run data, and finally generates a diagnostic recommendation. MongoDB stores agent profiles, historical recommendations, timeseries data, session logs, and more. This persistent storage not only logs every step of the diagnostic process for traceability but also enables efficient querying and reusability of past data."
+        ),
+        htmlBodyComponent("How to Demo", [
+          "Choose “New Diagnosis.",
+          "Enter a query in the text box (e.g., the sample complaint about a knocking sound).",
+          "Click the “Run Agent” button and wait for a few minutes as the agent finishes its run.",
+          "The workflow, chain-of-thought output, and the final recommendation are shown in the left column.",
+          "In the right column, the documents shown are the records inserted during the current agent run.",
+        ]),
+      ],
+    });
 }
