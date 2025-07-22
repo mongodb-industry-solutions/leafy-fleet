@@ -9,6 +9,8 @@ import requests
 import pandas as pd
 from dotenv import load_dotenv
 import itertools
+import logging
+
 coordinates = {
     1: (30.296986, -97.832127),
     2: (30.221040, -97.681799),
@@ -68,6 +70,9 @@ coordinates = {
 load_dotenv()
 api_key = os.getenv("GOOGLE_ROUTES_API_KEY")
 
+logging.basicConfig(filename='myapp.log', level=logging.INFO)
+logger = logging.getLogger("routeGen")
+
 # --- Google API call function ---
 def compute_route(origin, destination):
 
@@ -99,10 +104,10 @@ def compute_route(origin, destination):
             "encoded_polyline": route["polyline"]["encodedPolyline"]
         }
     except requests.exceptions.RequestException as e:
-        print("API request failed:", e)
+        logger.info("API request failed:", e)
         return None
     except (KeyError, IndexError) as e:
-        print("Unexpected response format:", e)
+        logger.info("Unexpected response format:", e)
         return None
 
 
@@ -127,9 +132,9 @@ def process_first_route(csv_file: str, output_file: str ):
     if route_data:
         with open(output_file, "w") as f:
             json.dump(route_data, f, indent=2)
-        print(f" Saved routes to {output_file}")
+        logger.info(f" Saved routes to {output_file}")
     else:
-        print(" error saving routes :o.  check to avoid using api calls unsuccesfully")
+        logger.info(" error saving routes.  check to avoid using api calls unsuccesfully")
 
 
 # --- Process all 300 routes --- update
@@ -150,7 +155,7 @@ def process_all_routes(csv_file :str, output_file: str ):
         destination = coordinates.get(to_id)
 
         if not origin or not destination:
-            print(f"[{i+1}] Skipping invalid coordinates: {from_id} → {to_id}")
+            logger.info(f"[{i+1}] Skipping invalid coordinates: {from_id} → {to_id}")
             failed_routes.append((from_id, to_id, "Invalid coordinates"))
             continue
 
@@ -160,32 +165,32 @@ def process_all_routes(csv_file :str, output_file: str ):
         if result_ab:
             all_routes[f"{from_id}_{to_id}"] = result_ab
         else:
-            print(f" {from_id} → {to_id} failed")
+            logger.info(f" {from_id} → {to_id} failed")
             failed_routes.append((from_id, to_id, " request failed"))
 
         if result_ba:
             all_routes[f"{to_id}_{from_id}"] = result_ba
             
         else:
-            print(f"{to_id} → {from_id} failed")
+            logger.info(f"{to_id} → {from_id} failed")
             failed_routes.append((to_id, from_id, " request failed"))
 
     # Save combined JSON file with all successful routes
     with open(os.path.join( output_file), "w") as f:
         json.dump(all_routes, f, indent=2)
-    print(f"\n All saved to {output_file}")
+    logger.info(f"\n All saved to {output_file}")
 
     #  print failed ones
     if failed_routes:
-        print("\n Failed Routes:")
+        logger.info("\n Failed Routes:")
         for from_id, to_id, reason in failed_routes:
-            print(f"- {from_id} → {to_id}: {reason}")
+            logger.info(f"- {from_id} → {to_id}: {reason}")
 
 
 # --- Main trigger ---
 if __name__ == "__main__":
     #process_first_route()
     if not os.getenv("GOOGLE_ROUTES_API_KEY"):
-        print(" GOOGLE_ROUTES_API_KEY not set in .env")
+        logger.info(" GOOGLE_ROUTES_API_KEY not set in .env")
     else:
         process_all_routes("random_150_routes.csv", "routes_final.json") 

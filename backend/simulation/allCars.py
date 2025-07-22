@@ -8,11 +8,20 @@ import aiohttp
 import logging
 import signal
 
+
 ROUTES = {}  # Global route map: {route_id: {"steps": np.array, "distancePerStep": float, "timePerStep": float}}
 
 HTTP_SESSION: aiohttp.ClientSession = None
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+#variables 
+constant_fuel_consumption_per_m = 0.0009  # in ml/m
+constant_oil_consumption_per_m = 0.0005  # in ml/m
+hostname = "http://localhost"  # This will be used to connect to the backend service,
+
+#in meantime localhost routes, will be replaced by the real 
 
 @dataclass
 class Car:
@@ -63,10 +72,10 @@ class Car:
     def update(self, move_distance_m: float, time_per_step: float):
         self.traveled_distance += move_distance_m / 1000 # km 
         self.traveled_distance_since_start += move_distance_m  # m
-        self.fuel_level = max(self.fuel_level - move_distance_m * 0.00009, 0)
-        self.engine_oil_level = max(self.engine_oil_level - move_distance_m * 0.00005, 0)
+        self.fuel_level = max(self.fuel_level - move_distance_m * constant_fuel_consumption_per_m, 0)
+        self.engine_oil_level = max(self.engine_oil_level - move_distance_m * constant_oil_consumption_per_m, 0)
         self.run_time += time_per_step
-        self.speed = move_distance_m / (time_per_step * 1000) + random.uniform(-0.5, 0.5)  # Simulate speed variation
+        self.speed = max((move_distance_m / (time_per_step * 1000) * 3600 )+ random.uniform(-0.35, 0.25), 0) #  speed variation km/h,  non-negative
         self.average_speed = (self.traveled_distance / self.run_time) * 3600  # Convert km/s to km/h
         self.is_moving = self.speed > 0
 
@@ -98,6 +107,7 @@ class Car:
             
         }
         return doc
+    
 
 
     async def run(self):
@@ -114,10 +124,9 @@ class Car:
 
                 if self.step_index % 10 == 0:
                     try:
-                        async with HTTP_SESSION.get(
-                            "http://localhost:9004/geofences/check",
-                            json={'coordinates': [float(self.longitude), float(self.latitude)]}
-                        ) as response:
+                        url = f"{hostname}:9004/geofences/check"
+                        payload = {'coordinates': [float(self.longitude), float(self.latitude)]}
+                        async with HTTP_SESSION.get(url, params=payload) as response:
                             if response.status == 200:
                                 data = await response.json()
                                 self.current_geozone = (
@@ -135,7 +144,7 @@ class Car:
                 # Send timeseries data every step
                 try:
                     await HTTP_SESSION.post(
-                        "http://localhost:9002/timeseries",
+                        f"{hostname}:9002/timeseries",
                         json=self.to_document()
                     )
                 except Exception as e:

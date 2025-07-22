@@ -1,10 +1,14 @@
 from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
-
+import logging
 load_dotenv()
 
-print("Doing database connection...")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+logger.info("Doing database connection...")
 
 MONGODB_URL = os.getenv("MONGODB_URI")
 DATABASE_NAME = "leafy_fleet"

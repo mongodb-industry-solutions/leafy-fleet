@@ -1,14 +1,10 @@
-from pydantic import ConfigDict, BaseModel, Field
 from typing import Optional, List
 from typing_extensions import Annotated
 from bson import ObjectId
-import motor.motor_asyncio
-from pymongo import ReturnDocument
 from pydantic.functional_validators import BeforeValidator
-from datetime import datetime, timezone
+from datetime import datetime
 from pydantic import BaseModel, Field  
 PyObjectId = Annotated[str, BeforeValidator(str)]
-import time
 
   
 # Custom ObjectId type for Pydantic  

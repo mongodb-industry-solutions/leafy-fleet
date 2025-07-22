@@ -1,7 +1,4 @@
-Here is your content formatted in Markdown:
-
-
-# Embedder
+# Timeseries POST Microservice
 
 This should be used as the sole method of posting timeseries data into the database. This handles the embedding and transforming the data so it’s ready to be vector searched and indexed correctly.
 
@@ -76,3 +73,46 @@ windows (With WSL)
 ```
 docker-compose up -d
 ```
+## Model of timeseries documents in time series
+{
+    "timestamp": "2025-07-22T14:30:00Z",
+    "car_id": 1,
+    "fuel_level": 3500.0,
+    "engine_oil_level": 1200.0,
+    "traveled_distance": 15234.5,
+    "run_time": 3600.0,
+    "performance_score": 98.5,
+    "quality_score": 100.0,
+    "availability_score": 95.0,
+    "max_fuel_level": 5000.0,
+    "oil_temperature": 90.0,
+    "is_oil_leak": false,
+    "is_engine_running": true,
+    "is_crashed": false,
+    "current_route": 2,
+    "speed": 45.2,
+    "average_speed": 42.8,
+    "is_moving": true,
+    "current_geozone": "Zone A",
+    "vin": 12345678901234567,
+    "coordinates": {
+      "type": "Point",
+      "coordinates": [-97.731842, 30.281019]
+    }
+}
+
+## Model of static documents (will not be used in timeseries, but in meatime will stay here for reference)
+{
+    "brand": "Toyota",
+    "model": "Corolla",
+    "license_plate": "ABC123",
+    "driver_name": "Jane Doe",
+    "vin": 12345678901234567,
+    "year": 2022,
+    "length": 4.5,
+    "body_type": "Sedan",
+    "vehicle_exterior_color": "Blue",
+    "wmi": "JT2BG22K9V",
+    "weight": 1300.5,
+    "car_id": 1
+  }

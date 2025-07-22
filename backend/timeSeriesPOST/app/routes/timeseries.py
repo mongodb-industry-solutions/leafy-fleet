@@ -5,7 +5,6 @@ from database import timeseries_coll
 from datetime import datetime, timezone
 from model.timeseriesModel import TimeseriesModel
 from model.timeseriesModel import VehicleModel
-import time
 
 router = APIRouter()
 

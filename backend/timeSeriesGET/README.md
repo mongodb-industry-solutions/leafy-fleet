@@ -1,9 +1,6 @@
-Here is your content formatted in Markdown:
+# Timeseries GET Service
 
-
-# Embedder
-
-This should be used as the sole method of posting timeseries data into the database. This handles the embedding and transforming the data so it’s ready to be vector searched and indexed correctly.
+This should be used as the sole method of getting data from the database. This handles the embedding and transforming the data so it’s ready to be vector searched and indexed correctly.
 
 ## Installation for Development
 
