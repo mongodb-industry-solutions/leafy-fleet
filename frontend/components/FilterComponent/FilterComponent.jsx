@@ -164,32 +164,32 @@ const FilterComponent = () => {
             </div>
             <div>
               <Body baseFontSize={16}>Historial Recommendations</Body>
-               <Body baseFontSize={14}>Contains ...</Body>
+               <Body baseFontSize={14}>Contains a query to other relevant questions to the selected message</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Agent Profile</Body>
-              <Body baseFontSize={14}>Contains ...</Body>
+              <Body baseFontSize={14}>This contains the identity of the agent, including instructions, goals and constraints.</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Telemetry Data</Body>
-              <Body baseFontSize={14}>Contains ...</Body>
+              <Body baseFontSize={14}>Contains the telemetry data queried to answer this question.</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Queries</Body>
-              <Body baseFontSize={14}>Contains ...</Body>
+              <Body baseFontSize={14}>Contains the queries made to the database during the agent's execution.</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Logs</Body>
-              <Body baseFontSize={14}>Contains ...</Body>
+              <Body baseFontSize={14}>Contains the logs generated during the agent's execution.</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Last Checkpoint</Body>
-              <Body baseFontSize={14}>Contains ...</Body>
+              <Body baseFontSize={14}>Contains the last checkpoint data for the agent's execution.</Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
           </div>
