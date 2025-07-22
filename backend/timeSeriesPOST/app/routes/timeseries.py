@@ -11,21 +11,21 @@ router = APIRouter()
 
 @router.post("/timeseries")
 async def create_timeseries_entry(entry: TimeseriesModel):
-    print("Creating timeseries entry...")
-    print("Received data:", entry)
+    #print("Creating timeseries entry...")
+    #print("Received data:", entry)
 
     if entry.timestamp is None:
         entry.timestamp = datetime.utcnow()
     # Convert coordinates to GeoJSON format
     
-    print("Prepared entry for insertion:", entry)
+    #print("Prepared entry for insertion:", entry)
 
     try:  
         result = timeseries_coll.insert_one(entry.dict())  
-        print("Insert result:", result)
+        #print("Insert result:", result)
         return {"message": "Timeseries entry created successfully", "id": str(result.inserted_id)}  
     except Exception as e:  
-        print(f"Error: {e}")  # Log the error for debugging  
+        #print(f"Error: {e}")  # Log the error for debugging  
         return {"message": "Error creating timeseries entry", "error": str(e)}  
     
 

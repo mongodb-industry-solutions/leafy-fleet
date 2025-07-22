@@ -110,7 +110,7 @@ class Car:
 
                 
                 #will add logging here instead of print
-                print(f"📤 Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | total distance: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
+                logger.info(f"📤 Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | total distance: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
 
                 if self.step_index % 10 == 0:
                     try:

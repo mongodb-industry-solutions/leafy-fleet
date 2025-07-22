@@ -1,3 +1,8 @@
+"""
+Generating routes using Google Routes API from a CSV file of routes in Austin, TX.
+
+"""
+
 import os
 import json
 import requests
@@ -103,7 +108,7 @@ def compute_route(origin, destination):
 
 
 # --- Process only the first row (for testing) ---
-def process_first_route(csv_file: str, output_file: str = "encoded_route.json"):
+def process_first_route(csv_file: str, output_file: str ):
     df = pd.read_csv(csv_file)
     first_row = df.iloc[1]
 

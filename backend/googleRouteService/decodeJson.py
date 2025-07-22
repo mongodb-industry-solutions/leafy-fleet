@@ -1,8 +1,13 @@
+"""
+Read JSON with encoded polylines, decode them, and save processed routes with distance and time per step.
+"""
+
+
 import json
 import polyline
 import logging
 
-def process_routes(input_file="routes_final.json", output_file="processed_routes.json"):
+def process_routes(input_file : str, output_file: str):
     with open(input_file, "r") as f:
         raw_data = json.load(f)
 
@@ -53,4 +58,4 @@ def process_routes(input_file="routes_final.json", output_file="processed_routes
         logger.info(" No valid routes were processed.")
 
 # Run, can add input and output file names if needed
-process_routes()
+process_routes("routes_final.json", "processed_routes.json")
