@@ -32,18 +32,18 @@ class PyObjectId(ObjectId):
 #  Class for the Static Model will no longer be nested 
 class VehicleModel(BaseModel):  
     # _id: PyObjectId = Field(default_factory=PyObjectId) # Mongo assignes a unique ID to each document
-    Brand: str
-    Model: str
-    LicensePlate: str
-    DriverName: str
-    VIN: int
-    Year: int
-    Length: float 
-    BodyType: str
-    VehicleExteriorColor: str
-    WMI: str
-    Weight: float
-    carID: int # del 1 al 300, carID is used to connect with timeseriesModel, 
+    brand: str
+    model: str
+    license_plate: str
+    driver_name: str
+    vin: int
+    year: int
+    length: float 
+    body_type: str
+    vehicle_exterior_color: str
+    wmi: str
+    weight: float
+    car_id: int # del 1 al 300, carID is used to connect with timeseriesModel, 
     # good if want to preload the data of 300 cars, else for easy comparision routes with carID
 
 #Class for the Timeseries Model
