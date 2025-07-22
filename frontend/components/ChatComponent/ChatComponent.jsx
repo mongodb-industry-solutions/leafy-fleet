@@ -1,4 +1,5 @@
 "use client";
+"use client";
 
 import styles from "./ChatComponene.module.css";
 
@@ -56,3 +57,4 @@ const ChatComponent = () => {
 }
 
 module.exports = ChatComponent;
+
