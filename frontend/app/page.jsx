@@ -18,7 +18,6 @@ import {
 import Code from "@leafygreen-ui/code";
 import InfoWizard from "@/components/InfoWizard/InfoWizard";
 import TextInput from "@leafygreen-ui/text-input";
-import { agenticPageTalkTrack } from "@/lib/talkTrack";
 
 export default function HomePage() {
   const [selectedOption, setSelectedOption] = useState("new"); // "new", "resume", or "list"
@@ -113,15 +112,6 @@ export default function HomePage() {
           zIndex: 9999,
         }}
       >
-        <div className="infowizard-container">
-          <InfoWizard
-            open={openHelpModal}
-            setOpen={setOpenHelpModal}
-            tooltipText="Tell me more!"
-            iconGlyph="Wizard"
-            sections={agenticPageTalkTrack}
-          />
-        </div>
       </div>
       <div style={{ padding: "20px", fontFamily: "Arial, sans-serif", width: "100%" }}>
 
