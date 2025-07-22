@@ -2,9 +2,8 @@ from fastapi import APIRouter, status, Body
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder  
 from database import timeseries_coll
-from datetime import datetime, timezone
+from datetime import datetime
 from model.timeseriesModel import TimeseriesModel
-from model.timeseriesModel import VehicleModel
 
 router = APIRouter()
 
@@ -22,7 +21,11 @@ async def create_timeseries_entry(entry: TimeseriesModel):
     try:  
         result = timeseries_coll.insert_one(entry.dict())  
         #print("Insert result:", result)
-        return {"message": "Timeseries entry created successfully", "id": str(result.inserted_id)}  
+        return JSONResponse(  
+            status_code=status.HTTP_201_CREATED,  
+            content=jsonable_encoder({"message": "Timeseries entry created successfully", "id": str(result.inserted_id)})  
+        )
+       # return {"message": "Timeseries entry created successfully", "id": str(result.inserted_id)}  
     except Exception as e:  
         #print(f"Error: {e}")  # Log the error for debugging  
         return {"message": "Error creating timeseries entry", "error": str(e)}  

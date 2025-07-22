@@ -20,10 +20,11 @@ logger = logging.getLogger(__name__)
 constant_fuel_consumption_per_m = 0.0009  # in ml/m
 constant_oil_consumption_per_m = 0.0005  # in ml/m
 hostname = "http://localhost"  # This will be used to connect to the backend service,
+#get on env
 
 #in meantime localhost routes, will be replaced by the real 
 
-@dataclass
+@dataclass 
 class Car:
     brand: str
     model: str
@@ -156,7 +157,7 @@ class Car:
             self.route_index = 1 - self.route_index
             self.step_index = 0
 
-def load_routes(filepath="processed_routes_2.json"):
+def load_routes(filepath: str):
     global ROUTES
     with open(filepath, "r") as f:
         raw = json.load(f)
@@ -224,7 +225,7 @@ async def main():
     global HTTP_SESSION
     HTTP_SESSION = aiohttp.ClientSession()
 
-    load_routes()
+    load_routes( "processed_routes_2.json")
     cars = create_cars()
 
     loop = asyncio.get_running_loop()
