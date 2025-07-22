@@ -1,0 +1,12 @@
+services:  
+  timeseries-post:  
+    container_name: timeseries-post-service  
+    build:  
+      context: .  
+    ports:  
+      - "9000:9000"  
+    volumes:  
+      - .:/app  
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  # MongoDB connection string from environment variable
+    command: python3 -m unittest discover -s tests

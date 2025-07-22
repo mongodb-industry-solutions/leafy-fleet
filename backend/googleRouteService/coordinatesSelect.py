@@ -1,7 +1,10 @@
+"""
+Generating random geographic routes with constraints (e.g., max connections, distance filter)...
+"""
+
 import pandas as pd
 import itertools
 from geopy.distance import geodesic
-import folium
 import random
 from collections import defaultdict
 
@@ -61,6 +64,10 @@ data = [
     (52, 30.316821, -97.793624),
 ]
 
+# variables
+number_routes = 150 # will do back and forward, so 150 connections or edges generate 300 routes in routeGen.py
+max_connections = 6 # maximum connections per coordinate
+min_distance = 2.4  # miles
 
 coordinates = {id: (lat, lon) for id, lat, lon in data}
 
@@ -74,7 +81,7 @@ for (id1, lat1, lon1), (id2, lat2, lon2) in pairs:
     distance_data.append(((id1, id2), dist))
 
 # Filter by distance ? 
-filtered_pairs = [((id1, id2), dist) for ((id1, id2), dist) in distance_data if dist >= 2.5]
+filtered_pairs = [((id1, id2), dist) for ((id1, id2), dist) in distance_data if dist >= min_distance]
 
 # Remove reverse duplicates
 seen_keys = set()
@@ -86,44 +93,25 @@ for (id1, id2), dist in filtered_pairs:
         seen_keys.add(key)
 
 # Limit connections per coordinate (looks better ig)
-MAX_CONNECTIONS = 15  
 connection_count = defaultdict(int)
 selected_routes = []
+
+
 
 # Shuffle to randomize
 random.shuffle(unique_filtered)
 
 for (id1, id2), dist in unique_filtered:
-    if connection_count[id1] < MAX_CONNECTIONS and connection_count[id2] < MAX_CONNECTIONS:
+    if connection_count[id1] < max_connections and connection_count[id2] < max_connections:
         selected_routes.append({"From_ID": id1, "To_ID": id2, "Distance_miles": round(dist, 3)})
         connection_count[id1] += 1
         connection_count[id2] += 1
-    if len(selected_routes) >= 300:
+    if len(selected_routes) >= number_routes:
         break
 
 # Create DataFrame
 limited_df = pd.DataFrame(selected_routes)
-limited_df.to_csv("random_300_routes.csv", index=False)
+limited_df.to_csv("random_routes.csv", index=False)
 
-# Create map centered in Austin (not necesaary)
-#m = folium.Map(location=[30.2672, -97.7431], zoom_start=10)
 
-# Add lines
-#for _, row in limited_df.iterrows():
- #   loc1 = coordinates[row["From_ID"]]
-  #  loc2 = coordinates[row["To_ID"]]
-   # folium.PolyLine([loc1, loc2], color='blue', weight=2, opacity=0.6).add_to(m)
-
-# Add markers
-#for cid, (lat, lon) in coordinates.items():
- #   folium.CircleMarker(
-  #      location=[lat, lon],
-   #     radius=3,
-    #    popup=f"ID: {cid}",
-     #   color='red',
-      #  fill=True,
-       # fill_color='red'
-   # ).add_to(m)
-
-#m.save("map.html")
-print("  CSV saved as random_300_routes.csv")
+print("  CSV saved as random_routes.csv")
