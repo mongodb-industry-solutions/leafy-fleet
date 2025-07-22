@@ -38,11 +38,11 @@ const ChatComponent = () => {
 
     // 2. Set up the onmessage event listener
     socketRef.current.onmessage = (event) => {
-      console.log("WebSocket message received:", event);
+      // console.log("WebSocket message received:", event);
       try {
         dispatch(setLatestThought({ thought: event.data }));
       } catch (error) {
-        console.error("Error parsing WebSocket data:", error);
+        // console.error("Error parsing WebSocket data:", error);
       }
     };
 
@@ -135,7 +135,7 @@ const ChatComponent = () => {
         }; // Fallback
       }
 
-      console.log("Received data:", data);
+      // console.log("Received data:", data);
       dispatch(setIsChatbotThinking(false));
       dispatch(
         updateMessageText({

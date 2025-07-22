@@ -16,7 +16,7 @@ const TextBubbleComponent = ({ user, text, id }) => {
   );
 
   const latestThought = useSelector((state) => state.Message.currentThought);
-  console.log(latestThought);
+  // console.log(latestThought);
   const lastMessageId = useSelector((state) => state.Message.lastMessageId);
   const message = useSelector((state) =>
     state.Message.messageHistory.find((msg) => msg.id === id)
@@ -24,7 +24,7 @@ const TextBubbleComponent = ({ user, text, id }) => {
 
   const thinkingMessageId = useSelector((state) => state.Message.thinkingMessageId);
 
-  console.log("Message ID:", id, "ThinkingMessageId:", thinkingMessageId, "ChatbotIsThinking:", chatbotIsThinking, "Latest Thought:", latestThought);
+  // console.log("Message ID:", id, "ThinkingMessageId:", thinkingMessageId, "ChatbotIsThinking:", chatbotIsThinking, "Latest Thought:", latestThought);
 
   return (
     <div className={`${styles.chatContainer}`}>

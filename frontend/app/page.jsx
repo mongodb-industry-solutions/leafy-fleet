@@ -43,7 +43,8 @@ export default function HomePage() {
   const runAgent = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/run-agent?query_reported=${encodeURIComponent(query)}`);
+      const apiUrl = process.env.LOCAL_API_URL;
+      const res = await fetch(`${apiUrl}/run-agent?query_reported=${encodeURIComponent(query)}`);
       const text = await res.text(); // Read raw response as text
       // console.log("Raw Response:", text);
       const data = JSON.parse(text); // Parse JSON if valid

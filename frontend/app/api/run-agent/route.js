@@ -3,7 +3,7 @@ export async function GET(request) {
   const query_reported = searchParams.get("query_reported");
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const apiEndpoint = `http://localhost:8000/run-agent?query_reported=${encodeURIComponent(query_reported)}`;
+    const apiEndpoint = `${apiUrl}/run-agent?query_reported=${encodeURIComponent(query_reported)}`;
     console.log("API Endpoint:", apiEndpoint); // Debugging log
     const res = await fetch(apiEndpoint);
 
