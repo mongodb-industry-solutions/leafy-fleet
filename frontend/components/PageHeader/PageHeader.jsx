@@ -11,12 +11,16 @@ import {
 } from '@leafygreen-ui/logo';
 import InfoWizard from '../InfoWizard/InfoWizard';
 import { useState } from 'react';
-import { chatbotTalktrackSection } from '@/talkTrack/chatbotTalktrack';
-import talktrackDemo from '@/talkTrack/talckBackDemo.js';
+import talktrackDemo from '@/talkTrack/talkbackBuilder.js';
+import { usePathname } from 'next/navigation'
 
 const PageHeader = () => {
 
   const [openHelpModal, setOpenHelpModal] = useState(false);
+
+
+  const pathname = usePathname();
+  
 
   return (
     
@@ -38,7 +42,7 @@ const PageHeader = () => {
         setOpen={setOpenHelpModal}
         tooltipText="Tell me more!"
         iconGlyph="Wizard" 
-        sections={talktrackDemo()}
+        sections={talktrackDemo(pathname)}
         />
 
       </div>
