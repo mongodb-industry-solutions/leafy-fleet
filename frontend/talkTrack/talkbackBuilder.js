@@ -1,11 +1,7 @@
 import BTSTalktrackSection from "./talktracks/BTSTalktrack.js";
 import chartsTalktrackSection from "./talktracks/chartsTalktrack.js";
 import chatTalktrackSection from "./talktracks/chatTalktrack.js";
-import bodyComponent, {
-  htmlBodyComponent,
-} from "./components/bodyComponent.js";
 import {
-  createTalktrackSection,
   combineTalktrackSections,
 } from "./components/talktrackComponent.js";
 import overviewTalktrackSection from "./talktracks/overviewTalktrack.js";
@@ -35,7 +31,6 @@ export function talktrackDemo(talktrackRequirement) {
     );
   }
   return combineTalktrackSections(
-    chatTalktrackSection(),
     BTSTalktrackSection(),
     whyMongoDBTalktrackSection()
   );
