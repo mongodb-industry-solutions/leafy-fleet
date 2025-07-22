@@ -120,7 +120,7 @@ class Car:
 
                 
                 #will add logging here instead of print
-                logger.info(f"📤 Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | total distance: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
+                logger.info(f" Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | total distance: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
 
                 if self.step_index % 10 == 0:
                     try:
@@ -137,7 +137,7 @@ class Car:
                             else:
                                 self.current_geozone = "Geofence check error"
                     except Exception as e:
-                        logger.warning(f"⚠️ Geofence check error: {e}")
+                        logger.warning(f" Geofence check error: {e}")
                         self.current_geozone = "Error checking geofence"
 
                     logger.info(f"Car {self.car_id} updated geozone: {self.current_geozone}")
@@ -148,7 +148,7 @@ class Car:
                         json=self.to_document()
                     )
                 except Exception as e:
-                    logger.warning(f"🚫 Error sending timeseries for Car {self.car_id}: {e}")
+                    logger.warning(f" Error sending timeseries for Car {self.car_id}: {e}")
                 self.step_index += 1
                 await asyncio.sleep(time_per_step)
             print(f" Car {self.car_id} finished route {self.current_route}")

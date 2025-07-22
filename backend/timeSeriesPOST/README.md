@@ -74,6 +74,7 @@ windows (With WSL)
 docker-compose up -d
 ```
 ## Model of timeseries documents in time series
+```json
 {
     "timestamp": "2025-07-22T14:30:00Z",
     "car_id": 1,
@@ -100,8 +101,10 @@ docker-compose up -d
       "coordinates": [-97.731842, 30.281019]
     }
 }
+```
 
 ## Model of static documents (will not be used in timeseries, but in meatime will stay here for reference)
+```json
 {
     "brand": "Toyota",
     "model": "Corolla",
@@ -116,3 +119,4 @@ docker-compose up -d
     "weight": 1300.5,
     "car_id": 1
   }
+  ```
