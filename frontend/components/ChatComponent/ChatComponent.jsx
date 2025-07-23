@@ -29,7 +29,7 @@ const ChatComponent = () => {
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
-    const socket = new WebSocket("ws://localhost:8000/ws?thread_id=123");
+    const socket = new WebSocket("ws://localhost:9000/ws?thread_id=123");
     socketRef.current = socket; // Store it in the ref
 
     socket.onopen = () => {
@@ -107,7 +107,7 @@ const ChatComponent = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/run-agent?query_reported=${encodeURIComponent(
+        `http://localhost:9000/run-agent?query_reported=${encodeURIComponent(
           userMessageText
         )}&thread_id=123`
       );

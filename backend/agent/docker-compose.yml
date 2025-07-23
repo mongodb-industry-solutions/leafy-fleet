@@ -1,0 +1,19 @@
+version: '3.8'  
+  
+services:  
+  agent:  
+    container_name: agent-service  
+    build:  
+      context: .  
+    ports:  
+      - "9000:9000"  # Map local port 9000 to container port 9000  
+    volumes:  
+      - ./:/agent  # Mount the current directory into the container  
+      - ~/.aws:/root/.aws  # Mount AWS credentials directory  
+    working_dir: /agent  # Set the working directory inside the container  
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  # Start your application  
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  # MongoDB connection string from environment variable  
+      - PYTHONUNBUFFERED=1  # Ensures real-time logging behavior  
+      - AWS_PROFILE=${AWS_PROFILE}  # Specify AWS profile name  
+      - AWS_REGION=${AWS_REGION}  # Set AWS region  

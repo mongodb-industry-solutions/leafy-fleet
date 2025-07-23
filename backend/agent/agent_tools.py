@@ -224,19 +224,19 @@ class AgentTools(MongoDBConnector):
         # Get the Query Reported from the state
         query_reported = state["query_reported"]
 
-        # CHAIN_OF_THOUGHTS_PROMPT = get_chain_of_thoughts_prompt(
-        #     agent_profile=p["profile"],
-        #     agent_rules=p["rules"],
-        #     agent_instructions=p["instructions"],
-        #     agent_goals=p["goals"],
-        #     query_reported=query_reported,
-        #     agent_motive=p["goals"],
-        #     agent_kind_of_data=p["kind_of_data"],
-        #     embedding_model_name=self.embeddings_model_name,
-        #     chat_completion_model_name=self.chatcompletions_model_name
-        # )
+        CHAIN_OF_THOUGHTS_PROMPT = get_chain_of_thoughts_prompt(
+            agent_profile=p["profile"],
+            agent_rules=p["rules"],
+            agent_instructions=p["instructions"],
+            agent_goals=p["goals"],
+            query_reported=query_reported,
+            agent_motive=p["goals"],
+            agent_kind_of_data=p["kind_of_data"],
+            embedding_model_name=self.embeddings_model_name,
+            chat_completion_model_name=self.chatcompletions_model_name
+        )
 
-        CHAIN_OF_THOUGHTS_PROMPT = (f"""Just provide an answer to the user query: {query_reported}. """)
+        # CHAIN_OF_THOUGHTS_PROMPT = (f"""Just provide an answer to the user query: {query_reported}. """)
         logger.info("Chain-of-Thought Reasoning Prompt:")
         logger.info(CHAIN_OF_THOUGHTS_PROMPT)
         try:

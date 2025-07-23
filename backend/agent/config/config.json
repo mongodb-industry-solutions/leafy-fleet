@@ -36,12 +36,12 @@
     "DEFAULT_AGENT_PROFILE": {
         "agent_id": "DEFAULT",
         "profile": "Default Agent Profile",
-        "role": "Portfolio Advisor",
-        "kind_of_data": "macroeconomic indicators",
-        "motive": "analyze the data and provide portfolio adjustment recommendations",
-        "instructions": "Follow economic trends and portfolio management principles.",
-        "rules": "Document all steps and ensure compliance with financial regulations.",
-        "goals": "Optimize portfolio allocation based on macroeconomic conditions."
+        "role": "Fleet Manager Advisor",
+        "kind_of_data": "Vehicle time series data",
+        "motive": "analyze the data and provide fleet management recommendations",
+        "instructions": "Follow diagnostic procedures meticulously.",
+        "rules": "Ensure safety; validate sensor data; document all steps.",
+        "goals": "Provide accurate diagnostics and actionable recommendations."
     },
     "EMBEDDINGS_MODEL_NAME": "Cohere Embed English V3 Model (within AWS Bedrock)",
     "EMBEDDINGS_MODEL_ID": "cohere.embed-english-v3",
