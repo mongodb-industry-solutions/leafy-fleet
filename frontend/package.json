@@ -22,8 +22,6 @@
     "@leafygreen-ui/leafygreen-provider": "^4.0.2",
     "@leafygreen-ui/loading-indicator": "^4.0.3",
     "@leafygreen-ui/logo": "^11.0.1",
-    "@leafygreen-ui/loading-indicator": "^4.0.3",
-    "@leafygreen-ui/logo": "^11.0.1",
     "@leafygreen-ui/modal": "^17.0.3",
     "@leafygreen-ui/number-input": "^5.0.2",
     "@leafygreen-ui/select": "^16.0.0",
@@ -41,11 +39,8 @@
     "npm": "^11.4.2",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.10",
-    "react-bootstrap": "^2.10.10",
     "react-dom": "^18.2.0",
     "react-icons": "^5.0.1",
-    "react-markdown": "^9.0.1",
-    "react-redux": "^9.2.0",
     "react-markdown": "^9.0.1",
     "react-redux": "^9.2.0"
   }
