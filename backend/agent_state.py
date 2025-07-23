@@ -23,8 +23,7 @@ class AgentState(TypedDict):
     recommendation_text: str
     next_step: Literal[
         "__start__", "start", 
-        "reasoning_node", "data_from_csv", "process_data", "embedding_node", 
-        "vector_search", "process_vector_search", "persistence_node", "recommendation_node", 
+        "recommendation_node", 
         "__end__", "end"
     ]
     updates: List[str]

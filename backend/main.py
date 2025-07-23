@@ -2,6 +2,9 @@ from db.mdb import MongoDBConnector
 
 import logging
 import datetime
+import asyncio  
+import websockets 
+import asyncio
 
 import json
 from bson import ObjectId
@@ -11,6 +14,7 @@ from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter
+from fastapi import WebSocket, WebSocketDisconnect
 
 from config.config_loader import ConfigLoader
 from utils import convert_objectids, format_document
@@ -18,8 +22,11 @@ from utils import convert_objectids, format_document
 from db.mdb import MongoDBConnector
 
 from agent_workflow_graph import create_workflow_graph
+from async_workflow_runner import create_async_workflow
 from agent_state import AgentState
 from agent_checkpointer import AgentCheckpointer
+
+from websocketServer import manager 
 
 import os
 from dotenv import load_dotenv
@@ -71,7 +78,7 @@ async def read_root(request: Request):
 
 
 @app.get("/run-agent")
-async def run_agent(query_reported: str = Query("Default query reported by the user", description="Query reported text"), query_number: int = Query(1, description="Query number for chat history")):
+async def run_agent(query_reported: str = Query("Default query reported by the user", description="Query reported text"), thread_id: str = Query(..., description="Thread ID for the session")):
     """Run the agent with the given query.
 
     Args:
@@ -92,25 +99,32 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         "recommendation_text": "",
         "next_step": "reasoning_node",
         "updates": [],
-        "thread_id": ""
+        "thread_id": thread_id
     }
-    thread_id = f"thread_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    await manager.send_to_thread("Agent started with query: " + query_reported, thread_id=thread_id)
+    # thread_id = f"thread_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}" # Old definition of thread_id, this was moved to the session microservice
     initial_state["thread_id"] = thread_id
     config = {"configurable": {"thread_id": thread_id}}
     try:
-        logger.info(f"Running agent for thread ID: {thread_id}")
-        mongodb_saver = AgentCheckpointer(database_name=MDB_DATABASE_NAME, collection_name=MDB_CHECKPOINTER_COLLECTION).create_mongodb_saver()
-        if mongodb_saver:
-            with mongodb_saver as checkpointer:
-                workflow = create_workflow_graph(checkpointer=checkpointer)
-                final_state = workflow.invoke(initial_state, config=config)
-                final_state = convert_objectids(final_state)
-        else:
-            workflow = create_workflow_graph()
-            final_state = workflow.invoke(initial_state, config=config)
-            final_state = convert_objectids(final_state)
+        # logger.info(f"Running agent for thread ID: {thread_id}")
+        
+        # Use custom async workflow runner
+        await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
+        logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
+        workflow = await create_async_workflow()
+        logger.info(f"Workflow created for thread ID: {thread_id}")
+        final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
+        await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
+        # logger.info(f"Agent run completed for thread ID: {thread_id}")
+
+        final_state = convert_objectids(final_state)
+        # logger.info(f"Final state for thread ID {thread_id}: {final_state}")
         final_state["thread_id"] = thread_id
         
+        # Broadcast completion with recommendation
+        recommendation_text = final_state.get("recommendation_text", "No recommendation generated")
+        await manager.send_to_thread(f"Agent workflow completed", thread_id=thread_id)
+
         try:
             with MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME) as mdb_connector: 
                 session_metadata = {
@@ -128,6 +142,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             logger.info(f"[MongoDB] Error storing session metadata: {e}")
             return final_state
     except Exception as e:
+        await manager.broadcast(f"Error occurred: {str(e)}")
         logger.info(f"[Error] An error occurred during execution: {e}")
         logger.info(f"You can resume this session later using thread ID: {thread_id}")
         try:
@@ -146,6 +161,29 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         except Exception as db_error:
                 logger.info(f"[MongoDB] Error storing session error state: {db_error}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, thread_id: str = Query(..., description="Thread ID for the session")):
+    """
+    WebSocket endpoint. Handles connection, disconnection, and keeps the connection alive.
+    """
+    await manager.connect(websocket, thread_id=thread_id)
+    try:
+        # This loop is essential. It keeps the connection open.
+        # You could also receive messages from the client here if needed.
+        while True:
+            # We wait for a message from the client. If they disconnect,
+            # a WebSocketDisconnect exception will be raised.
+            await websocket.receive_text()
+            # Note: In a real app, you might want to process the received text.
+            # For this example, we just keep the connection alive.
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket) 
+    
+    
+    
+
 
 
 @app.get("/resume-agent")

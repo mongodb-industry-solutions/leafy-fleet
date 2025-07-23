@@ -59,14 +59,8 @@
             {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"}
         ],
         "edges": [
-            {"from": "reasoning_node", "to": "data_from_csv"},
-            {"from": "data_from_csv", "to": "process_data"},
-            {"from": "process_data", "to": "embedding_node"},
-            {"from": "embedding_node", "to": "vector_search"},
-            {"from": "vector_search", "to": "process_vector_search"},
-            {"from": "process_vector_search", "to": "persistence_node"},
-            {"from": "persistence_node", "to": "recommendation_node"},
             {"from": "recommendation_node", "to": "END"}
+            
         ],
         "entry_point": "reasoning_node"
     }

@@ -22,6 +22,7 @@ class MongoDBConnector:
         filepath (str, optional): File path. Default is None.
     """
 
+
     def __init__(self, uri=None, database_name=None, collection_name=None, appname=None, filepath=None):
         self.uri = uri or os.getenv("MONGODB_URI")
         self.database_name = database_name or str(config.get("MDB_DATABASE_NAME"))
