@@ -129,6 +129,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             with MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME) as mdb_connector: 
                 session_metadata = {
                     "thread_id": thread_id,
+                    "query_number": query_number,
                     "query_reported": query_reported,
                     "created_at": datetime.datetime.now(datetime.timezone.utc),
                     "status": "completed",
@@ -148,6 +149,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             with MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME) as mdb_connector: 
                 session_metadata = {
                     "thread_id": thread_id,
+                    "query_number": query_number,
                     "query_reported": query_reported,
                     "created_at": datetime.datetime.now(datetime.timezone.utc),
                     "status": "error",
