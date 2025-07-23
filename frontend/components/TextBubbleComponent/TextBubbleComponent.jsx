@@ -7,6 +7,7 @@ import { Body } from "@leafygreen-ui/typography";
 import Tooltip from "@leafygreen-ui/tooltip";
 import IconButton from "@leafygreen-ui/icon-button";
 import Icon from "@leafygreen-ui/icon";
+import { Spinner } from "@leafygreen-ui/loading-indicator";
 const TextBubbleComponent = ({ user, text, id }) => {
   const userID = useSelector((state) => state.User.selectedUser);
   const dispatch = useDispatch();
@@ -22,7 +23,9 @@ const TextBubbleComponent = ({ user, text, id }) => {
     state.Message.messageHistory.find((msg) => msg.id === id)
   );
 
-  const thinkingMessageId = useSelector((state) => state.Message.thinkingMessageId);
+  const thinkingMessageId = useSelector(
+    (state) => state.Message.thinkingMessageId
+  );
 
   // console.log("Message ID:", id, "ThinkingMessageId:", thinkingMessageId, "ChatbotIsThinking:", chatbotIsThinking, "Latest Thought:", latestThought);
 
@@ -58,7 +61,14 @@ const TextBubbleComponent = ({ user, text, id }) => {
         {user === "user" ? (
           <Body>{text}</Body>
         ) : id === thinkingMessageId && chatbotIsThinking && latestThought ? (
-          <Body style={{ color: "#aaaaaa" }}>thoughts: {latestThought}</Body>
+          <>
+            <Spinner
+              variant="large"
+              description="The agent is generating the response…"
+              className="mt-2 mb-2"
+            />           
+            <Body className='d-flex justify-content-center'>{latestThought}</Body>
+          </>
         ) : id === thinkingMessageId && !chatbotIsThinking && message?.text ? (
           <Typewriter text={message.text} role={user} id={id} />
         ) : (

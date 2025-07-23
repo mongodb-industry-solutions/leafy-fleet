@@ -91,7 +91,7 @@ const ChatComponent = () => {
     
     const botResponseMessage = {
       id: lastMessageId + 2,
-      text: "",
+      text: data.chain_of_thought,
       sender: "bot",
       completed: false,
     };
