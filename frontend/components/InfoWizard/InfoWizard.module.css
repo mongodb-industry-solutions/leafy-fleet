@@ -11,6 +11,10 @@
   justify-content: center; /* Centers content vertically */
 }
 
+.modal button[data-testid="lg-modal-close"]{
+  position: absolute;
+}
+
 .modalContent {
   display: flex;
   flex-direction: column;
