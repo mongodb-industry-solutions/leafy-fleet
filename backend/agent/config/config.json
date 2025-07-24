@@ -32,8 +32,18 @@
     "MDB_LOGS_COLLECTION": "logs",
     "MDB_AGENT_PROFILES_COLLECTION": "agent_profiles",
     "MDB_AGENT_SESSIONS_COLLECTION": "agent_sessions",
-    "AGENT_PROFILE_CHOSEN_ID": "FINANCE_AG01",
-    "DEFAULT_AGENT_PROFILE": {
+    "AGENT_PROFILE_CHOSEN_ID": "DECIDING_AGENT",
+    "DECIDING_AGENT": {
+        "agent_id": "DECIDING_AGENT",
+        "profile": "Agentic Tool Decider",
+        "role": "Agentic Tool Decider",
+        "kind_of_data": "User Input Data and information about internal agent tools to process the data",
+        "motive": "Given the user input data and information about internal agent tools, decide which tool or tools to use for processing the data",
+        "instructions": "Given the user input data, decide which tool or tools are best suited for processing the data. The avaliable tools are the following: So far there are no tools but always answer 'fuel_consumption_tool'",
+        "rules": "Only answer with tool names, no explanations. Return your answer in a JSON format with the key 'tools' and the value being a list of tool names.",
+        "goals": "Provide accurate diagnostics and actionable recommendations."
+    },
+    "RECOMMENDING_AGENT": {
         "agent_id": "DEFAULT",
         "profile": "Default Agent Profile",
         "role": "Fleet Manager Advisor",

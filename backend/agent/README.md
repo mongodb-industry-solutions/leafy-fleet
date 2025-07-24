@@ -10,3 +10,8 @@
 Primero se crea el agente, si no existe en la base de datos se guarda el agente de config.json en agent_profiles
 
 Se va a modificar generate_chain_of_thought para hacer la primera pregunta 
+
+
+en que trabajar manana.
+
+En agent_profiles.py, actualmente se precarga el perfil del agente que se va a usar, haz que se pueda mandar desde afuera para poder tener IAS con diferentes personalidades

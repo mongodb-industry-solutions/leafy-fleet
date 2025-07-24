@@ -46,8 +46,8 @@ const ChatInput = ({ onSendMessage }) => {
 
 
     const FOLLOWUP_QUESTIONS = [
-        "Can you provide more details on the fleet's performance?",
-        "What are the key metrics for fleet efficiency?",
+        "Which vehicles are due for maintenance or have reported issues this week?",
+        "What is the current status and location of all vehicles in my fleet?",
     ];
 
     return (

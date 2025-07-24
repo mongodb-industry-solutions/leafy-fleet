@@ -22,6 +22,29 @@ import {
   setFleet2Capacity,
   setFleet3Capacity,
 } from "@/redux/slices/UserSlice";
+import ExpandableCard from "@leafygreen-ui/expandable-card";
+import Checkbox, { getTestUtils } from "@leafygreen-ui/checkbox";
+import styles from "./FilterComponent.module.css";
+import Code from "@leafygreen-ui/code";
+import {
+  H1,
+  H2,
+  Subtitle,
+  Body,
+  InlineCode,
+  InlineKeyCode,
+  Disclaimer,
+  Overline,
+  Link,
+  BackLink,
+} from "@leafygreen-ui/typography";
+import { NumberInput } from "@leafygreen-ui/number-input";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setFleet1Capacity,
+  setFleet2Capacity,
+  setFleet3Capacity,
+} from "@/redux/slices/UserSlice";
 const FilterComponent = () => {
   const dispatch = useDispatch();
   const {
@@ -66,73 +89,6 @@ const FilterComponent = () => {
     console.log(greeting('World'));
     `;
 
-  const filterGroups = [
-    {
-      title: "Geofences",
-      options: ["Geofence 1", "Geofence 2", "Downtown ", "Norths"]
-    },
-    {
-      title: "Fleets",
-      options: ["Fleet 1", "Fleet 2", "Fleet 3"]
-    },
-    {
-      title: "Time",
-      options: ["Last 30 min", "Last hour", "Last 24 hrs"]
-    }
-  ];
-
-  const fleetInputs = [
-    {
-      dataLgId: "fleet-1",
-      label: fleet1Name,
-      value: fleet1Capacity,
-      onChange: (value) => dispatch(setFleet1Capacity(value.target.value))
-    },
-    {
-      dataLgId: "fleet-2",
-      label: fleet2Name,
-      value: fleet2Capacity,
-      onChange: (value) => dispatch(setFleet2Capacity(value))
-    },
-    {
-      dataLgId: "fleet-3",
-      label: fleet3Name,
-      value: fleet3Capacity,
-      onChange: (value) => dispatch(setFleet3Capacity(value.target.value))
-    }
-  ];
-
-  const agentRunDocuments = [
-    {
-      title: "Agent Sessions",
-      description: "Contains session metadata and the thread ID."
-    },
-    {
-      title: "Historial Recommendations",
-      description: "Contains a query to other relevant questions to the selected message"
-    },
-    {
-      title: "Agent Profile",
-      description: "This contains the identity of the agent, including instructions, goals and constraints."
-    },
-    {
-      title: "Telemetry Data",
-      description: "Contains the telemetry data queried to answer this question."
-    },
-    {
-      title: "Queries",
-      description: "Contains the queries made to the database during the agent's execution."
-    },
-    {
-      title: "Logs",
-      description: "Contains the logs generated during the agent's execution."
-    },
-    {
-      title: "Last Checkpoint",
-      description: "Contains the last checkpoint data for the agent's execution."
-    }
-  ];
-
   return (
     <div className={styles.filterComponent}>
       {/* First ExpandableCard with 3x 2x2 checkbox groups */}
@@ -144,14 +100,25 @@ const FilterComponent = () => {
           darkMode={false}
         >
           <div className={styles.filterGrid}>
-            {filterGroups.map((group, i) => (
-              <div key={group.title} className={styles.checkboxGroup}>
-                <h3 className={styles.groupTitle}>{group.title}</h3>
-                {group.options.map((option, j) => (
-                  <Checkbox key={option} data-lgid={`cb-${i * 4 + j + 1}`} label={option} />
-                ))}
-              </div>
-            ))}
+            <div className={styles.checkboxGroup}>
+              <h3 className={styles.groupTitle}>Geofences</h3>
+              <Checkbox data-lgid="cb-1" label="Geofence 1" />
+              <Checkbox data-lgid="cb-2" label="Geofence 2" />
+              <Checkbox data-lgid="cb-3" label="Downtown " />
+              <Checkbox data-lgid="cb-4" label="Norths" />
+            </div>
+            <div className={styles.checkboxGroup}>
+              <h3 className={styles.groupTitle}>Fleets</h3>
+              <Checkbox data-lgid="cb-5" label="Fleet 1" />
+              <Checkbox data-lgid="cb-6" label="Fleet 2" />
+              <Checkbox data-lgid="cb-7" label="Fleet 3" />
+            </div>
+            <div className={styles.checkboxGroup}>
+              <h3 className={styles.groupTitle}>Time</h3>
+              <Checkbox data-lgid="cb-8" label="Last 30 min" />
+              <Checkbox data-lgid="cb-9" label="Last hour" />
+              <Checkbox data-lgid="cb-9" label="Last 24 hrs" />
+            </div>
           </div>
         </ExpandableCard>
       </div>
@@ -165,19 +132,42 @@ const FilterComponent = () => {
           darkMode={false}
         >
           <div className={styles.filterGrid}>
-            {fleetInputs.map(input => (
-              <NumberInput
-                key={input.dataLgId}
-                data-lgid={input.dataLgId}
-                label={input.label}
-                min={0}
-                max={100}
-                defaultValue={input.value}
-                unit="vehicles"
-                disabled={true}
-                onChange={input.onChange}
-              />
-            ))}
+            <NumberInput
+              data-lgid="fleet-1"
+              label={fleet1Name}
+              min={0}
+              max={100}
+              defaultValue={fleet1Capacity}
+              unit="vehicles"
+              disabled={true}
+              onChange={(value) =>
+                dispatch(setFleet1Capacity(value.target.value))
+              }
+            />
+
+            <NumberInput
+              data-lgid="fleet-2"
+              label={fleet2Name}
+              min={0}
+              max={100}
+              defaultValue={`None` ? fleet2Capacity : `None`}
+              unit="vehicles"
+              disabled={true}
+              onChange={(value) => dispatch(setFleet2Capacity(value))}
+            />
+
+            <NumberInput
+              data-lgid="fleet-3"
+              label={fleet3Name}
+              min={0}
+              max={100}
+              defaultValue={fleet3Capacity}
+              unit="vehicles"
+              disabled={true}
+              onChange={(value) =>
+                dispatch(setFleet3Capacity(value.target.value))
+              }
+            />
           </div>
         </ExpandableCard>
       </div>
@@ -190,13 +180,168 @@ const FilterComponent = () => {
           darkMode={false}
         >
           <div style={{ overflowY: "auto", maxHeight: "500px" }}>
-            {agentRunDocuments.map((doc, idx) => (
-              <div key={doc.title}>
-                <Body baseFontSize={16}><strong>{doc.title}</strong></Body>
-                <Body baseFontSize={14}>{doc.description}</Body>
-                <Code language="javascript">{jsSnippet}</Code>
-              </div>
-            ))}
+            <div>
+                <Body baseFontSize={16}><strong>Agent Sessions</strong></Body>
+                <Body baseFontSize={14}>Contains session metadata and the thread ID.</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Historial Recommendations</Body>
+               <Body baseFontSize={14}>Contains a query to other relevant questions to the selected message</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Agent Profile</Body>
+              <Body baseFontSize={14}>This contains the identity of the agent, including instructions, goals and constraints.</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Telemetry Data</Body>
+              <Body baseFontSize={14}>Contains the telemetry data queried to answer this question.</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Queries</Body>
+              <Body baseFontSize={14}>Contains the queries made to the database during the agent's execution.</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Logs</Body>
+              <Body baseFontSize={14}>Contains the logs generated during the agent's execution.</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Last Checkpoint</Body>
+              <Body baseFontSize={14}>Contains the last checkpoint data for the agent's execution.</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+          </div>
+        </ExpandableCard>
+      </div>
+      {/* First ExpandableCard with 3x 2x2 checkbox groups */}
+      <div className={styles.cardWrapper}>
+        <ExpandableCard
+          title="Filters"
+          description="This filters will apply to the conversation with the Leafy Fleet assistant."
+          flagText=""
+          darkMode={false}
+        >
+          <div className={styles.filterGrid}>
+            <div className={styles.checkboxGroup}>
+              <h3 className={styles.groupTitle}>Geofences</h3>
+              <Checkbox data-lgid="cb-1" label="Geofence 1" />
+              <Checkbox data-lgid="cb-2" label="Geofence 2" />
+              <Checkbox data-lgid="cb-3" label="Downtown " />
+              <Checkbox data-lgid="cb-4" label="Norths" />
+            </div>
+            <div className={styles.checkboxGroup}>
+              <h3 className={styles.groupTitle}>Fleets</h3>
+              <Checkbox data-lgid="cb-5" label="Fleet 1" />
+              <Checkbox data-lgid="cb-6" label="Fleet 2" />
+              <Checkbox data-lgid="cb-7" label="Fleet 3" />
+            </div>
+            <div className={styles.checkboxGroup}>
+              <h3 className={styles.groupTitle}>Time</h3>
+              <Checkbox data-lgid="cb-8" label="Last 30 min" />
+              <Checkbox data-lgid="cb-9" label="Last hour" />
+              <Checkbox data-lgid="cb-9" label="Last 24 hrs" />
+            </div>
+          </div>
+        </ExpandableCard>
+      </div>
+
+      {/* Additional cards with just description */}
+      <div className={styles.cardWrapper}>
+        <ExpandableCard
+          title="Fleet Overview"
+          description="Here you can customize your current fleet."
+          flagText=""
+          darkMode={false}
+        >
+          <div className={styles.filterGrid}>
+            <NumberInput
+              data-lgid="fleet-1"
+              label={fleet1Name}
+              min={0}
+              max={100}
+              defaultValue={fleet1Capacity}
+              unit="vehicles"
+              disabled={true}
+              onChange={(value) =>
+                dispatch(setFleet1Capacity(value.target.value))
+              }
+            />
+
+            <NumberInput
+              data-lgid="fleet-2"
+              label={fleet2Name}
+              min={0}
+              max={100}
+              defaultValue={`None` ? fleet2Capacity : `None`}
+              unit="vehicles"
+              disabled={true}
+              onChange={(value) => dispatch(setFleet2Capacity(value))}
+            />
+
+            <NumberInput
+              data-lgid="fleet-3"
+              label={fleet3Name}
+              min={0}
+              max={100}
+              defaultValue={fleet3Capacity}
+              unit="vehicles"
+              disabled={true}
+              onChange={(value) =>
+                dispatch(setFleet3Capacity(value.target.value))
+              }
+            />
+          </div>
+        </ExpandableCard>
+      </div>
+
+      <div className={styles.cardWrapper}>
+        <ExpandableCard
+          title="Agent Run Documents"
+          description="This contains detailed information of the entire workflow performed by the agent to generate a specific response. Feel free to try out, and discover how we use AI inside of MongoDB to empower the user."
+          flagText=""
+          darkMode={false}
+        >
+          <div style={{ overflowY: "auto", maxHeight: "500px" }}>
+            <div>
+                <Body baseFontSize={16}><strong>Agent Sessions</strong></Body>
+                <Body baseFontSize={14}>Contains session metadata and the thread ID.</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Historial Recommendations</Body>
+               <Body baseFontSize={14}>Contains ...</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Agent Profile</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Telemetry Data</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Queries</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Logs</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
+            <div>
+              <Body baseFontSize={16}>Last Checkpoint</Body>
+              <Body baseFontSize={14}>Contains ...</Body>
+              <Code language="javascript">{jsSnippet}</Code>
+            </div>
           </div>
         </ExpandableCard>
       </div>

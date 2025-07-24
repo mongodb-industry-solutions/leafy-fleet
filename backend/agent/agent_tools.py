@@ -244,6 +244,7 @@ class AgentTools(MongoDBConnector):
             chat_completions = BedrockAnthropicChatCompletions(model_id=self.chatcompletions_model_id)
             # Generate a chain of thought based on the prompt
             chain_of_thought = chat_completions.predict(CHAIN_OF_THOUGHTS_PROMPT)
+            logger.info("Answer from the LLM:", chain_of_thought, " Finish")
         except Exception as e:
             logger.error(f"Error generating chain of thought: {e}")
             chain_of_thought = (

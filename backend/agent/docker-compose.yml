@@ -11,7 +11,7 @@ services:
       - ./:/agent  # Mount the current directory into the container  
       - ~/.aws:/root/.aws  # Mount AWS credentials directory  
     working_dir: /agent  # Set the working directory inside the container  
-    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  # Start your application  
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000 --workers 2 # Start your application  
     environment:  
       - MONGODB_URI=${MONGODB_URI}  # MongoDB connection string from environment variable  
       - PYTHONUNBUFFERED=1  # Ensures real-time logging behavior  
