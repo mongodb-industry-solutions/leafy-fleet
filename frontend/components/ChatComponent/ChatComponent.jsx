@@ -12,7 +12,7 @@ import {
   setIsChatbotThinking,
   setLatestThought,
   updateMessageText,
-  setThinkingMessageId
+  setThinkingMessageId,
 } from "@/redux/slices/MessageSlice";
 import { Body } from "@leafygreen-ui/typography";
 
@@ -21,15 +21,11 @@ const ChatComponent = () => {
   const socketRef = useRef(null);
   const [connectionStatus, setConnectionStatus] = useState("Not Connected");
 
-  const chatbotIsThinking = useSelector(
-    (state) => state.Message.chatbotIsThinking
-  );
-
-  const thinkingMessageId = useSelector((state) => state.Message.thinkingMessageId);
+  const filters = useSelector((state) => state.User.queryFilters); // At top level of component
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
-    const socket = new WebSocket("ws://localhost:9000/ws?thread_id=123");
+    const socket = new WebSocket("ws://localhost:9000/ws?thread_id=abc123");
     socketRef.current = socket; // Store it in the ref
 
     socket.onopen = () => {
@@ -83,13 +79,12 @@ const ChatComponent = () => {
     dispatch(
       pushMessageHistory({ message: newUserMessage, id: newUserMessage.id })
     );
-    
-    
+
     let data = {
-        chain_of_thought:
+      chain_of_thought:
         "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
-      }; // Default fallback
-    
+    }; // Default fallback
+
     const botResponseMessage = {
       id: lastMessageId + 2,
       text: data.chain_of_thought,
@@ -109,7 +104,15 @@ const ChatComponent = () => {
       const res = await fetch(
         `http://localhost:9000/run-agent?query_reported=${encodeURIComponent(
           userMessageText
-        )}&thread_id=123`
+        )}&thread_id=abc123&filters=${encodeURIComponent(
+          JSON.stringify(filters)
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       //   const res = {
@@ -128,11 +131,13 @@ const ChatComponent = () => {
 
       const text = await res.text();
       try {
-        data = JSON.parse(text); // Parse JSON if valid
+         // Parse JSON if valid
+        console.log("Received data:", text);
+        data.chain_of_thought = text;
       } catch (jsonParseError) {
         console.error("Error parsing JSON:", jsonParseError);
         data = {
-          chain_of_thought: "Invalid response format. Please contact support.",
+          chain_of_thought: "Invalid response format.",
         }; // Fallback
       }
 
@@ -174,4 +179,3 @@ const ChatComponent = () => {
 };
 
 module.exports = ChatComponent;
-

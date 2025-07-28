@@ -3,21 +3,21 @@
 def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_instructions: str, agent_goals: str, query_reported: str, agent_motive: str,
                                  agent_kind_of_data: str, embedding_model_name: str, chat_completion_model_name: str) -> str:
     """
-    Generate a prompt for the chain of thoughts reasoning.
+    Generate a prompt for the tool and keyword selection.
 
     Args:
-        agent_profile (str): Profile of the agent generating the chain of thoughts.
-        agent_rules (str): Rules the agent follows in generating the chain of thoughts.
-        agent_instructions (str): Instructions for the agent generating the chain of thoughts.
-        agent_goals (str): Goals of the agent generating the chain of thoughts.
+        agent_profile (str): Profile of the agent.
+        agent_rules (str): Rules the agent follows.
+        agent_instructions (str): Instructions for the agent.
+        agent_goals (str): Goals of the agent.
         query_reported (str): Query reported to the agent.
-        agent_motive (str): Motive of the agent generating the chain of thoughts.
+        agent_motive (str): Motive of the agent.
         agent_kind_of_data (str): Kind of data the agent consumes.
-        embedding_model_name (str): Name of the embedding model used by the agent.
-        chat_completion_model_name (str): Name of the chat completion model used by the agent
+        embedding_model_name (str): Name of the embedding model.
+        chat_completion_model_name (str): Name of the chat completion model.
 
     Returns:
-        str: The prompt for the chain of thoughts reasoning
+        str: The prompt for tool and keyword selection.
     """
 
     return f"""
@@ -26,18 +26,29 @@ def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_ins
         Rules: {agent_rules}
         Goals: {agent_goals}
 
+        You are an AI agent designed to {agent_motive}. Given the user query:
+        "{query_reported}"
 
-        You are an AI agent designed to {agent_motive}. Given the query:
-        {query_reported}
         
-        Generate a detailed chain-of-thought reasoning that outlines the following steps:
-        1. Consume {agent_kind_of_data}.
-        2. Generate an embedding for the complaint using {embedding_model_name}
-        3. Perform a vector search on past queries in MongoDB Atlas.
-        4. Persist {agent_kind_of_data} into MongoDB.
-        5. Use {chat_completion_model_name}'s ChatCompletion model to generate a final summary and recommendation.
-        
-        Please provide your chain-of-thought as a numbered list with explanations for each step.
+
+        Available fleet management tools, only choose one of these tools:
+        - fuel_consumption_tool: Analyze fuel usage and efficiency
+        - fleet_position_search_tool: Search for vehicle positions and routes
+
+        Extract from the query:
+        1. Time parameters (convert relative dates like "last week" to actual dates)
+        2. Vehicle filters (specific car IDs, routes, or "all")
+        3. Relevant database fields from: timestamp, car_id, fuel_level, oil_temperature, quality_score, performance_score, availability_score, engine_oil_level, coordinates, current_route, speed, traveled_distance, is_engine_running, is_moving
+
+        Respond ONLY with valid JSON:
+        {{
+          "tool": "tool_name",
+          "time_range": {{
+            "start_date": "YYYY-MM-DD",
+            "end_date": "YYYY-MM-DD"
+          }},
+          "fields": ["relevant_database_fields"]
+        }}
         """
 
 

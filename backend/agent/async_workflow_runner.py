@@ -9,6 +9,14 @@ from config.config_loader import ConfigLoader
 from agent_state import AgentState
 from websocketServer import manager
 
+import logging
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 class AsyncWorkflowRunner:
     """Custom async workflow runner that executes nodes sequentially with WebSocket broadcasts."""
@@ -43,6 +51,7 @@ class AsyncWorkflowRunner:
         # Starting from entry_point and following the edges
         execution_order = []
         current_node = self.graph_config["entry_point"]
+        logging.info(f"Starting execution from entry point: {current_node}")
         
         # Build a mapping of node -> next_node
         edge_map = {}
@@ -59,6 +68,7 @@ class AsyncWorkflowRunner:
         if current_node and current_node != "END":
             execution_order.append(current_node)
             
+        logger.info(f"Execution order: {execution_order}")
         return execution_order
 
     async def ainvoke(self, initial_state: Dict[str, Any], config: Dict[str, Any] = None, thread_id: str = None, **kwargs) -> Dict[str, Any]:
@@ -75,42 +85,33 @@ class AsyncWorkflowRunner:
             Dict[str, Any]: Final state after workflow execution.
         """
         state = initial_state.copy()
-        execution_order = self.build_execution_order()
-        total_steps = len(execution_order)
-        
-        # Broadcast workflow start
-        await manager.send_to_thread(f"Starting workflow with {total_steps} steps...", thread_id=thread_id)
+        edge_map = {}
+        for edge in self.graph_config["edges"]:
+            edge_map.setdefault(edge["from"], []).append(edge["to"])
+        node_tools = {node["id"]: self.resolve_tool(node["tool"]) for node in self.graph_config["nodes"]}
+        current_node = self.graph_config["entry_point"]
+        steps = 0
 
-        # Create node tools mapping
-        node_tools = {}
-        for node in self.graph_config["nodes"]:
-            tool_function = self.resolve_tool(node["tool"])
-            node_tools[node["id"]] = tool_function
-        
-        # Execute nodes in order
-        for i, node_id in enumerate(execution_order, 1):
-            try:
-                # Broadcast step start
-                
-                if node_id in node_tools:
-                    tool_function = node_tools[node_id]
-                    # Execute the tool function
-                    result = await tool_function(state)
-                    
-                    # Update state with result
-                    if isinstance(result, dict):
-                        state.update(result)
-                    
-                    # Broadcast step completion
-                else:
-                    await manager.send_to_thread(f"Node {node_id} not found in tools", thread_id=thread_id)
-
-            except Exception as e:
-                await manager.send_to_thread(f"Error in step {i}/{total_steps} ({node_id}): {str(e)}", thread_id=thread_id)
-                raise e
-        
-        # Broadcast workflow completion
-        await manager.send_to_thread(f"All {total_steps} steps completed successfully!", thread_id=thread_id)
+        while current_node and current_node != "END":
+            steps += 1
+            if current_node not in node_tools:
+                await manager.send_to_thread(f"Node {current_node} not found in tools", thread_id=thread_id)
+                break
+            tool_function = node_tools[current_node]
+            result = await tool_function(state)
+            if isinstance(result, dict):
+                state.update(result)
+            # Check for dynamic jump
+            next_step = state.get("next_step")
+            if next_step and next_step != current_node:
+                current_node = next_step
+                state["next_step"] = None  # Optionally clear after use
+            else:
+                # Default: follow the first outgoing edge
+                next_nodes = edge_map.get(current_node, [])
+                current_node = next_nodes[0] if next_nodes else "END"
+        await manager.send_to_thread(f"Workflow completed after {steps} steps.", thread_id=thread_id)
+        # logger.info(f"Final state after workflow execution: {state}")
         return state
 
 

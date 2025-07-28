@@ -3,15 +3,14 @@ import ExpandableCard from "@leafygreen-ui/expandable-card";
 import Checkbox from "@leafygreen-ui/checkbox";
 import styles from "./FilterComponent.module.css";
 import Code from "@leafygreen-ui/code";
-import {
-  Body,
-} from "@leafygreen-ui/typography";
+import { Body } from "@leafygreen-ui/typography";
 import { NumberInput } from "@leafygreen-ui/number-input";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setFleet1Capacity,
   setFleet2Capacity,
   setFleet3Capacity,
+  setQueryFilters,
 } from "@/redux/slices/UserSlice";
 const FilterComponent = () => {
   const dispatch = useDispatch();
@@ -49,6 +48,11 @@ const FilterComponent = () => {
     }
     console.log(greeting('World'));
     `;
+
+  const setFilter = (label, checked) => {
+    dispatch(setQueryFilters({ label, checked }));
+  };
+
   return (
     <div className={styles.filterComponent}>
       {/* First ExpandableCard with 3x 2x2 checkbox groups */}
@@ -62,22 +66,58 @@ const FilterComponent = () => {
           <div className={styles.filterGrid}>
             <div className={styles.checkboxGroup}>
               <h3 className={styles.groupTitle}>Geofences</h3>
-              <Checkbox data-lgid="cb-1" label="Geofence 1" />
-              <Checkbox data-lgid="cb-2" label="Geofence 2" />
-              <Checkbox data-lgid="cb-3" label="Downtown " />
-              <Checkbox data-lgid="cb-4" label="Norths" />
+              <Checkbox
+                onChange={(e) => setFilter("Geofence 1", e.target.checked)}
+                label="Geofence 1"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("Geofence 2", e.target.checked)}
+                label="Geofence 2"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("Downtown", e.target.checked)}
+                label="Downtown"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("North", e.target.checked)}
+                label="North"
+              />
             </div>
             <div className={styles.checkboxGroup}>
               <h3 className={styles.groupTitle}>Fleets</h3>
-              <Checkbox data-lgid="cb-5" label="Fleet 1" />
-              <Checkbox data-lgid="cb-6" label="Fleet 2" />
-              <Checkbox data-lgid="cb-7" label="Fleet 3" />
+              {fleet1Name && (
+                <Checkbox
+                  onChange={(e) => setFilter("Fleet 1", e.target.checked)}
+                  label={fleet1Name}
+                />
+              )}
+              {fleet2Name && (
+                <Checkbox
+                  onChange={(e) => setFilter("Fleet 2", e.target.checked)}
+                  label={fleet2Name}
+                />
+              )}
+              {fleet3Name && (
+                <Checkbox
+                  onChange={(e) => setFilter("Fleet 3", e.target.checked)}
+                  label={fleet3Name}
+                />
+              )}
             </div>
             <div className={styles.checkboxGroup}>
               <h3 className={styles.groupTitle}>Time</h3>
-              <Checkbox data-lgid="cb-8" label="Last 30 min" />
-              <Checkbox data-lgid="cb-9" label="Last hour" />
-              <Checkbox data-lgid="cb-9" label="Last 24 hrs" />
+              <Checkbox
+                onChange={(e) => setFilter("Last 30 min", e.target.checked)}
+                label="Last 30 min"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("Last hour", e.target.checked)}
+                label="Last hour"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("Last 2 hours", e.target.checked)}
+                label="Last 2 hours"
+              />
             </div>
           </div>
         </ExpandableCard>
@@ -137,38 +177,57 @@ const FilterComponent = () => {
         >
           <div style={{ overflowY: "auto", maxHeight: "500px" }}>
             <div>
-              <Body baseFontSize={16}><strong>Agent Sessions</strong></Body>
-              <Body baseFontSize={14}>Contains session metadata and the thread ID.</Body>
+              <Body baseFontSize={16}>
+                <strong>Agent Sessions</strong>
+              </Body>
+              <Body baseFontSize={14}>
+                Contains session metadata and the thread ID.
+              </Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Historial Recommendations</Body>
-              <Body baseFontSize={14}>Contains a query to other relevant questions to the selected message</Body>
+              <Body baseFontSize={14}>
+                Contains a query to other relevant questions to the selected
+                message
+              </Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Agent Profile</Body>
-              <Body baseFontSize={14}>This contains the identity of the agent, including instructions, goals and constraints.</Body>
+              <Body baseFontSize={14}>
+                This contains the identity of the agent, including instructions,
+                goals and constraints.
+              </Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Telemetry Data</Body>
-              <Body baseFontSize={14}>Contains the telemetry data queried to answer this question.</Body>
+              <Body baseFontSize={14}>
+                Contains the telemetry data queried to answer this question.
+              </Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Queries</Body>
-              <Body baseFontSize={14}>Contains the queries made to the database during the agent's execution.</Body>
+              <Body baseFontSize={14}>
+                Contains the queries made to the database during the agent's
+                execution.
+              </Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Logs</Body>
-              <Body baseFontSize={14}>Contains the logs generated during the agent's execution.</Body>
+              <Body baseFontSize={14}>
+                Contains the logs generated during the agent's execution.
+              </Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
             <div>
               <Body baseFontSize={16}>Last Checkpoint</Body>
-              <Body baseFontSize={14}>Contains the last checkpoint data for the agent's execution.</Body>
+              <Body baseFontSize={14}>
+                Contains the last checkpoint data for the agent's execution.
+              </Body>
               <Code language="javascript">{jsSnippet}</Code>
             </div>
           </div>

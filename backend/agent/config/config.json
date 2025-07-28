@@ -12,15 +12,25 @@
         }
     ],
     "CRITICAL_CONDITIONS": {
-        "gdp": {"threshold": 2.5, "condition": "<", "message": "GDP growth slowing: {value}%"},
-        "interest_rate": {"threshold": 2.0, "condition": ">", "message": "Interest rates rising: {value}%"},
-        "unemployment_rate": {"threshold": 4.0, "condition": ">", "message": "Unemployment rate increasing: {value}%"},
-        "vix": {"threshold": 20, "condition": ">", "message": "High market volatility (VIX): {value}"}
+        "fuel_level": {"threshold": 500, "condition": "<", "message": "Low fuel level: {value}L - Vehicle needs refueling"},
+        "oil_temperature": {"threshold": 100, "condition": ">", "message": "High oil temperature: {value}°C - Engine overheating risk"},
+        "quality_score": {"threshold": 70, "condition": "<", "message": "Low quality score: {value} - Vehicle needs maintenance"},
+        "performance_score": {"threshold": 75, "condition": "<", "message": "Poor performance: {value} - Vehicle underperforming"},
+        "availability_score": {"threshold": 80, "condition": "<", "message": "Low availability: {value}% - Vehicle reliability issues"},
+        "engine_oil_level": {"threshold": 1000, "condition": "<", "message": "Low oil level: {value}ml - Oil change needed"}
     },
     "MDB_TIMESERIES_TIMEFIELD": "timestamp",
     "MDB_TIMESERIES_GRANULARITY": "seconds",
-    "MDB_EMBEDDINGS_COLLECTION": "queries",
-    "MDB_EMBEDDINGS_COLLECTION_VS_FIELD": "query_embedding",
+    "DEFAULT_TIME_WINDOWS": {
+        "fuel_consumption_tool": {"days": 7},
+        "vehicle_health_tool": {"hours": 24},
+        "performance_analytics_tool": {"days": 30},
+        "route_optimization_tool": {"days": 1},
+        "fleet_status_tool": {"hours": 1},
+        "location_tracking_tool": {"minutes": 30}
+    },
+    "MDB_EMBEDDINGS_COLLECTION": "historical_recommendations",
+    "MDB_EMBEDDINGS_COLLECTION_VS_FIELD": "embedding",
     "MDB_VS_INDEX": "agentic_framework_queries_vs_idx",
     "MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION": "historical_recommendations",
     "SIMILAR_QUERIES": [
@@ -35,16 +45,26 @@
     "AGENT_PROFILE_CHOSEN_ID": "DECIDING_AGENT",
     "DECIDING_AGENT": {
         "agent_id": "DECIDING_AGENT",
-        "profile": "Agentic Tool Decider",
-        "role": "Agentic Tool Decider",
-        "kind_of_data": "User Input Data and information about internal agent tools to process the data",
-        "motive": "Given the user input data and information about internal agent tools, decide which tool or tools to use for processing the data",
-        "instructions": "Given the user input data, decide which tool or tools are best suited for processing the data. The avaliable tools are the following: So far there are no tools but always answer 'fuel_consumption_tool'",
-        "rules": "Only answer with tool names, no explanations. Return your answer in a JSON format with the key 'tools' and the value being a list of tool names.",
+        "profile": "Fleet Management Tool Decider",
+        "role": "Fleet Management Tool Decider",
+        "kind_of_data": "Fleet vehicle telemetry data and user queries about fleet operations",
+        "motive": "Given the user input data and information about internal fleet management tools, decide which tool or tools to use for processing fleet data",
+        "instructions": "Analyze the user query to extract: 1) Which fleet management tool to use, 2) Time parameters (dates, periods), 3) Vehicle filters (specific cars, routes), 4) Relevant data fields. Available tools: fuel_consumption_tool, fleet_position_search_tool, only select one tool",
+        "rules": "Return ONLY valid JSON. Extract time references like 'last week', 'since Monday', 'past 7 days' and convert to date ranges. If no time specified, use appropriate defaults. Include vehicle filters and relevant database fields.",
+        "goals": "Provide accurate tool selection with proper time parameters and filters for fleet management queries."
+        },
+    "DEFAULT_AGENT_PROFILE": {
+        "agent_id": "DEFAULT",
+        "profile": "Default Agent Profile",
+        "role": "Fleet Manager Advisor",
+        "kind_of_data": "Vehicle time series data",
+        "motive": "analyze the data and provide fleet management recommendations",
+        "instructions": "Follow diagnostic procedures meticulously.",
+        "rules": "Ensure safety; validate sensor data; document all steps.",
         "goals": "Provide accurate diagnostics and actionable recommendations."
     },
     "RECOMMENDING_AGENT": {
-        "agent_id": "DEFAULT",
+        "agent_id": "RECOMMENDING_AGENT",
         "profile": "Default Agent Profile",
         "role": "Fleet Manager Advisor",
         "kind_of_data": "Vehicle time series data",
@@ -57,7 +77,7 @@
     "EMBEDDINGS_MODEL_ID": "cohere.embed-english-v3",
     "CHATCOMPLETIONS_MODEL_NAME": "Anthropic Claude 3 Haiku (within AWS Bedrock)",
     "CHATCOMPLETIONS_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0",
-    "AGENT_WORKFLOW_GRAPH": {
+    "DEAFAULT_AGENT_WORKFLOW_GRAPH": {
         "nodes": [
             {"id": "reasoning_node", "tool": "agent_tools.generate_chain_of_thought_tool"},
             {"id": "data_from_csv", "tool": "agent_tools.get_data_from_csv_tool"},
@@ -79,5 +99,37 @@
             {"from": "recommendation_node", "to": "END"}
         ],
         "entry_point": "reasoning_node"
+    },
+    "AGENT_WORKFLOW_GRAPH": {
+        "nodes": [
+            {"id": "reasoning_node", "tool": "agent_tools.generate_chain_of_thought_tool"},
+            {"id": "data_from_csv", "tool": "agent_tools.get_data_from_csv_tool"},
+            {"id": "process_data", "tool": "agent_tools.process_data_tool"},
+            {"id": "embedding_node", "tool": "agent_tools.get_query_embedding_tool"},
+            {"id": "vector_search_tool", "tool": "agent_tools.vector_search_tool"},
+            {"id": "process_vector_search", "tool": "agent_tools.process_vector_search_tool"},
+            {"id": "persistence_node", "tool": "agent_tools.persist_data_tool"},
+            {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"},
+            {"id": "fuel_consumption_tool", "tool": "agent_tools.fuel_consumption_tool"},
+            {"id": "save_embedding_tool", "tool": "agent_tools.save_query_embedding_tool"},
+            {"id": "fleet_position_search_tool", "tool": "query_tools.fleet_position_search_tool"}
+            
+        ],
+        "edges": [
+            {"from": "embedding_node", "to": "vector_search_tool"},
+
+            {"from": "vector_search_tool", "to": "fleet_position_search_tool"},
+            {"from": "vector_search_tool", "to": "reasoning_node"},
+            
+            
+            {"from": "reasoning_node", "to": "save_embedding_tool"},
+            
+            {"from": "save_embedding_tool", "to": "fleet_position_search_tool"},
+            
+            {"from": "fleet_position_search_tool", "to": "recommendation_node"}, 
+            
+            {"from": "recommendation_node", "to": "END"}
+        ],
+        "entry_point": "embedding_node"
     }
 }

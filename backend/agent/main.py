@@ -1,3 +1,4 @@
+from typing import Any, Dict, Optional
 from db.mdb import MongoDBConnector
 
 import logging
@@ -78,7 +79,7 @@ async def read_root(request: Request):
 
 
 @app.get("/run-agent")
-async def run_agent(query_reported: str = Query("Default query reported by the user", description="Query reported text"), thread_id: str = Query(..., description="Thread ID for the session")):
+async def run_agent(query_reported: str = Query("Default query reported by the user", description="Query reported text"), thread_id: str = Query(..., description="Thread ID for the session"), filters = Query(..., description="User selected checkbox filters")):
     """Run the agent with the given query.
 
     Args:
@@ -90,6 +91,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
     Returns:
         _type_: _description_
     """
+    logger.info("body: " + str(filters))
     initial_state: AgentState = {
         "query_reported": query_reported,
         "chain_of_thought": "",
@@ -122,25 +124,12 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         final_state["thread_id"] = thread_id
         
         # Broadcast completion with recommendation
-        recommendation_text = final_state.get("recommendation_text", "No recommendation generated")
-        await manager.send_to_thread(f"Agent workflow completed", thread_id=thread_id)
+        logger.info(f"This is the recommendation text: {final_state.get('recommendation_text')}")
+        recommendation_text = final_state.get("recommendation_text")
+        logger.info(f"Agent workflow completed for thread ID: {thread_id} with recommendation: {recommendation_text}")
+        await manager.send_to_thread(f"Agent workflow completed", thread_id)
 
-        try:
-            with MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME) as mdb_connector: 
-                session_metadata = {
-                    "thread_id": thread_id,
-                    "query_number": query_number,
-                    "query_reported": query_reported,
-                    "created_at": datetime.datetime.now(datetime.timezone.utc),
-                    "status": "completed",
-                    "recommendation": final_state["recommendation_text"]
-                }
-                session_metadata = convert_objectids(session_metadata)
-                mdb_connector.insert_one(collection_name=MDB_AGENT_SESSIONS_COLLECTION, document=session_metadata)
-                return final_state
-        except Exception as e:
-            logger.info(f"[MongoDB] Error storing session metadata: {e}")
-            return final_state
+        return final_state.get('recommendation_text')
     except Exception as e:
         await manager.broadcast(f"Error occurred: {str(e)}")
         logger.info(f"[Error] An error occurred during execution: {e}")
@@ -149,7 +138,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             with MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME) as mdb_connector: 
                 session_metadata = {
                     "thread_id": thread_id,
-                    "query_number": query_number,
+                    # "query_number": query_number,
                     "query_reported": query_reported,
                     "created_at": datetime.datetime.now(datetime.timezone.utc),
                     "status": "error",

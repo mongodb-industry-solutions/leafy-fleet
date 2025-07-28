@@ -15,3 +15,22 @@ Se va a modificar generate_chain_of_thought para hacer la primera pregunta
 en que trabajar manana.
 
 En agent_profiles.py, actualmente se precarga el perfil del agente que se va a usar, haz que se pueda mandar desde afuera para poder tener IAS con diferentes personalidades
+
+
+Ahorita estoy en fuel_consumption_tool, antes de ir a la tool se debe de guardar historical recommendarions y embeddear eso para futura referencia, despues ir a la tool seleccionada
+
+
+
+1. Get embedding
+2. Vector search
+de vector search se puede ir a la 
+3. tool 
+o
+3. generate_chain_of_thought
+de generate_chain_of_thought se va a 
+4. save_embedding
+5. tool
+
+
+
+Se tiene que enviar la cantiad de coches seleccionada y de que flotilla es para saber de que coches se esta hablando

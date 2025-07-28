@@ -21,6 +21,11 @@ from mdb_vector_search_idx_creator import VectorSearchIDXCreator
 
 from dotenv import load_dotenv
 
+from dateutil.parser import parse
+
+import json
+
+
 import asyncio  
 import websockets 
 
@@ -59,7 +64,7 @@ class AgentTools(MongoDBConnector):
         self.mdb_timeseries_granularity = self.config.get("MDB_TIMESERIES_GRANULARITY")
         self.default_timeseries_data = self.config.get("DEFAULT_TIMESERIES_DATA")
         self.critical_conditions_config = self.config.get("CRITICAL_CONDITIONS")
-        self.mdb_embeddings_collection = self.config.get("MDB_EMBEDDINGS_COLLECTION")
+        self.mdb_embeddings_collection = self.config.get("MDB_EMBEDDINGS_COLLECTION") # historical_recommendations
         self.mdb_embeddings_collection_vs_field = self.config.get("MDB_EMBEDDINGS_COLLECTION_VS_FIELD")
         self.mdb_vs_index = self.config.get("MDB_VS_INDEX")
         self.default_similar_queries = self.config.get("DEFAULT_SIMILAR_QUERIES")
@@ -69,7 +74,7 @@ class AgentTools(MongoDBConnector):
         self.embeddings_model_name = self.config.get("EMBEDDINGS_MODEL_NAME")
         self.chatcompletions_model_id = self.config.get("CHATCOMPLETIONS_MODEL_ID")
         self.chatcompletions_model_name = self.config.get("CHATCOMPLETIONS_MODEL_NAME")
-        self.mdb_historical_recommendations_collection = self.config.get("MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION")
+        self.mdb_historical_recommendations_collection = self.config.get("MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION") # historical_recommendations
 
         if collection_name:
             # Set the collection name
@@ -138,24 +143,22 @@ class AgentTools(MongoDBConnector):
                     logger.error(f"[Warning] Error parsing values for {key}: {e}")
         return critical_conditions
 
-    def vector_search(self, state: dict) -> dict:
+    def vector_search(self, state: dict, ) -> dict:
         """Performs a vector search in a MongoDB collection."""
         message = "[Tool] Performing MongoDB Atlas Vector Search"
         logger.info(message)
 
         # Set default update message
         state.setdefault("updates", []).append(message)
-        # Get embedding key
-        if state.get("embedding_key"):
-            embedding_key = state["embedding_key"]
-        elif self.collection_name:
-            embedding_key = self.mdb_embeddings_collection_vs_field
-        else:
-            # Default embedding key
-            embedding_key = "embedding"
+        # Get embedding key - use "embedding" to match the actual field name in MongoDB
+        # if state.get("embedding_key"):
+        #     embedding_key = state["embedding_key"]
+        # else:
+            # Use "embedding" to match the field name in the collection and index
+        embedding_key = "embedding"
 
         logger.info(f"Embedding key: {embedding_key}")
-        # Get the embedding vector from the state
+        # Get the embedding vector from the state, this is the embedded message
         embedding = state.get("embedding_vector", [])
 
         try:
@@ -167,41 +170,70 @@ class AgentTools(MongoDBConnector):
         except Exception as e:
             logger.error(f"[MongoDB] Error checking vector search index: {e}")
             state.setdefault("updates", []).append("[MongoDB] Error checking vector search.")
-
+        index_name = vector_index_creator_result.get("index_name", self.mdb_vs_index)
         try:
+            logger.info(f"[MongoDB] Performing vector search in collection: {self.collection_name} with index: {index_name}")
             # Perform vector search
             if self.collection is not None:
                 pipeline = [
                     {
                         "$vectorSearch": {
-                            "index": self.mdb_vs_index,
+                            "index": index_name,
                             "path": embedding_key,
                             "queryVector": embedding,
                             "numCandidates": 5,
                             "limit": 2
                         }
-                    }
-                ]
+                    },
+                    {
+                        "$addFields": {"score": {"$meta": "vectorSearchScore"}}
+                    },
+              ]
                 # Execute the aggregation pipeline
                 results = list(self.collection.aggregate(pipeline))
+
                 # Format the results
                 for result in results:
+                    #Adjust all dates to be in the current day
+
+                    # start_date = parse(result["time_range"]["start_date"])
+                    # end_date = parse(result["time_range"]["end_date"])
+                    # current_date = datetime.now(datetime.timezone.utc)
+                    # # Calculate the duration of the historical period
+                    # duration = end_date - start_date
+                    
+                    # # Set new end_date to current date and start_date based on duration
+                    # new_end_date = current_date
+                    # new_start_date = current_date - duration
+                    
+                    # # Update the time range
+                    # result["time_range"]["start_date"] = new_start_date.strftime("%Y-%m-%d")
+                    # result["time_range"]["end_date"] = new_end_date.strftime("%Y-%m-%d")
+                    
                     if "_id" in result:
                         # result["_id"] = str(result["_id"])
                         # It's not necessary to process the _id field, so removing it!
                         del result["_id"]
-                    if self.mdb_embeddings_collection_vs_field in result:
+                    if embedding_key in result:
                         # Removing the embedding field from the results
-                        del result[self.mdb_embeddings_collection_vs_field]
-            else:
-                logger.info("[MongoDB] No collection set for vector search.")
-                logger.info("Setting default similar queries.")
-                similar_queries = self.default_similar_queries
-                state.setdefault("updates", []).append("[MongoDB] No collection set for vector search. Using default similar queries.")
+                        del result[embedding_key]
+                    # Remove if score is below 0.9
+                    if "score" in result and result["score"] < 0.9:
+                        logger.info(f"[MongoDB] Result with low score removed: {result}")
+                        results.remove(result)
+            # else: # In case there is no collection set
+            #     logger.info("[MongoDB] No collection set for vector search.")
+            #     logger.info("Setting default similar queries.")
+            #     similar_queries = self.default_similar_queries
+            #     state.setdefault("updates", []).append("[MongoDB] No collection set for vector search. Using default similar queries.")
             if results:
                 logger.info(f"[MongoDB] Retrieved similar data from vector search.")
                 state.setdefault("updates", []).append("[MongoDB] Retrieved similar data.")
                 similar_queries = results
+
+                
+
+
                 logger.info(f"Similar queries - Vector Search results: {similar_queries}")
             else:
                 logger.info(f"[MongoDB] No similar data found. Returning default message.")
@@ -210,9 +242,10 @@ class AgentTools(MongoDBConnector):
         except Exception as e:
             logger.error(f"Error during MongoDB Vector Search operation: {e}")
             state.setdefault("updates", []).append("[MongoDB] Error during Vector Search operation.")
-            similar_queries = [{"query": "MongoDB Vector Search operation error", "recommendation": "Please try again later."}]
+            similar_queries = [{"query": "MongoDB Vector Search operation error", "recommendation": "Please try again later.", "score": 0.0}]
+            return similar_queries
 
-        return {"historical_recommendations_list": similar_queries}
+        return similar_queries
 
     def generate_chain_of_thought(self, state: AgentState) -> AgentState:
         """Generates the chain of thought for the agent."""
@@ -220,7 +253,7 @@ class AgentTools(MongoDBConnector):
         # Instantiate the AgentProfiles class
         profiler = AgentProfiles(collection_name=self.mdb_agent_profiles_collection)
         # Get the agent profile
-        p = profiler.get_agent_profile(agent_id=self.agent_profile_chosen_id)
+        p = profiler.get_agent_profile(agent_id="DECIDING_AGENT") # For this first call to the agent, we use the DECIDING_AGENT profile
         # Get the Query Reported from the state
         query_reported = state["query_reported"]
 
@@ -244,7 +277,9 @@ class AgentTools(MongoDBConnector):
             chat_completions = BedrockAnthropicChatCompletions(model_id=self.chatcompletions_model_id)
             # Generate a chain of thought based on the prompt
             chain_of_thought = chat_completions.predict(CHAIN_OF_THOUGHTS_PROMPT)
-            logger.info("Answer from the LLM:", chain_of_thought, " Finish")
+            JSON_chain_of_thought = json.loads(chain_of_thought)
+            next_step = JSON_chain_of_thought
+            
         except Exception as e:
             logger.error(f"Error generating chain of thought: {e}")
             chain_of_thought = (
@@ -254,11 +289,11 @@ class AgentTools(MongoDBConnector):
                 "4. Persist data into MongoDB.\n"
                 "5. Generate a final summary and recommendation."
             )
+            # Default to fuel_consumption_tool if LLM fails
+            next_step = "END"
 
-        logger.info("Chain-of-Thought Reasoning:")
-        logger.info(chain_of_thought)
         state.setdefault("updates", []).append("Chain-of-thought generated.")
-        return {**state, "chain_of_thought": chain_of_thought, "next_step": "get_data_from_csv_tool"}
+        return {**state, "chain_of_thought": chain_of_thought, "selected_tool": next_step}
     
     @staticmethod
     def process_data(state: AgentState) -> AgentState:
@@ -279,6 +314,7 @@ class AgentTools(MongoDBConnector):
             # Instantiate the Embedder
             embedder = Embedder(collection_name=self.mdb_embeddings_collection)
             embedding = embedder.get_embedding(text)
+            state["embedding_vector"] = embedding
             state.setdefault("updates", []).append("Query embedding generated!")
             logger.info("Query embedding generated!")
         except Exception as e:
@@ -287,6 +323,41 @@ class AgentTools(MongoDBConnector):
             embedding = [0.0] * 1024
         return {**state, "embedding_vector": embedding, "next_step": "vector_search_tool"}
     
+    def save_query_embedding(self, state: AgentState) -> AgentState:
+        """Saves the query embedding to the state."""
+        text = state.get("query_reported", "")
+        embedding = state.get("embedding_vector", [])
+
+        try: 
+            # Instantiate the Embedder
+            embedder = Embedder(collection_name=self.mdb_embeddings_collection) # historical_recommendations collection
+            # embedding = embedder.get_embedding(text)
+
+            # Save the embedded question with the answer to MongoDB
+            historical_recommendation = {
+                "query": text,
+                "recommendation": state.get("selected_tool", ""),
+                "embedding": embedding,
+                "thread_id": state.get("thread_id", ""),
+                "created_at": datetime.datetime.now(datetime.timezone.utc)
+            }
+
+            # Convert ObjectIds to strings
+            # historical_recommendation = convert_objectids(historical_recommendation)
+            # Insert the historical recommendation into the MongoDB collection
+            self.get_collection(self.mdb_historical_recommendations_collection).insert_one(historical_recommendation)
+            logger.info(f"[MongoDB] Historical recommendation saved")
+            state.setdefault("updates", []).append("Query embedding generated!")
+            logger.info("Query embedding generated!")
+        except Exception as e:
+            logger.error(f"Error generating query embedding: {e}")
+            state.setdefault("updates", []).append("Error generating query embedding; using dummy vector.")
+            embedding = [0.0] * 1024
+        
+        # We go to the intended tool based on the response from the LLM
+        
+        return state
+
     @staticmethod
     def process_vector_search(state: AgentState) -> AgentState:
         """Processes the vector search results."""
@@ -403,28 +474,26 @@ class AgentTools(MongoDBConnector):
         except Exception as e:
             logger.error(f"Error generating LLM recommendation: {e}")
             llm_recommendation = "Unable to generate recommendation at this time."
-
-        logger.info("LLM Recommendation:")
-        logger.info(llm_recommendation)
         state.setdefault("updates", []).append("Final recommendation generated.")
 
-        try:
-            recommendation_record = {
-                "thread_id": state.get("thread_id", ""),
-                "timestamp": datetime.datetime.now(datetime.timezone.utc),
-                "query_reported": state["query_reported"],
-                "timeseries_data": timeseries_data,
-                "historical_recommendations": state.get("historical_recommendations_list", []),
-                "recommendation": llm_recommendation
-            }
-            recommendation_record = convert_objectids(recommendation_record)
-            self.collection.insert_one(recommendation_record)
-            state.setdefault("updates", []).append("Recommendation stored in MongoDB.")
-            logger.info("[MongoDB] Recommendation stored in historical records")
-        except Exception as e:
-            logger.error(f"Error storing recommendation in MongoDB: {e}")
-            state.setdefault("updates", []).append("Error storing recommendation in MongoDB.")
-
+        # try:
+        #     recommendation_record = {
+        #         "thread_id": state.get("thread_id", ""),
+        #         "timestamp": datetime.datetime.now(datetime.timezone.utc),
+        #         "query_reported": state["query_reported"],
+        #         "timeseries_data": timeseries_data,
+        #         "historical_recommendations": state.get("historical_recommendations_list", []),
+        #         "recommendation": llm_recommendation
+        #     }
+        #     recommendation_record = convert_objectids(recommendation_record)
+        #     self.collection.insert_one(recommendation_record)
+        #     state.setdefault("updates", []).append("Recommendation stored in MongoDB.")
+        #     logger.info("[MongoDB] Recommendation stored in historical records")
+        # except Exception as e:
+        #     logger.error(f"Error storing recommendation in MongoDB: {e}")
+        #     state.setdefault("updates", []).append("Error storing recommendation in MongoDB.")
+        logger.info(f"[LLM] Recommendation generated: {llm_recommendation}")
+        state["recommendation_text"] = llm_recommendation
         return {**state, "recommendation_text": llm_recommendation, "next_step": "end"}
 
 
@@ -461,13 +530,29 @@ async def vector_search_tool(state: dict) -> dict:
     # Instantiate the AgentTools class
     agent_tools = AgentTools(collection_name=mdb_embeddings_collection)
     result = agent_tools.vector_search(state=state)
-    search_results = len(result.get("historical_recommendations_list", []))
+    logger.info(result)
+    logger.info("Vector Search Results score:")
+    logger.info(result[0].get("score"))
+    if result and result[0].get("score") < 0.9:
+        state["next_step"] = "fuel_consumption_tool"  # Fixed: correct node name
+    elif result and result[0].get("score", 0) < 0.9:
+        state["next_step"] = "reasoning_node"
+    elif not result:
+        state["next_step"] = "reasoning_node"
+    else:
+        state["next_step"] = "reasoning_node"
+    # search_results = len(result.get("historical_recommendations_list", []))
     return result
 
 async def generate_chain_of_thought_tool(state: AgentState) -> AgentState:
     """Generates the chain of thought for the agent."""
     agent_tools = AgentTools()
+    await manager.send_to_thread("Deciding which tools to use next", state.get("thread_id", ""))
+
     result = agent_tools.generate_chain_of_thought(state=state)
+    # If we come to the tool selecting LLM we always need to save the response, then we go to the tool
+    state["response"] = result
+    state["next_step"] = "save_embedding_tool"
     return result
 
 async def process_data_tool(state: AgentState) -> AgentState:
@@ -511,4 +596,23 @@ async def get_llm_recommendation_tool(state: AgentState) -> AgentState:
     # Instantiate the AgentTools class
     agent_tools = AgentTools(collection_name=mdb_historical_recommendations_collection)
     result = agent_tools.get_llm_recommendation(state=state)
+    return result
+
+async def fuel_consumption_tool(state: dict) -> dict:
+    """Placeholder for fuel consumption tool."""
+    logger.info("Fuel consumption tool is not implemented yet.")
+    # state["next_step"] = "reasoning_node"
+    # input()
+    state["chain_of_thoughtç"] = "Fuel consumption tool is not implemented yet."
+    return {"message": "Fuel consumption tool is not implemented yet."}
+
+async def save_query_embedding_tool(state: dict) -> dict:
+    """Saves the query embedding to the state."""
+    await manager.broadcast("Saving new question's result to MongoDB")
+    logger.info("Saving new question's result to MongoDB")
+    # Instantiate the AgentTools class
+    agent_tools = AgentTools()
+    result = agent_tools.save_query_embedding(state=state)
+    # We go to the intended tool based on the response from the LLM
+    state["next_step"] = state["selected_tool"]["tools"][0]  # Default to 'end' if no tool is selected
     return result

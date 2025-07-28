@@ -15,6 +15,7 @@ class HistoricalRecommendation(TypedDict):
     recommendation: str
 
 class AgentState(TypedDict):
+    
     query_reported: str
     chain_of_thought: str
     timeseries_data: List[TimeseriesRecord]

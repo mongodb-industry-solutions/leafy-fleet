@@ -47,7 +47,7 @@ class AgentProfiles(MongoDBConnector):
         # Load configuration
         config = ConfigLoader()
         # Load Default Agent Profile from config
-        default_profile = config.get("DECIDING_AGENT")
+        default_profile = config.get("DEFAULT_AGENT_PROFILE")
 
         try:
             # Retrieve the agent profile from MongoDB
@@ -58,12 +58,12 @@ class AgentProfiles(MongoDBConnector):
                 return profile
             else:
                 # Check if the default profile already exists
-                existing_default_profile = self.collection.find_one({"agent_id": "DECIDING_AGENT"})
+                existing_default_profile = self.collection.find_one({"agent_id": "DEFAULT"})
                 if existing_default_profile:
                     if update_default:
                         # Update the existing default profile
                         self.collection.update_one(
-                            {"agent_id": "DECIDING_AGENT"},
+                            {"agent_id": "DEFAULT"},
                             {"$set": default_profile}
                         )
                         logger.info("Default profile updated.")
