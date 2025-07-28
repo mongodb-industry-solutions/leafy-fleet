@@ -125,9 +125,12 @@ class Car:
 
                 if self.step_index % 10 == 0:
                     try:
-                        url = f"{hostname}:9004/geofences/check"
-                        payload = {'coordinates': [float(self.longitude), float(self.latitude)]}
-                        async with HTTP_SESSION.get(url, params=payload) as response:
+                        
+                        async with HTTP_SESSION.get(
+                        f"{hostname}:9004/geofences/check",
+                            json={'coordinates': [float(self.longitude), float(self.latitude)]}
+
+                        ) as response:
                             if response.status == 200:
                                 data = await response.json()
                                 self.current_geozone = (
@@ -174,7 +177,7 @@ def create_cars(num_cars=4):
     for car_id in range(1, num_cars + 1):
         route_id = car_id if car_id in ROUTES else car_id - 1
         if route_id not in ROUTES:
-            print(f"⚠️ Skipping car {car_id}: no starting route {route_id}")
+            print(f" Skipping car {car_id}: no starting route {route_id}")
             continue
         lat, lng = ROUTES[route_id][0][0]
         car = Car(
