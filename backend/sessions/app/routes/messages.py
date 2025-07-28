@@ -16,7 +16,8 @@ async def update_message(
 ):  
     thread_id = payload.get("thread_id")  
     message = payload.get("message")  
-    sender = payload.get("sender")  
+    sender = payload.get("sender")
+    completed = payload.get("completed", True)  # Default to True if not provided  
   
     # Validate thread_id  
     if not thread_id:  
@@ -43,7 +44,7 @@ async def update_message(
           
         # Prepare new message  
         msg_index = len(session.get("chat_history", []))  # Use existing chat_history length  
-        new_msg = Message(message=message, index=msg_index, sender=sender).dict()  
+        new_msg = Message(message=message, index=msg_index, sender=sender, completed=completed).dict()  
           
         # Update chat_history and last_used_at  
         updated_session = sessions_coll.find_one_and_update(  
@@ -110,4 +111,5 @@ async def get_messages(thread_id: str):
 #   "thread_id": "688795a6bd4be05fdbfe3eab",
 #   "message": "Hello, this is my message text",
 #   "sender": "user"
+#   "completed": true  # Optional, defaults to true
 # }

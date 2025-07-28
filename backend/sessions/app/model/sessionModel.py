@@ -38,6 +38,7 @@ class Message(BaseModel):
     message: str = Field(default="easter egg") #text
     index: int = Field(default=0) #from 0 to n, to kniow the order of the messages. in theory should not be needed if appended to list in order, but just in case
     sender: str = Field(default="bot") #bot or user
+    completed: bool = Field(default=True) #if the message is completed or not, to know if the bot is still typing
     
 
 class SessionModel(BaseModel):
