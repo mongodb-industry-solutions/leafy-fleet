@@ -144,7 +144,7 @@ def process_all_routes(csv_file :str, output_file: str ):
     all_routes = {}
     #un array de routes fallidas
     failed_routes = []
-    limit = 2 
+    limit = 5 # limite 5, 10 carros 
     #  islice to limit the number of rows processed while testing
     rows = itertools.islice(df.iterrows(), limit) if limit else df.iterrows()
 

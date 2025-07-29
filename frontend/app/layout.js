@@ -7,7 +7,7 @@ import PageHeader from "@/components/PageHeader/PageHeader";
 export const metadata = {
   title: "Leafy Fleet",
   description:
-    "This AI Agent listens to complaints and advises on next course of action",
+    "Fleet Management System with AI-driven diagnostics and recommendations",
   icons: [
     {
       url: "/favicon_light.png",

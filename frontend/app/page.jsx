@@ -117,7 +117,7 @@ export default function HomePage() {
       <div style={{ padding: "20px", fontFamily: "Arial, sans-serif", width: "100%" }}>
 
         <div style={{ marginLeft: "30px" }}>
-          <H1 style={{ marginBottom: "5px" }}>Agentic Framework</H1>
+          <H1 style={{ marginBottom: "5px" }}>Agentic Framework. gggg</H1>
           <Body style={{ width: "50%" }}>The Agentic Framework serves as a versatile AI-driven recommendation assistant capable of comprehending your data, performing a multi-step diagnostic workflow using <b>LangGraph</b>, and generating actionable recommendations. </Body>
           <Body style={{ width: "50%", paddingTop: "15px" }}> The backend reads timeseries data from a CSV file or MongoDB, generates text embeddings using the <b>Cohere English V3 model</b>, performs vector searches to identify similar past queries using <b>MongoDB Atlas Vector Search</b>, persists session and run data, and finally generates a diagnostic recommendation. <b>MongoDB</b> stores agent profiles, historical recommendations, timeseries data, session logs, and more.</Body>
           <Body style={{ width: "50%", paddingTop: "15px" }}> This persistent storage not only logs every step of the diagnostic process for traceability but also enables efficient querying and reusability of past data.</Body>

@@ -78,3 +78,4 @@ class TimeseriesModel(BaseModel):
         default_factory=lambda: {"type": "Point", "coordinates": [0.0, 0.0]},
         description="GeoJSON Point coordinates for the vehicle's location"
     )
+    
