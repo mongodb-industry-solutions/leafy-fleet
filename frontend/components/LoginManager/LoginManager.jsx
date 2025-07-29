@@ -26,7 +26,7 @@ import {
 } from "@/redux/slices/UserSlice";
 import { Option, OptionGroup, Select, Size } from "@leafygreen-ui/select";
 import Button from "@leafygreen-ui/button";
-import Code from "@leafygreen-ui/code";
+import { usePathname } from "next/navigation";   
 import DocumentFleetComponent from "../DocumentFleetComponent/DocumentFleetComponent";
 
 const LoginManager = () => {
@@ -34,7 +34,7 @@ const LoginManager = () => {
   const selectedUser = useSelector(
     (state) => state.User.selectedUser
   );
-const editFleet = useSelector((state) => state.User.editFleet);
+  const editFleet = useSelector((state) => state.User.editFleet);
 
   const selectedFleets = useSelector((state) =>state.User.selectedFleets);
 
@@ -94,10 +94,18 @@ const editFleet = useSelector((state) => state.User.editFleet);
     setOpen(false);
     if (fleet1Size == 0) {
       dispatch(setFleet1Capacity(20));
+
     }
   };
 
-  return (
+  const pathname = usePathname(); // Get the current route  
+  const pathsRequiringLogin = ["/chat", "/charts", "/overview"]; // Paths requiring login  
+  
+  const shouldShowLoginPopup = pathsRequiringLogin.includes(pathname);  
+  
+
+  if (shouldShowLoginPopup) {  
+    return ( 
       <div>
       <LoginComp modalObserver={modalObserver} />
 
@@ -267,6 +275,9 @@ const editFleet = useSelector((state) => state.User.editFleet);
       </Modal>
     </div>
   );
+}
+  return null;  
+  
 };
 
 module.exports = LoginManager;

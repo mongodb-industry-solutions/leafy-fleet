@@ -20,6 +20,9 @@ export const metadata = {
   ],
 };
 
+// Check if the current route starts with "/extensions", and exclude "/" (root)  
+
+
 
 export default function RootLayout({ children }) {
   return (
