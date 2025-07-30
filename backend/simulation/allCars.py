@@ -103,7 +103,7 @@ class Car:
             "vin": self.vin,
             "coordinates": {
             "type": "Point",
-            "coordinates": [float(round(self.longitude, 6)), float(round(self.latitude, 6))]
+            "coordinates": [float(round(self.longitude, 7)), float(round(self.latitude, 7))]
         }
             
         }
@@ -125,17 +125,19 @@ class Car:
 
                 if self.step_index % 10 == 0:
                     try:
-                        
+                        json_payload = {'coordinates': [float(self.longitude), float(self.latitude)]}  
+  
+                        # Print or log the JSON payload  
+                        print(f"Sending JSON payload: {json_payload}")  
                         async with HTTP_SESSION.get(
                         f"{hostname}:9004/geofences/check",
-                            json={'coordinates': [float(self.longitude), float(self.latitude)]}
-
+                            json=json_payload  
                         ) as response:
                             if response.status == 200:
                                 data = await response.json()
                                 self.current_geozone = (
-                                    f"Geofence {data['geofence_id']} active"
-                                    if data.get("geofence_id")
+                                    f"{data['geofence_name']}"
+                                    if data.get("geofence_name")
                                     else "No active geofence"
                                 )
                             else:
@@ -147,6 +149,7 @@ class Car:
                     logger.info(f"Car {self.car_id} updated geozone: {self.current_geozone}")
                 # Send timeseries data every step
                 try:
+                
                     await HTTP_SESSION.post(
                         f"{hostname}:9002/timeseries",
                         json=self.to_document()
@@ -172,7 +175,7 @@ def load_routes(filepath: str):
         )
     print(f" Loaded {len(ROUTES)} routes")
 
-def create_cars(num_cars=4):
+def create_cars(num_cars: int):
     cars = []
     for car_id in range(1, num_cars + 1):
         route_id = car_id if car_id in ROUTES else car_id - 1
@@ -228,8 +231,8 @@ async def main():
     global HTTP_SESSION
     HTTP_SESSION = aiohttp.ClientSession()
 
-    load_routes( "processed_routes_2.json")
-    cars = create_cars()
+    load_routes( "processed_routes.json")
+    cars = create_cars(num_cars=10)
 
     loop = asyncio.get_running_loop()
     stop_event = asyncio.Event()

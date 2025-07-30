@@ -16,7 +16,8 @@ const UserSlice = createSlice({
     fleet1Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality"],
     fleet2Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality",],
     fleet3Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality",],
-    editFleet: 1
+    editFleet: 1,
+    isLoggedIn: false
   },
   reducers: {
     setSelectedUser: (state, action) => {
@@ -54,7 +55,12 @@ const UserSlice = createSlice({
     },
     setEditFleet:(state, action) => {
       state.editFleet = action.payload.editFleet;
-  },}
+  },setLoggedFleet: (state, action) => {
+      state.isLoggedIn = action.payload; // Set the login status based on the action payload
+    }
+
+}
+
 });
 
 export const {
@@ -69,7 +75,8 @@ export const {
   setFleet1Attributes,
   setFleet2Attributes,
   setFleet3Attributes,
-  setEditFleet
+  setEditFleet,
+  setLoggedFleet
 } = UserSlice.actions;
 
 export default UserSlice.reducer;

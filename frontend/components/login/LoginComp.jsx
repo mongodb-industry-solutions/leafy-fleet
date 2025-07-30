@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useEffect } from "react";
-import Icon from "@leafygreen-ui/icon";
 import { Modal, Container } from "react-bootstrap";
 import { H2, Subtitle, Description } from "@leafygreen-ui/typography";
 
@@ -15,7 +14,10 @@ import UserComp from "../user/UserComp";
 import Banner from "@leafygreen-ui/banner";
 import WizardIcon from "@leafygreen-ui/icon/dist/Wizard";
 import { USER_MAP } from "@/lib/constants";
-
+import { useDispatch, useSelector } from "react-redux";
+import { usePathname } from "next/navigation";
+import {
+  setLoggedFleet} from "@/redux/slices/UserSlice";
 const LoginComp = ({ modalObserver }) => {
   const [open, setOpen] = useState(false);
 
@@ -23,12 +25,23 @@ const LoginComp = ({ modalObserver }) => {
     setOpen(true);
   }, []);
 
+  
+  const dispatch = useDispatch();  
+
+  
+  const pathname = usePathname(); // Get the current route  
+  const pathsRequiringLogin = ["/chat", "/charts", "/overview"]; // Paths requiring login  
+  
+  const shouldShowLoginPopup = pathsRequiringLogin.includes(pathname);  
+
   const handleClose = () => {
     modalObserver();
     setOpen(false);
   };
+  
 
-  return (
+  if (shouldShowLoginPopup) {  
+    return (  
     <Modal
       show={open}
       onHide={handleClose}
@@ -95,6 +108,8 @@ const LoginComp = ({ modalObserver }) => {
       </Container>
     </Modal>
   );
+}
+return null; // If the current route does not require login, return null
 };
 
 export default LoginComp;
