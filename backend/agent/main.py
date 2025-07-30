@@ -1,6 +1,8 @@
 from typing import Any, Dict, Optional
 from db.mdb import MongoDBConnector
 
+import ast
+
 import logging
 import datetime
 import asyncio  
@@ -79,7 +81,10 @@ async def read_root(request: Request):
 
 
 @app.get("/run-agent")
-async def run_agent(query_reported: str = Query("Default query reported by the user", description="Query reported text"), thread_id: str = Query(..., description="Thread ID for the session"), filters = Query(..., description="User selected checkbox filters")):
+async def run_agent(query_reported: str = Query("Default query reported by the user", 
+                                                description="Query reported text"), thread_id: str = Query(..., description="Thread ID for the session"), 
+                                                filters = Query(..., description="User selected checkbox filters"), 
+                                                preferences = Query(..., description="User preferences for the query")): #This is a literal string, not a list or anything
     """Run the agent with the given query.
 
     Args:
@@ -91,8 +96,13 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
     Returns:
         _type_: _description_
     """
-    logger.info("body: " + str(filters))
+    
+    parsed_filters = ast.literal_eval(filters) if filters else []
+    parsed_preferences = ast.literal_eval(preferences) if preferences else []
     initial_state: AgentState = {
+        "userFilters": parsed_filters,
+        "userPreferences": parsed_preferences,
+        "botPreferences": [],
         "query_reported": query_reported,
         "chain_of_thought": "",
         "timeseries_data": [],
@@ -124,12 +134,23 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         final_state["thread_id"] = thread_id
         
         # Broadcast completion with recommendation
-        logger.info(f"This is the recommendation text: {final_state.get('recommendation_text')}")
-        recommendation_text = final_state.get("recommendation_text")
-        logger.info(f"Agent workflow completed for thread ID: {thread_id} with recommendation: {recommendation_text}")
         await manager.send_to_thread(f"Agent workflow completed", thread_id)
 
-        return final_state.get('recommendation_text')
+
+        # For some reason I get problems returning final_state
+        final_answer = {
+            "thread_id": thread_id,
+            "query_reported": query_reported,
+            "recommendation_text": final_state.get('recommendation_text', 'No recommendation found'),
+            "recommendation_data": final_state.get('recommendation_data', []),
+            "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "checkpoint": final_state.get('checkpoint', None),
+            # "tool_used": final_state.get('tool_used', None),
+            # Agent profile
+        }
+
+
+        return final_answer
     except Exception as e:
         await manager.broadcast(f"Error occurred: {str(e)}")
         logger.info(f"[Error] An error occurred during execution: {e}")

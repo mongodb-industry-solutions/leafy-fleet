@@ -20,6 +20,7 @@ const UserSlice = createSlice({
       "Longitude",
       "Avaliability",
       "Quality",
+      "OEE",
     ],
     fleet2Attributes: [
       "Latitude",
@@ -28,6 +29,7 @@ const UserSlice = createSlice({
       "Longitude",
       "Avaliability",
       "Quality",
+      "OEE",
     ],
     fleet3Attributes: [
       "Latitude",
@@ -36,6 +38,7 @@ const UserSlice = createSlice({
       "Longitude",
       "Avaliability",
       "Quality",
+      "OEE",
     ],
     editFleet: 1,
     queryFilters: [],

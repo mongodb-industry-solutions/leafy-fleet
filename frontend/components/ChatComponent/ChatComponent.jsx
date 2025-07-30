@@ -23,6 +23,21 @@ const ChatComponent = () => {
 
   const filters = useSelector((state) => state.User.queryFilters); // At top level of component
 
+  const {
+    fleet1Atributes,
+    fleet2Atributes,
+    fleet3Atributes,
+  } = useSelector((state) => ({
+    fleet1Atributes: state.User.fleet1Attributes,
+    fleet2Atributes: state.User.fleet2Attributes,
+    fleet3Atributes: state.User.fleet3Attributes,
+  }));
+
+    const userPreferences = [[fleet1Atributes], [fleet2Atributes], [fleet3Atributes]].flat();
+
+
+
+
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
     const socket = new WebSocket("ws://localhost:9000/ws?thread_id=abc123");
@@ -106,6 +121,7 @@ const ChatComponent = () => {
           userMessageText
         )}&thread_id=abc123&filters=${encodeURIComponent(
           JSON.stringify(filters)
+        )}&preferences=${encodeURIComponent(JSON.stringify(userPreferences)
         )}`,
         {
           method: "GET",
@@ -128,16 +144,18 @@ const ChatComponent = () => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
+      
 
       const text = await res.text();
+      // console.log("Response text:", text);
       try {
          // Parse JSON if valid
-        console.log("Received data:", text);
-        data.chain_of_thought = text;
+        const parsedData = JSON.parse(text);
+        data.recommendation_text = parsedData.recommendation_text;
       } catch (jsonParseError) {
         console.error("Error parsing JSON:", jsonParseError);
         data = {
-          chain_of_thought: "Invalid response format.",
+          recommendation_text: "Invalid response format.",
         }; // Fallback
       }
 
@@ -146,7 +164,7 @@ const ChatComponent = () => {
       dispatch(
         updateMessageText({
           id: botResponseMessage.id,
-          text: data.chain_of_thought,
+          text: data.recommendation_text,
         })
       );
     } catch (error) {

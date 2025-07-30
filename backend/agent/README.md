@@ -34,3 +34,36 @@ de generate_chain_of_thought se va a
 
 
 Se tiene que enviar la cantiad de coches seleccionada y de que flotilla es para saber de que coches se esta hablando
+
+
+
+
+
+
+
+
+
+{
+    $project: {
+      fleetId: 1, // keep fleetId for condition checks
+      vehicleInfo: {
+        $cond: {
+          if: { $eq: ["$fleetId", 1] },
+          then: {
+            fieldA: "$fieldA",
+            fieldB: "$fieldB"
+          },
+          else: {
+            $cond: {
+              if: { $eq: ["$fleetId", 2] },
+              then: {
+                fieldX: "$fieldX",
+                fieldY: "$fieldY"
+              },
+              else: "$$REMOVE" // remove vehicleInfo if it's a different fleet
+            }
+          }
+        }
+      }
+    }
+  }

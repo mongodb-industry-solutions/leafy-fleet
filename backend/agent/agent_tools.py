@@ -25,6 +25,7 @@ from dateutil.parser import parse
 
 import json
 
+import voyageai
 
 import asyncio  
 import websockets 
@@ -238,7 +239,7 @@ class AgentTools(MongoDBConnector):
             else:
                 logger.info(f"[MongoDB] No similar data found. Returning default message.")
                 state.setdefault("updates", []).append("[MongoDB] No similar data found.")
-                similar_queries = [{"query": "No similar queries found", "recommendation": "No immediate action based on past data."}]
+                similar_queries = [{"query": "No similar queries found", "recommendation": "No immediate action based on past data.", "score": 0.0}]
         except Exception as e:
             logger.error(f"Error during MongoDB Vector Search operation: {e}")
             state.setdefault("updates", []).append("[MongoDB] Error during Vector Search operation.")
@@ -270,16 +271,19 @@ class AgentTools(MongoDBConnector):
         )
 
         # CHAIN_OF_THOUGHTS_PROMPT = (f"""Just provide an answer to the user query: {query_reported}. """)
-        logger.info("Chain-of-Thought Reasoning Prompt:")
-        logger.info(CHAIN_OF_THOUGHTS_PROMPT)
+        # logger.info("Chain-of-Thought Reasoning Prompt:")
+        # logger.info(CHAIN_OF_THOUGHTS_PROMPT)
         try:
             # Instantiate the chat completion model
             chat_completions = BedrockAnthropicChatCompletions(model_id=self.chatcompletions_model_id)
             # Generate a chain of thought based on the prompt
             chain_of_thought = chat_completions.predict(CHAIN_OF_THOUGHTS_PROMPT)
             JSON_chain_of_thought = json.loads(chain_of_thought)
-            next_step = JSON_chain_of_thought
-            
+            logger.info(f"Chain of thought JSON: {JSON_chain_of_thought}")
+            next_step = JSON_chain_of_thought.get("tool")
+            logger.info(f"Next step selected: {next_step}")
+            logger.info(f"Chain of thought generated: {chain_of_thought}")
+            state["response"] = next_step
         except Exception as e:
             logger.error(f"Error generating chain of thought: {e}")
             chain_of_thought = (
@@ -289,7 +293,6 @@ class AgentTools(MongoDBConnector):
                 "4. Persist data into MongoDB.\n"
                 "5. Generate a final summary and recommendation."
             )
-            # Default to fuel_consumption_tool if LLM fails
             next_step = "END"
 
         state.setdefault("updates", []).append("Chain-of-thought generated.")
@@ -311,9 +314,17 @@ class AgentTools(MongoDBConnector):
         text = state["query_reported"]
 
         try: 
-            # Instantiate the Embedder
-            embedder = Embedder(collection_name=self.mdb_embeddings_collection)
-            embedding = embedder.get_embedding(text)
+            # Instantiate the Voyage AI Embedder
+
+            # https://docs.voyageai.com/docs/embeddings
+
+            # This will automatically use the environment variable VOYAGE_API_KEY.
+            # Alternatively, you can use vo = voyageai.Client(api_key="<your secret key>")
+
+            embedder = voyageai.Client()
+            embedding_response = embedder.embed(text, model="voyage-3.5", input_type="document")
+            embedding = embedding_response.embeddings[0]
+            # logger.info(f"Generated embedding: {embedding}")
             state["embedding_vector"] = embedding
             state.setdefault("updates", []).append("Query embedding generated!")
             logger.info("Query embedding generated!")
@@ -440,15 +451,15 @@ class AgentTools(MongoDBConnector):
         logger.info("[Final Answer] Generating final recommendation...")
         
         # Use default timeseries data if none is provided
-        timeseries_data = state.get("timeseries_data", [])
+        timeseries_data = state.get("recommendation_data", [])
         if not timeseries_data:
             state.setdefault("updates", []).append("No timeseries data; using default values.")
             logger.warning("[Warning] No timeseries data available. Using default values.")
             timeseries_data = self.default_timeseries_data
 
-        # Evaluate critical conditions
-        critical_conditions = self.evaluate_critical_conditions(timeseries_data)
-        critical_info = "CRITICAL ALERT: " + ", ".join(critical_conditions) + "\n\n" if critical_conditions else ""
+        # # Evaluate critical conditions
+        # critical_conditions = self.evaluate_critical_conditions(timeseries_data)
+        # critical_info = "CRITICAL ALERT: " + ", ".join(critical_conditions) + "\n\n" if critical_conditions else ""
 
         # Instantiate the AgentProfiles class
         profiler = AgentProfiles(collection_name=self.mdb_agent_profiles_collection)
@@ -459,18 +470,19 @@ class AgentTools(MongoDBConnector):
         LLM_RECOMMENDATION_PROMPT = get_llm_recommendation_prompt(
             agent_role=p["role"],
             agent_kind_of_data=p["kind_of_data"],
-            critical_info=critical_info,
+            critical_info="No critical info",
             timeseries_data=timeseries_data,
             historical_recommendations_list=state.get("historical_recommendations_list", [])
         )
-        logger.info("LLM Recommendation Prompt:")
-        logger.info(LLM_RECOMMENDATION_PROMPT)
+        # logger.info("LLM Recommendation Prompt:")
+        # logger.info(LLM_RECOMMENDATION_PROMPT)
 
         try:
             # Instantiate the chat completion model
             chat_completions = BedrockAnthropicChatCompletions(model_id=self.chatcompletions_model_id)
             # Generate a chain of thought based on the prompt
             llm_recommendation = chat_completions.predict(LLM_RECOMMENDATION_PROMPT)
+            
         except Exception as e:
             logger.error(f"Error generating LLM recommendation: {e}")
             llm_recommendation = "Unable to generate recommendation at this time."
@@ -530,15 +542,13 @@ async def vector_search_tool(state: dict) -> dict:
     # Instantiate the AgentTools class
     agent_tools = AgentTools(collection_name=mdb_embeddings_collection)
     result = agent_tools.vector_search(state=state)
-    logger.info(result)
-    logger.info("Vector Search Results score:")
-    logger.info(result[0].get("score"))
-    if result and result[0].get("score") < 0.9:
-        state["next_step"] = "fuel_consumption_tool"  # Fixed: correct node name
-    elif result and result[0].get("score", 0) < 0.9:
-        state["next_step"] = "reasoning_node"
-    elif not result:
-        state["next_step"] = "reasoning_node"
+
+    if result and len(result) > 0 and result[0].get("score", 0) > 0.95:
+        # Check if tools exist in the recommendation field
+        recommendation = result[0].get("recommendation", {})    
+
+        state["next_step"] = recommendation if recommendation else "reasoning_node"
+        logger.info(f"Next step set to: {state['next_step']}")
     else:
         state["next_step"] = "reasoning_node"
     # search_results = len(result.get("historical_recommendations_list", []))
@@ -598,13 +608,7 @@ async def get_llm_recommendation_tool(state: AgentState) -> AgentState:
     result = agent_tools.get_llm_recommendation(state=state)
     return result
 
-async def fuel_consumption_tool(state: dict) -> dict:
-    """Placeholder for fuel consumption tool."""
-    logger.info("Fuel consumption tool is not implemented yet.")
-    # state["next_step"] = "reasoning_node"
-    # input()
-    state["chain_of_thoughtç"] = "Fuel consumption tool is not implemented yet."
-    return {"message": "Fuel consumption tool is not implemented yet."}
+
 
 async def save_query_embedding_tool(state: dict) -> dict:
     """Saves the query embedding to the state."""
@@ -614,5 +618,7 @@ async def save_query_embedding_tool(state: dict) -> dict:
     agent_tools = AgentTools()
     result = agent_tools.save_query_embedding(state=state)
     # We go to the intended tool based on the response from the LLM
-    state["next_step"] = state["selected_tool"]["tools"][0]  # Default to 'end' if no tool is selected
+    selected_tool = state.get("selected_tool", {})
+    logger.info(f"Selected tool: {selected_tool}")
+    state["next_step"] = selected_tool if selected_tool else "end"
     return result

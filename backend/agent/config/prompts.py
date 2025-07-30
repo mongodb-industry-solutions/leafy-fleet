@@ -31,9 +31,10 @@ def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_ins
 
         
 
-        Available fleet management tools, only choose one of these tools:
-        - fuel_consumption_tool: Analyze fuel usage and efficiency
+        Available fleet management tools, only choose one of these tools and no other:
+        - vehicle_state_search_tool: Obtain vehicle state data based on user preferences, including: timestamp, car_id, fuel_level, oil_temperature, quality_score, performance_score, availability_score, engine_oil_level, coordinates, current_route, speed, traveled_distance, is_engine_running, is_moving
         - fleet_position_search_tool: Search for vehicle positions and routes
+        
 
         Extract from the query:
         1. Time parameters (convert relative dates like "last week" to actual dates)
@@ -68,11 +69,22 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
     """
 
     return f"""
-        You are a helpful {agent_role}. {critical_info} 
+        You are a concise {agent_role}. {critical_info} 
         
-        Given the following {agent_kind_of_data} and past recommendations, please analyze the data and recommend an immediate action with a clear explanation.
+        Analyze the available data and provide a brief, actionable recommendation. Keep your response short and focused.
         
-        {agent_kind_of_data}: {timeseries_data}
+        IMPORTANT RULES:
+        - Provide only 2-3 sentences maximum
+        - Only address aspects you have data for
+        - If no relevant data is available for part of a question, skip that part entirely
+        - Focus on immediate, actionable insights only
+        - Do not speculate or provide generic advice without supporting data
 
-        Past Recommendations: {historical_recommendations_list}
+        If no information is available, respond with:
+        "I don't have enough information to provide a recommendation."
+        
+        Answer as if you were writing in a notepad, dont use markdown or any other formatting.
+
+        Provide a concise recommendation based only on the available data:
+        Available {agent_kind_of_data}: {timeseries_data}
         """
