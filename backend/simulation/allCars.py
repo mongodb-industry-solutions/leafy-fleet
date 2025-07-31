@@ -20,11 +20,25 @@ logger = logging.getLogger(__name__)
 constant_fuel_consumption_per_m = 0.0009  # in ml/m
 constant_oil_consumption_per_m = 0.0005  # in ml/m
 hostname = "http://localhost"  # This will be used to connect to the backend service,
+state_lock = asyncio.Lock()  
+cars_correctly_running = 10  # Example starting value  
+total_cars = 10              # Total cars in simulation  
+ # Total number of cars in the simulation, can be used to check if all cars are running correctly
 #get on env
 
 #in meantime localhost routes, will be replaced by the real 
 
+async def decrement_cars_correctly_running():  
+    async with state_lock:  
+        global cars_correctly_running  
+        cars_correctly_running -= 1  
   
+async def increment_cars_correctly_running():  
+    async with state_lock:  
+        global cars_correctly_running  
+        cars_correctly_running += 1  
+
+
 """  
 this class and function were used to create the cars, and insert in the database, 
 i reused my post component, which is why some of the variables are not used here (timeseries)
@@ -206,7 +220,7 @@ async def create_cars_ONCE(num_cars: int):
                 oil_temperature=random.uniform(70, 120),
                 engine_oil_level=random.uniform(500, 2000),
                 performance_score=random.uniform(80, 100),
-                availability_score=random.uniform(80, 100),
+                availability_score=random.uniform(90, 100),
                 run_time=0.0,
                 quality_score=90.0,
                 is_oil_leak=False,
@@ -250,10 +264,9 @@ class Car:
     engine_oil_level: float # In ml
     traveled_distance: float # Total distance traveled by the vehicle in km
     traveled_distance_since_start: float # Distance traveled since the start of the route in m
-    performance_score: float # From 0 to 100
-    availability_score: float # From 0 to 100
+    availability_score: float # From 0 to 1
     run_time: float # Engine run time in s
-    quality_score: float # From 0 to 100
+    quality_score: float # From 0 to 1
     is_engine_running: bool
     is_crashed: bool
     current_route: int
@@ -262,25 +275,55 @@ class Car:
     speed: float # Average speed of the vehicle in km/h
     average_speed: float # Average speed of the vehicle in km/h over the route
     is_moving: bool #  if the vehicle is currently moving
-    sessions: list = None  # List of session IDs, can be used for tracking or logging
+    
+    steps_route:int =0 
     # Internal state
+    performance_score: float =0 # From 0 to 1
+    sessions: list = None  # List of session IDs, can be used for tracking or logging
     step_index: int = 0
+    real_step: int = 0
     route_index: int = 0  # 0 or 1
     is_oil_leak: bool = False
     has_driver: bool = True 
+    oee: int = 0
+    
 
     def __post_init__(self):
         self.route_ids = [self.car_id, self.car_id + 1] if self.car_id % 2 == 1 else [self.car_id, self.car_id - 1]
 
-    def update(self, move_distance_m: float, time_per_step: float):
-        self.traveled_distance += move_distance_m / 1000 # km 
+    async def update(self, move_distance_m: float, time_per_step: float):
+        self.real_step+=1
+        self.engine_oil_level = max(self.engine_oil_level - move_distance_m * constant_oil_consumption_per_m, 0)
+        self.traveled_distance += (move_distance_m / 1000) # km 
         self.traveled_distance_since_start += move_distance_m  # m
         self.fuel_level = max(self.fuel_level - move_distance_m * constant_fuel_consumption_per_m, 0)
-        self.engine_oil_level = max(self.engine_oil_level - move_distance_m * constant_oil_consumption_per_m, 0)
         self.run_time += time_per_step
         self.speed = max((move_distance_m / (time_per_step * 1000) * 3600 )+ random.uniform(-0.35, 0.25), 0) #  speed variation km/h,  non-negative
         self.average_speed = (self.traveled_distance / self.run_time) * 3600  # Convert km/s to km/h
+        self.performance_score = (self.real_step /self.steps_route)
+        
+        if (random.random() < 0.001):  # 0.1% chance of crash
+            self.is_crashed = True
+            self.is_engine_running = False
+            logger.warning(f" Car {self.car_id} has crashed!")
+            self.speed = 0
+            await decrement_cars_correctly_running()  
+        if self.fuel_level <= 0:
+            self.is_engine_running = False
+            self.speed = 0
+            logger.warning(f" Car {self.car_id} has run out of fuel!")
+            await decrement_cars_correctly_running()
+        if self.engine_oil_level <= 0:
+            self.is_oil_leak = True
+            self.is_engine_running = False
+            logger.warning(f" Car {self.car_id} has an oil leak!")
+            await decrement_cars_correctly_running()
         self.is_moving = self.speed > 0
+        self.quality_score = cars_correctly_running/total_cars
+        self.availability_score = min(1, self.availability_score + (random.uniform(-0.02, 0.02)))
+        self.oee = self.quality_score * self.availability_score* self.performance_score
+        print("car updated")
+
 
     def to_document(self):
         doc = {
@@ -293,6 +336,7 @@ class Car:
             "quality_score": float(self.quality_score),
             "availability_score": float(self.availability_score),
             "max_fuel_level": float(self.max_fuel_level),
+            "oee": float(self.oee),
             "oil_temperature": float(self.oil_temperature),
             "is_oil_leak": self.is_oil_leak,
             "is_engine_running": self.is_engine_running,
@@ -314,12 +358,13 @@ class Car:
 
     async def run(self):
         while True:
+            
             self.current_route = self.route_ids[self.route_index]
             steps, dist_per_step, time_per_step = ROUTES[self.current_route]
+            self.steps_route += len(steps) # para que oee nunca se quede como 0 despues de inicio
             while self.step_index < len(steps):
                 self.latitude, self.longitude = steps[self.step_index]
-                self.update(dist_per_step, time_per_step)
-
+                await self.update(dist_per_step, time_per_step)
                 
                 #will add logging here instead of print
                 logger.info(f" Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | total distance: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
@@ -358,6 +403,22 @@ class Car:
                 except Exception as e:
                     logger.warning(f" Error sending timeseries for Car {self.car_id}: {e}")
                 self.step_index += 1
+
+                #agregue logica chocar y checar si el carro esta parado
+                if self.is_engine_running==False:
+                    logger.warning(f" Car {self.car_id} is not running, skipping step {self.step_index}")
+                    await asyncio.sleep(60) # Wait for a minute before next step
+                    await increment_cars_correctly_running()  
+                    if self.is_crashed:
+                        self.is_crashed = False  # Reset crash state after some time
+                        self.is_engine_running = True  # Restart the engine after a crash
+                    if self.fuel_level <= 0:
+                        self.fuel_level = self.max_fuel_level
+                        self.is_engine_running = True  # Refuel and restart the engine
+                    if self.engine_oil_level <= 0:
+                        self.engine_oil_level = 1000  # Reset oil level after a leak
+                        self.is_oil_leak = False  #
+                    continue
                 await asyncio.sleep(time_per_step)
             print(f" Car {self.car_id} finished route {self.current_route}")
             await asyncio.sleep(10)
@@ -386,7 +447,7 @@ async def create_cars(num_cars: int):
             performance_score=random.uniform(80, 100),
             availability_score=random.uniform(80, 100),
             run_time=0.0,
-            quality_score=90.0,
+            quality_score=1.0,
             is_oil_leak=False,
             is_engine_running=True,
             is_crashed=False,
@@ -412,6 +473,7 @@ def load_routes(filepath: str):
                 float(val["timePerStep"])
             )
         print(f" Loaded {len(ROUTES)} routes")
+        
 
 
 async def shutdown_signal_handler():
@@ -425,8 +487,11 @@ async def main():
     HTTP_SESSION = aiohttp.ClientSession()
 
     load_routes( "processed_routes.json")
-    cars = await create_cars(num_cars=300)  # Create 300 cars
+    cars_correctly_running = len(ROUTES)
+    total_cars = len(ROUTES)
+    cars = await create_cars(num_cars=10)  # Create 300 cars
 
+    
         
     loop = asyncio.get_running_loop()
     stop_event = asyncio.Event()

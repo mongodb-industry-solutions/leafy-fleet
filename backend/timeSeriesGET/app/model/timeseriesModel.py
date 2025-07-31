@@ -67,6 +67,7 @@ class TimeseriesModel(BaseModel):
     is_engine_running: bool
     is_crashed: bool
     current_route: int
+    oee: float
     #Latitude: float 
     #Longitude: float 
     speed: float # Field(default=0.0, description="Average speed of the vehicle in km/h")
