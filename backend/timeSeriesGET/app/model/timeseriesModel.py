@@ -73,7 +73,6 @@ class TimeseriesModel(BaseModel):
     average_speed: float # Field(default=0.0, description="Average speed of the vehicle in km/h over the route")
     is_moving: bool # Field(default=True, description="Indicates if the vehicle is currently moving")
     current_geozone: str # will update every 10 steps
-    vin: int
     coordinates: dict = Field(
         default_factory=lambda: {"type": "Point", "coordinates": [0.0, 0.0]},
         description="GeoJSON Point coordinates for the vehicle's location"
