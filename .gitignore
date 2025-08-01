@@ -1,6 +1,10 @@
 # task-def.json
 **/task-def.json
 
+
+#dockers ecs
+create-ecs.txt
+
 # Environments
 .env
 .venv
