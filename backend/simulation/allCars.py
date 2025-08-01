@@ -286,6 +286,7 @@ class Car:
     is_oil_leak: bool = False
     has_driver: bool = True 
     oee: int = 0
+    speed_total: int = 0
     
 
     def __post_init__(self):
@@ -299,8 +300,9 @@ class Car:
         self.fuel_level = max(self.fuel_level - move_distance_m * constant_fuel_consumption_per_m, 0)
         self.run_time += time_per_step
         self.speed = max((move_distance_m / (time_per_step * 1000) * 3600 )+ random.uniform(-0.35, 0.25), 0) #  speed variation km/h,  non-negative
-        self.average_speed = (self.traveled_distance / self.run_time) * 3600  # Convert km/s to km/h
-        self.performance_score = (self.real_step /self.steps_route)
+        self.speed_total+=self.speed
+        self.average_speed = self.speed_total / self.real_step
+        
         
         if (random.random() < 0.001):  # 0.1% chance of crash
             self.is_crashed = True
@@ -319,6 +321,7 @@ class Car:
             logger.warning(f" Car {self.car_id} has an oil leak!")
             await decrement_cars_correctly_running()
         self.is_moving = self.speed > 0
+        self.performance_score = (self.real_step /self.steps_route)
         self.quality_score = cars_correctly_running/total_cars
         self.availability_score = min(1, self.availability_score + (random.uniform(-0.02, 0.02)))
         self.oee = self.quality_score * self.availability_score* self.performance_score
