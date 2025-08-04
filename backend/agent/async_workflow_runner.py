@@ -9,6 +9,8 @@ from config.config_loader import ConfigLoader
 from agent_state import AgentState
 from websocketServer import manager
 
+from langgraph.graph import StateGraph, END
+
 import logging
 # Configure logging
 logging.basicConfig(
@@ -19,58 +21,78 @@ logger = logging.getLogger(__name__)
 
 
 class AsyncWorkflowRunner:
-    """Custom async workflow runner that executes nodes sequentially with WebSocket broadcasts."""
+    """LangGraph-based async workflow runner with WebSocket broadcasting support."""
     
     def __init__(self, checkpointer=None):
-        """Initialize the async workflow runner."""
+        """Initialize the async workflow runner with LangGraph."""
         self.config_loader = ConfigLoader()
         self.graph_config = self.config_loader.get("AGENT_WORKFLOW_GRAPH")
-        self.checkpointer = checkpointer  # Placeholder for checkpointer, can be set later
+        self.checkpointer = checkpointer
         
-    def resolve_tool(self, tool_path: str):
+        # Initialize LangGraph checkpointer if provided
+        if checkpointer:
+            self.checkpointer = checkpointer.create_mongodb_saver()
+            if self.checkpointer:
+                logger.info("LangGraph MongoDB checkpointer initialized successfully")
+            else:
+                logger.warning("Failed to initialize LangGraph MongoDB checkpointer")
+        
+        # Build the LangGraph workflow
+        self.workflow_graph = self._build_langgraph_workflow()
+        
+    def resolve_tool(self, tool_path):
         """
         Dynamically import a tool function based on its import path.
-        
+
         Args:
             tool_path (str): The full import path of the tool (e.g., "agent_tools.get_data_from_csv_tool").
-            
+
         Returns:
             function: The imported tool function.
         """
         module_name, function_name = tool_path.rsplit(".", 1)
         module = importlib.import_module(module_name)
         return getattr(module, function_name)
-    
-    def build_execution_order(self) -> List[str]:
-        """
-        Build the execution order of nodes based on the graph edges.
         
+    def _build_langgraph_workflow(self):
+        """
+        Create the LangGraph StateGraph for the agent workflow based on the JSON config file.
+
+        Args:
+            checkpointer (AgentCheckpointer, optional): AgentCheckpointer instance. Default is None.
+
         Returns:
-            List[str]: Ordered list of node IDs to execute.
+            StateGraph: LangGraph StateGraph for the agent workflow
         """
-        # Create a simple linear execution order based on the edges
-        # Starting from entry_point and following the edges
-        execution_order = []
-        current_node = self.graph_config["entry_point"]
-        logging.info(f"Starting execution from entry point: {current_node}")
-        
-        # Build a mapping of node -> next_node
-        edge_map = {}
-        for edge in self.graph_config["edges"]:
-            if edge["to"] != "END":
-                edge_map[edge["from"]] = edge["to"]
-        
-        # Follow the chain
-        while current_node and current_node in edge_map:
-            execution_order.append(current_node)
-            current_node = edge_map.get(current_node)
-        
-        # Add the last node if it exists
-        if current_node and current_node != "END":
-            execution_order.append(current_node)
-            
-        logger.info(f"Execution order: {execution_order}")
-        return execution_order
+        # Load configuration
+        config_loader = ConfigLoader()
+        graph_config = config_loader.get("AGENT_WORKFLOW_GRAPH")
+
+        graph = StateGraph(AgentState)
+
+        # Add nodes
+        for node in graph_config["nodes"]:
+            logger.info(f"Adding node: {node['id']} with tool: {node['tool']}")
+            tool_function = self.resolve_tool(node["tool"])
+            graph.add_node(node["id"], tool_function)
+
+        # Add edges
+        for edge in graph_config["edges"]:
+            from_node = edge["from"]
+            to_node = edge["to"]
+            if to_node == "END":
+                graph.add_edge(from_node, END)
+            else:
+                graph.add_edge(from_node, to_node)
+
+        # Set entry point
+        graph.set_entry_point(graph_config["entry_point"])
+
+        # Compile the graph
+        if self.checkpointer:
+            return graph.compile(checkpointer=self.checkpointer)
+        else:
+            return graph.compile()
 
     async def ainvoke(self, initial_state: Dict[str, Any], config: Dict[str, Any] = None, thread_id: str = None, **kwargs) -> Dict[str, Any]:
         """
@@ -126,6 +148,7 @@ class AsyncWorkflowRunner:
         await manager.send_to_thread(f"Workflow completed after {steps} steps.", thread_id=thread_id)
         # logger.info(f"Final state after workflow execution: {state}")
         return state
+
 
 
 async def create_async_workflow(checkpointer=None) -> AsyncWorkflowRunner:
