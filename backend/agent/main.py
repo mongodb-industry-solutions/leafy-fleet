@@ -120,27 +120,16 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
     config = {"configurable": {"thread_id": thread_id}}
     mongodb_checkpointer = AgentCheckpointer(database_name=MDB_DATABASE_NAME, collection_name=MDB_CHECKPOINTER_COLLECTION)
     logger.info("checkpointer state: " + str(mongodb_checkpointer))
+    
     try:
-        with mongodb_checkpointer as checkpointer:
-            await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
-            logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
-            
-            # workflow = workflow._build_langgraph_workflow()
-            workflow = await create_async_workflow()
-            logger.info(f"Workflow created for thread ID: {thread_id}")
-            final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
-            await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
-        # logger.info(f"Running agent for thread ID: {thread_id}")
+        await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
+        logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
         
-        # Use custom async workflow runner
-        logger.info(f"Agent run completed for thread ID: {thread_id}")
-
-        final_state = convert_objectids(final_state)
-        # logger.info(f"Final state for thread ID {thread_id}: {final_state}")
-        final_state["thread_id"] = thread_id
-        
-        # Broadcast completion with recommendation
-        await manager.send_to_thread(f"Agent workflow completed", thread_id)
+        # Pass the AgentCheckpointer instance
+        workflow = await create_async_workflow(checkpointer=mongodb_checkpointer)
+        logger.info(f"Workflow created for thread ID: {thread_id}")
+        final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
+        await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
 
         agent_profiles = []
         agent_profiles.append({

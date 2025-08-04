@@ -31,8 +31,8 @@ class AsyncWorkflowRunner:
         
         # Initialize LangGraph checkpointer if provided
         if checkpointer:
-            self.checkpointer = checkpointer.create_mongodb_saver()
-            if self.checkpointer:
+            self.langgraph_checkpointer = self.checkpointer.create_mongodb_saver()
+            if self.langgraph_checkpointer:
                 logger.info("LangGraph MongoDB checkpointer initialized successfully")
             else:
                 logger.warning("Failed to initialize LangGraph MongoDB checkpointer")
@@ -90,7 +90,7 @@ class AsyncWorkflowRunner:
 
         # Compile the graph
         if self.checkpointer:
-            return graph.compile(checkpointer=self.checkpointer)
+            return graph.compile(checkpointer=self.langgraph_checkpointer)
         else:
             return graph.compile()
 
@@ -107,6 +107,28 @@ class AsyncWorkflowRunner:
         Returns:
             Dict[str, Any]: Final state after workflow execution.
         """
+        # Use LangGraph's built-in execution with automatic checkpointing
+        if self.langgraph_checkpointer and config:
+            logger.info(f"Invoking LangGraph workflow with checkpointer for thread_id: {thread_id}")
+            
+            # Use astream to get step-by-step execution with checkpointing
+            final_state = {}
+            step_count = 0
+            
+            async for step in self.workflow_graph.astream(initial_state, config=config):
+                step_count += 1
+                logger.info(f"Step {step_count}: {list(step.keys())}")
+                
+                # Send progress updates via WebSocket
+                for node_name, node_result in step.items():
+                    await manager.send_to_thread(f"Completed step: {node_name}", thread_id=thread_id)
+                    final_state = node_result
+            
+            await manager.send_to_thread(f"Workflow completed after {step_count} steps.", thread_id=thread_id)
+            return final_state
+        
+        # Fallback to manual execution if no checkpointer
+        logger.info("Invoking workflow without checkpointer (manual execution).")
         state = initial_state.copy()
         edge_map = {}
         for edge in self.graph_config["edges"]:
@@ -124,18 +146,7 @@ class AsyncWorkflowRunner:
             result = await tool_function(state)
             if isinstance(result, dict):
                 state.update(result)
-            # Save checkpoint after each node using LangGraph checkpointer
-            if self.checkpointer and thread_id:
-                try:
-                    # Use the LangGraph MongoDBSaver instead of custom method
-                    langgraph_saver = self.checkpointer.create_mongodb_saver()
-                    if langgraph_saver:
-                        # Create a checkpoint config for LangGraph
-                        checkpoint_config = {"configurable": {"thread_id": thread_id}}
-                        # LangGraph checkpointer will handle the state saving automatically
-                        logger.info(f"LangGraph checkpoint ready for node {current_node}")
-                except Exception as e:
-                    logger.error(f"Failed to initialize LangGraph checkpoint: {e}")
+            
             # Check for dynamic jump
             next_step = state.get("next_step")
             if next_step and next_step != current_node:
@@ -145,8 +156,8 @@ class AsyncWorkflowRunner:
                 # Default: follow the first outgoing edge
                 next_nodes = edge_map.get(current_node, [])
                 current_node = next_nodes[0] if next_nodes else "END"
+        
         await manager.send_to_thread(f"Workflow completed after {steps} steps.", thread_id=thread_id)
-        # logger.info(f"Final state after workflow execution: {state}")
         return state
 
 
