@@ -244,6 +244,7 @@ class AgentTools(MongoDBConnector):
             logger.error(f"Error during MongoDB Vector Search operation: {e}")
             state.setdefault("updates", []).append("[MongoDB] Error during Vector Search operation.")
             similar_queries = [{"query": "MongoDB Vector Search operation error", "recommendation": "Please try again later.", "score": 0.0}]
+            self.add_used_tools(state, "vector_search_tool")
             return similar_queries
 
         return similar_queries
@@ -257,6 +258,8 @@ class AgentTools(MongoDBConnector):
         p = profiler.get_agent_profile(agent_id="DECIDING_AGENT") # For this first call to the agent, we use the DECIDING_AGENT profile
         # Get the Query Reported from the state
         query_reported = state["query_reported"]
+
+        state["agent_profile1"] = p["profile"]
 
         CHAIN_OF_THOUGHTS_PROMPT = get_chain_of_thoughts_prompt(
             agent_profile=p["profile"],
@@ -283,7 +286,9 @@ class AgentTools(MongoDBConnector):
             next_step = JSON_chain_of_thought.get("tool")
             logger.info(f"Next step selected: {next_step}")
             logger.info(f"Chain of thought generated: {chain_of_thought}")
+            state["next_step"] = "save_embedding_tool"
             state["response"] = next_step
+
         except Exception as e:
             logger.error(f"Error generating chain of thought: {e}")
             chain_of_thought = (
@@ -296,6 +301,7 @@ class AgentTools(MongoDBConnector):
             next_step = "END"
 
         state.setdefault("updates", []).append("Chain-of-thought generated.")
+        self.add_used_tools(state, "reasoning_node")
         return {**state, "chain_of_thought": chain_of_thought, "selected_tool": next_step}
     
     @staticmethod
@@ -338,20 +344,29 @@ class AgentTools(MongoDBConnector):
         """Saves the query embedding to the state."""
         text = state.get("query_reported", "")
         embedding = state.get("embedding_vector", [])
+        additional_fields = state.get("chain_of_thought", "")
+        additional_fields = json.loads(additional_fields)
 
         try: 
             # Instantiate the Embedder
             embedder = Embedder(collection_name=self.mdb_embeddings_collection) # historical_recommendations collection
             # embedding = embedder.get_embedding(text)
 
+
             # Save the embedded question with the answer to MongoDB
             historical_recommendation = {
                 "query": text,
                 "recommendation": state.get("selected_tool", ""),
+                "time_field": additional_fields.get("time_range", ""),
+                "fields": additional_fields.get("fields", []),
                 "embedding": embedding,
                 "thread_id": state.get("thread_id", ""),
                 "created_at": datetime.datetime.now(datetime.timezone.utc)
             }
+
+            state["botPreferences"] = additional_fields
+
+            # logger.info(f"Bot preferences updated in state: {state.get('botPreferences', '')}")
 
             # Convert ObjectIds to strings
             # historical_recommendation = convert_objectids(historical_recommendation)
@@ -359,6 +374,7 @@ class AgentTools(MongoDBConnector):
             self.get_collection(self.mdb_historical_recommendations_collection).insert_one(historical_recommendation)
             logger.info(f"[MongoDB] Historical recommendation saved")
             state.setdefault("updates", []).append("Query embedding generated!")
+            self.add_used_tools(state, "embedding_node")
             logger.info("Query embedding generated!")
         except Exception as e:
             logger.error(f"Error generating query embedding: {e}")
@@ -466,6 +482,8 @@ class AgentTools(MongoDBConnector):
         # Get the agent profile
         p = profiler.get_agent_profile(agent_id=self.agent_profile_chosen_id)
 
+        state["agent_profile2"] = p["profile"]
+
         # Generate the LLM recommendation prompt
         LLM_RECOMMENDATION_PROMPT = get_llm_recommendation_prompt(
             agent_role=p["role"],
@@ -487,6 +505,7 @@ class AgentTools(MongoDBConnector):
             logger.error(f"Error generating LLM recommendation: {e}")
             llm_recommendation = "Unable to generate recommendation at this time."
         state.setdefault("updates", []).append("Final recommendation generated.")
+        self.add_used_tools(state, "recommendation_node")
 
         # try:
         #     recommendation_record = {
@@ -508,7 +527,14 @@ class AgentTools(MongoDBConnector):
         state["recommendation_text"] = llm_recommendation
         return {**state, "recommendation_text": llm_recommendation, "next_step": "end"}
 
-
+    def add_used_tools(self, state: AgentState, tool_name: str) -> AgentState:
+        """Adds the used tools to the state."""
+        logger.info(f"Adding used tool: {tool_name} to state")
+        used_tools = state.get("used_tools", [])
+        
+        used_tools.append(tool_name)
+        state["used_tools"] = used_tools
+        return state
 
 # Define tools
 async def get_data_from_csv_tool(state: dict) -> dict:
@@ -549,6 +575,7 @@ async def vector_search_tool(state: dict) -> dict:
 
         state["next_step"] = recommendation if recommendation else "reasoning_node"
         logger.info(f"Next step set to: {state['next_step']}")
+        agent_tools.add_used_tools(state, recommendation)
     else:
         state["next_step"] = "reasoning_node"
     # search_results = len(result.get("historical_recommendations_list", []))
@@ -563,6 +590,7 @@ async def generate_chain_of_thought_tool(state: AgentState) -> AgentState:
     # If we come to the tool selecting LLM we always need to save the response, then we go to the tool
     state["response"] = result
     state["next_step"] = "save_embedding_tool"
+    agent_tools.add_used_tools(state, result.get("selected_tool", ""))
     return result
 
 async def process_data_tool(state: AgentState) -> AgentState:
@@ -622,3 +650,68 @@ async def save_query_embedding_tool(state: dict) -> dict:
     logger.info(f"Selected tool: {selected_tool}")
     state["next_step"] = selected_tool if selected_tool else "end"
     return result
+
+# Routing functions for conditional edges
+def route_after_vector_search(state: dict) -> str:
+    """Route after vector search based on the results and score."""
+    
+    # Check if we have vector search results
+    historical_recommendations = state.get("historical_recommendations_list", [])
+    
+    if historical_recommendations and len(historical_recommendations) > 0:
+        # Check if we have a high-confidence match
+        first_result = historical_recommendations[0]
+        score = first_result.get("score", 0)
+        
+        if score > 0.95:
+            # High confidence - check if we have a specific tool recommendation
+            recommendation = first_result.get("recommendation", {})
+            if isinstance(recommendation, dict) and "tool" in recommendation:
+                tool_name = recommendation["tool"]
+                if "fleet_position" in tool_name:
+                    return "fleet_position_search_tool"
+                elif "vehicle_state" in tool_name:
+                    return "vehicle_state_search_tool"
+        
+        # Medium confidence - go to reasoning to decide
+        if score > 0.9:
+            return "reasoning_node"
+    
+    # No good matches - go to reasoning to decide
+    return "reasoning_node"
+
+def route_to_selected_tool(state: dict) -> str:
+    """Route to the tool selected by the reasoning node."""
+    
+    # Check what tool was selected by the reasoning/chain-of-thought process
+    selected_tool = state.get("selected_tool", {})
+    
+    # Handle if selected_tool is a dictionary with tools array
+    if isinstance(selected_tool, dict):
+        if "tools" in selected_tool:
+            tools = selected_tool["tools"]
+            if isinstance(tools, list) and len(tools) > 0:
+                tool_name = tools[0]
+            else:
+                tool_name = selected_tool.get("tool", "")
+        else:
+            tool_name = selected_tool.get("tool", "")
+    else:
+        # Handle if selected_tool is a string
+        tool_name = str(selected_tool)
+    
+    # Route based on the tool name
+    if "fleet_position" in tool_name:
+        return "fleet_position_search_tool"
+    elif "vehicle_state" in tool_name:
+        return "vehicle_state_search_tool"
+    
+    # Check next_step as fallback
+    next_step = state.get("next_step", "")
+    if "fleet_position" in next_step:
+        return "fleet_position_search_tool"
+    elif "vehicle_state" in next_step:
+        return "vehicle_state_search_tool"
+    
+    # Default to recommendation if no specific tool selected
+    return "default"

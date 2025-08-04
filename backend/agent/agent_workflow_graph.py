@@ -44,10 +44,41 @@ async def create_workflow_graph(checkpointer=None):
     for edge in graph_config["edges"]:
         from_node = edge["from"]
         to_node = edge["to"]
-        if to_node == "END":
-            graph.add_edge(from_node, END)
+        
+        # Check if this is a conditional edge
+        if edge.get("type") == "conditional":
+            # Add conditional edge with routing function
+            condition_func = edge.get("condition_function")
+            path_map = edge.get("path_map", {})
+            
+            if condition_func:
+                # Resolve the condition function
+                routing_function = resolve_tool(condition_func)
+                graph.add_conditional_edges(
+                    from_node,
+                    routing_function,
+                    path_map
+                )
+            else:
+                # Use a default routing function based on next_step
+                def route_based_on_next_step(state):
+                    next_step = state.get("next_step")
+                    if next_step and next_step in path_map.values():
+                        return next_step
+                    # Return default path if specified
+                    return path_map.get("default", END)
+                
+                graph.add_conditional_edges(
+                    from_node,
+                    route_based_on_next_step,
+                    path_map
+                )
         else:
-            graph.add_edge(from_node, to_node)
+            # Regular edge
+            if to_node == "END":
+                graph.add_edge(from_node, END)
+            else:
+                graph.add_edge(from_node, to_node)
 
     # Set entry point
     graph.set_entry_point(graph_config["entry_point"])

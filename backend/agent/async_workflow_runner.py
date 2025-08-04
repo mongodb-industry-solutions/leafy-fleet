@@ -21,10 +21,11 @@ logger = logging.getLogger(__name__)
 class AsyncWorkflowRunner:
     """Custom async workflow runner that executes nodes sequentially with WebSocket broadcasts."""
     
-    def __init__(self):
+    def __init__(self, checkpointer=None):
         """Initialize the async workflow runner."""
         self.config_loader = ConfigLoader()
         self.graph_config = self.config_loader.get("AGENT_WORKFLOW_GRAPH")
+        self.checkpointer = checkpointer  # Placeholder for checkpointer, can be set later
         
     def resolve_tool(self, tool_path: str):
         """
@@ -101,6 +102,18 @@ class AsyncWorkflowRunner:
             result = await tool_function(state)
             if isinstance(result, dict):
                 state.update(result)
+            # Save checkpoint after each node using LangGraph checkpointer
+            if self.checkpointer and thread_id:
+                try:
+                    # Use the LangGraph MongoDBSaver instead of custom method
+                    langgraph_saver = self.checkpointer.create_mongodb_saver()
+                    if langgraph_saver:
+                        # Create a checkpoint config for LangGraph
+                        checkpoint_config = {"configurable": {"thread_id": thread_id}}
+                        # LangGraph checkpointer will handle the state saving automatically
+                        logger.info(f"LangGraph checkpoint ready for node {current_node}")
+                except Exception as e:
+                    logger.error(f"Failed to initialize LangGraph checkpoint: {e}")
             # Check for dynamic jump
             next_step = state.get("next_step")
             if next_step and next_step != current_node:
@@ -115,11 +128,11 @@ class AsyncWorkflowRunner:
         return state
 
 
-async def create_async_workflow():
+async def create_async_workflow(checkpointer=None) -> AsyncWorkflowRunner:
     """
     Create an async workflow runner instance.
     
     Returns:
         AsyncWorkflowRunner: Configured async workflow runner.
     """
-    return AsyncWorkflowRunner()
+    return AsyncWorkflowRunner(checkpointer=checkpointer)

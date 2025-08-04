@@ -151,6 +151,7 @@ const ChatComponent = () => {
       try {
          // Parse JSON if valid
         const parsedData = JSON.parse(text);
+        console.log("Parsed data:", parsedData);
         data.recommendation_text = parsedData.recommendation_text;
       } catch (jsonParseError) {
         console.error("Error parsing JSON:", jsonParseError);

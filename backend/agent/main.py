@@ -111,23 +111,29 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         "recommendation_text": "",
         "next_step": "reasoning_node",
         "updates": [],
-        "thread_id": thread_id
+        "thread_id": thread_id,
+        "used_tools": [],
     }
     await manager.send_to_thread("Agent started with query: " + query_reported, thread_id=thread_id)
     # thread_id = f"thread_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}" # Old definition of thread_id, this was moved to the session microservice
     initial_state["thread_id"] = thread_id
     config = {"configurable": {"thread_id": thread_id}}
+    mongodb_checkpointer = AgentCheckpointer(database_name=MDB_DATABASE_NAME, collection_name=MDB_CHECKPOINTER_COLLECTION)
+    logger.info("checkpointer state: " + str(mongodb_checkpointer))
     try:
+        with mongodb_checkpointer as checkpointer:
+            await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
+            logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
+            
+            # workflow = workflow._build_langgraph_workflow()
+            workflow = await create_async_workflow()
+            logger.info(f"Workflow created for thread ID: {thread_id}")
+            final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
+            await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
         # logger.info(f"Running agent for thread ID: {thread_id}")
         
         # Use custom async workflow runner
-        await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
-        logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
-        workflow = await create_async_workflow()
-        logger.info(f"Workflow created for thread ID: {thread_id}")
-        final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
-        await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
-        # logger.info(f"Agent run completed for thread ID: {thread_id}")
+        logger.info(f"Agent run completed for thread ID: {thread_id}")
 
         final_state = convert_objectids(final_state)
         # logger.info(f"Final state for thread ID {thread_id}: {final_state}")
@@ -136,6 +142,12 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         # Broadcast completion with recommendation
         await manager.send_to_thread(f"Agent workflow completed", thread_id)
 
+        agent_profiles = []
+        agent_profiles.append({
+            "agent_profile_1": final_state.get("agent_profile1", {}),
+            "agent_profile_2": final_state.get("agent_profile2", {})
+        })
+        final_state["agent_profiles"] = agent_profiles
 
         # For some reason I get problems returning final_state
         final_answer = {
@@ -145,8 +157,8 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             "recommendation_data": final_state.get('recommendation_data', []),
             "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "checkpoint": final_state.get('checkpoint', None),
-            # "tool_used": final_state.get('tool_used', None),
-            # Agent profile
+            "used_tools": final_state.get("used_tools", []),
+            "agent_profiles": final_state.get('agent_profiles', []),
         }
 
 

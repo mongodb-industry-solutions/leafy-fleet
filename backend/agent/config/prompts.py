@@ -1,5 +1,8 @@
 # --- Prompt Generation Functions ---
 
+from datetime import datetime
+
+
 def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_instructions: str, agent_goals: str, query_reported: str, agent_motive: str,
                                  agent_kind_of_data: str, embedding_model_name: str, chat_completion_model_name: str) -> str:
     """
@@ -37,9 +40,11 @@ def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_ins
         
 
         Extract from the query:
-        1. Time parameters (convert relative dates like "last week" to actual dates)
+        1. Time parameters (convert relative dates like "last week" to actual dates) 
         2. Vehicle filters (specific car IDs, routes, or "all")
         3. Relevant database fields from: timestamp, car_id, fuel_level, oil_temperature, quality_score, performance_score, availability_score, engine_oil_level, coordinates, current_route, speed, traveled_distance, is_engine_running, is_moving
+
+        Try to use today's date as a base: {datetime.now().strftime('%Y-%m-%d')}
 
         Respond ONLY with valid JSON:
         {{

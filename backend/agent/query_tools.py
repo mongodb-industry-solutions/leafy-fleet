@@ -54,6 +54,7 @@ class QueryTools(MongoDBConnector):
 
                 # Get configuration values
         self.mdb_timeseries_collection = self.config.get("MDB_TIMESERIES_COLLECTION")
+        self.mdb_static_information_collection = self.config.get("MDB_STATIC_INFORMATION_COLLECTION")
         self.mdb_timeseries_timefield = self.config.get("MDB_TIMESERIES_TIMEFIELD")
         self.mdb_timeseries_granularity = self.config.get("MDB_TIMESERIES_GRANULARITY")
         self.default_timeseries_data = self.config.get("DEFAULT_TIMESERIES_DATA")
@@ -119,7 +120,7 @@ class QueryTools(MongoDBConnector):
         
         return result
 
-    async def vehicle_state_search(self, user_preferences: str = None, agent_filters: str = None):
+    async def vehicle_state_search(self, user_preferences: str = None, agent_filters: str = None, user_filters: str = None):
         """
         Perform a vehicle state search based on the provided user preferences.
         """
@@ -187,14 +188,13 @@ class QueryTools(MongoDBConnector):
 
         logger.info(f"Final project stage: {project_stage}")
 
+        match_stage = self.build_match_stage(user_filters, agent_filters)
+
         pipeline = [
-            # Sort first to get latest documents
-            {
-                "$sort": {
-                    "car_id": 1,
-                    "timestamp": -1 
-                }
+            
+            {                "$match": match_stage
             },
+
             # Group to get latest per car
             {
                 "$group": {
@@ -267,6 +267,66 @@ class QueryTools(MongoDBConnector):
         return result
 
 
+    def build_match_stage(self, user_filters: str = None, agent_filters: str = None):
+        """
+        Build the match stage for the MongoDB query based on user preferences and agent filters.
+        
+        User Filters are to be used in the match stage
+        User Preferences are to be used in the project stage
+        
+        
+        """
+        match_stage = {}
+
+        if user_filters:
+            match_stage["$or"] = []
+            for fleet_prefs in user_filters:
+                if fleet_prefs == "Last 30 min" or fleet_prefs == "Last hour" or fleet_prefs == "Last 2 hours" :
+                    logger.info(f"Skipping preference")
+                    continue
+                if fleet_prefs:
+                    if fleet_prefs == "Fleet 1":
+                        car_ids = list(range(0, 100))  # Car IDs 0-99
+                    elif fleet_prefs == "Fleet 2":
+                        car_ids = list(range(100, 200))  # Car IDs 100-199
+                    elif fleet_prefs == "Fleet 3":
+                        car_ids = list(range(200, 300))  # Car IDs 200-299
+                    elif fleet_prefs in ["Downtown", "Geofence 2"]:
+                        # For geofence filters, use current_geozone field instead
+                        match_stage["$or"].append({"current_geozone": fleet_prefs})
+                        continue
+                    else:
+                        # For other string values, treat as direct car_id match
+                        match_stage["$or"].append({"car_id": fleet_prefs})
+                        continue
+                    
+                    # Add car ID range filter
+                    match_stage["$or"].append({"car_id": {"$in": car_ids}})
+
+
+
+        if agent_filters:
+            # agent_filters is already a dict, no need to parse JSON
+            if isinstance(agent_filters, str):
+                agent_filters = json.loads(agent_filters)
+            
+            # Access the nested time_range
+            time_range = agent_filters.get("time_range", {})
+            if time_range:
+                match_stage["timestamp"] = {
+                    "$gte": time_range.get("start_date"),
+                    "$lte": time_range.get("end_date")
+                }
+        logger.info(f"Match stage: {match_stage}")
+
+        return match_stage
+    
+    def obtain_maintenance_data(self, car_id: int):
+        """
+        Obtain maintenance data for a specific car_id.
+        """
+        collection = self.get_collection(self.mdb_timeseries_collection)
+
 async def fleet_position_search_tool(state: dict) -> AgentState:
     await manager.send_to_thread("Performing fleet location search", state.get("thread_id", None))
 
@@ -284,10 +344,11 @@ async def vehicle_state_search_tool(state: dict) -> AgentState:
     logger.info("QueryTools initialized for vehicle state search.")
 
     userPreferences = state.get("userPreferences")
-    agentFilters = state.get("userFilters")
+    userFilters = state.get("userFilters")
+    agentPreferences = state.get("botPreferences")
 
     query_tools = QueryTools()
-    result = await query_tools.vehicle_state_search(user_preferences=userPreferences, agent_filters=agentFilters)
+    result = await query_tools.vehicle_state_search(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)
     logger.info(f"Vehicle state search result count: {len(result)}")
 
     state["recommendation_data"] = result

@@ -4,8 +4,6 @@ from langgraph.checkpoint.mongodb import MongoDBSaver
 from db.mdb import MongoDBConnector
 from config.config_loader import ConfigLoader
 
-
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
