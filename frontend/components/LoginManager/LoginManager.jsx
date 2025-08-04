@@ -39,7 +39,7 @@ const editFleet = useSelector((state) => state.User.editFleet);
   const selectedFleets = useSelector((state) =>state.User.selectedFleets);
 
   // Used to know if default value is needed
-  const fleet1Size = useSelector((state) => state.User.fleet1Capacity) === 0
+  const fleet1Size = useSelector((state) => state.User.fleet1Capacity)
 
   // Dispatch actions based on user input or component logic
   const dispatchFleetCapacity = (indexFleet, fleetCapacity) => {
@@ -94,6 +94,8 @@ const editFleet = useSelector((state) => state.User.editFleet);
     setOpen(false);
     if (fleet1Size == 0) {
       dispatch(setFleet1Capacity(20));
+      dispatch(setFleet2Capacity(0));
+      dispatch(setFleet3Capacity(0));
     }
   };
 

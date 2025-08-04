@@ -28,6 +28,7 @@ class AsyncWorkflowRunner:
         self.config_loader = ConfigLoader()
         self.graph_config = self.config_loader.get("AGENT_WORKFLOW_GRAPH")
         self.checkpointer = checkpointer
+        self.langgraph_checkpointer = None
         
         # Initialize LangGraph checkpointer if provided
         if checkpointer:
@@ -89,7 +90,7 @@ class AsyncWorkflowRunner:
         graph.set_entry_point(graph_config["entry_point"])
 
         # Compile the graph
-        if self.checkpointer:
+        if self.langgraph_checkpointer:
             return graph.compile(checkpointer=self.langgraph_checkpointer)
         else:
             return graph.compile()
@@ -110,21 +111,10 @@ class AsyncWorkflowRunner:
         # Use LangGraph's built-in execution with automatic checkpointing
         if self.langgraph_checkpointer and config:
             logger.info(f"Invoking LangGraph workflow with checkpointer for thread_id: {thread_id}")
-            
-            # Use astream to get step-by-step execution with checkpointing
-            final_state = {}
-            step_count = 0
-            
-            async for step in self.workflow_graph.astream(initial_state, config=config):
-                step_count += 1
-                logger.info(f"Step {step_count}: {list(step.keys())}")
-                
-                # Send progress updates via WebSocket
-                for node_name, node_result in step.items():
-                    await manager.send_to_thread(f"Completed step: {node_name}", thread_id=thread_id)
-                    final_state = node_result
-            
-            await manager.send_to_thread(f"Workflow completed after {step_count} steps.", thread_id=thread_id)
+        
+            # Directly invoke the workflow and get the final state
+            final_state = await self.workflow_graph.ainvoke(initial_state, config=config)
+            await manager.send_to_thread(f"Workflow completed.", thread_id=thread_id)
             return final_state
         
         # Fallback to manual execution if no checkpointer

@@ -37,6 +37,7 @@ def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_ins
         Available fleet management tools, only choose one of these tools and no other:
         - vehicle_state_search_tool: Obtain vehicle state data based on user preferences, including: timestamp, car_id, fuel_level, oil_temperature, quality_score, performance_score, availability_score, engine_oil_level, coordinates, current_route, speed, traveled_distance, is_engine_running, is_moving
         - fleet_position_search_tool: Search for vehicle positions and routes
+        - get_vehicle_maintenance_data_tool: Obtain maintenance data for a range of cars
         
 
         Extract from the query:

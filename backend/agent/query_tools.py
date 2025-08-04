@@ -191,41 +191,17 @@ class QueryTools(MongoDBConnector):
         match_stage = self.build_match_stage(user_filters, agent_filters)
 
         pipeline = [
-            
-            {                "$match": match_stage
-            },
-
-            # Group to get latest per car
             {
-                "$group": {
-                    "_id": "$car_id",
-                    "car_id": {"$first": "$car_id"},
-                    "fuel_level": {"$first": "$fuel_level"},
-                    "oil_temperature": {"$first": "$oil_temperature"},
-                    "quality_score": {"$first": "$quality_score"},
-                    "performance_score": {"$first": "$performance_score"},
-                    "availability_score": {"$first": "$availability_score"},
-                    "engine_oil_level": {"$first": "$engine_oil_level"},
-                    "coordinates": {"$first": "$coordinates"},
-                    "current_route": {"$first": "$current_route"},
-                    "speed": {"$first": "$speed"},
-                    "average_speed": {"$first": "$average_speed"},
-                    "traveled_distance": {"$first": "$traveled_distance"},
-                    "is_engine_running": {"$first": "$is_engine_running"},
-                    "is_moving": {"$first": "$is_moving"},
-                    "is_crashed": {"$first": "$is_crashed"},
-                    "is_oil_leak": {"$first": "$is_oil_leak"},
-                    "max_fuel_level": {"$first": "$max_fuel_level"},
-                    "run_time": {"$first": "$run_time"},
-                    "current_geozone": {"$first": "$current_geozone"},
-                    "vin": {"$first": "$vin"},
-                    "timestamp": {"$first": "$timestamp"}
-                }
+                "$match": match_stage
+            },
+            {
+                "$limit": 500  # Limit to 500 results
             },
             # Project only requested fields
             {
                 "$project": project_stage
             },
+
             # Final sort
             {
                 "$sort": {
@@ -321,11 +297,79 @@ class QueryTools(MongoDBConnector):
 
         return match_stage
     
-    def obtain_maintenance_data(self, car_id: int):
+    async def obtain_maintenance_data(self, user_preferences: str = None, agent_filters: str = None, user_filters: str = None):
         """
         Obtain maintenance data for a specific car_id.
         """
-        collection = self.get_collection(self.mdb_timeseries_collection)
+
+        collection = self.get_collection(self.mdb_static_information_collection)
+        logger.info(f"User preferences: {user_preferences}")
+        logger.info(f"Agent filters: {agent_filters}")
+        logger.info(f"User filters: {user_filters}")
+
+
+        fleet_capacity = self.understand_fleet_number(user_preferences)
+
+        pipeline = []  
+  
+        # Add conditional stages based on fleet_capacity values  
+        if fleet_capacity[0] > 0:  
+            pipeline.append({  
+                "$match": {  
+                    "car_id": {"$gte": 0, "$lte": fleet_capacity[0]}  
+                }  
+            })  
+        
+        if fleet_capacity[1] > 0:  
+            pipeline.append({  
+                "$match": {  
+                    "car_id": {"$gte": 100, "$lte": fleet_capacity[1]}  
+                }  
+            })  
+        
+        if fleet_capacity[2] > 0:  
+            pipeline.append({  
+                "$match": {  
+                    "car_id": {"$gte": 200, "$lte": fleet_capacity[2]}  
+                }  
+            }) 
+            # {
+            #     "$project": {
+            #         "_id": 0,
+            #         "car_id": 1,
+            #         "last_maintenance_date": 1,
+            #         "maintenance_history": 1,
+            #         "engine_oil_level": 1,
+            #         "oil_temperature": 1,
+            #         "ambient_temperature": 1
+            #     }
+            # }
+    
+
+        logger.info(f"Pipeline for maintenance data: {pipeline}")
+
+        cursor = collection.aggregate(pipeline)
+        result = list(cursor)
+
+        logger.info(f"Maintenance data result count: {len(result)}")
+
+        return "ok"
+    
+    def understand_fleet_number(self, user_preferences: str):
+        """        Understand the fleet number from user preferences.
+
+        Args:
+            user_preferences (str): User preferences string.
+
+        Returns:
+            [int]: an array of the last car IDs in the fleet
+            for example [50,150,250] for fleets 1,2,3 so we know we should search for car IDs 0-50, 100-150, 200-250
+        """
+        fleet_numbers = []
+        for preference in user_preferences:
+            if isinstance(preference[-1], int):
+                fleet_numbers.append(preference[-1])
+        return fleet_numbers
 
 async def fleet_position_search_tool(state: dict) -> AgentState:
     await manager.send_to_thread("Performing fleet location search", state.get("thread_id", None))
@@ -351,6 +395,20 @@ async def vehicle_state_search_tool(state: dict) -> AgentState:
     result = await query_tools.vehicle_state_search(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)
     logger.info(f"Vehicle state search result count: {len(result)}")
 
+    state["recommendation_data"] = result
+    state["next_step"] = "recommendation_node"
+    return AgentState(**state)
+
+async def get_vehicle_maintenance_data_tool(state: dict) -> AgentState:
+    await manager.send_to_thread("Obtaining vehicle maintenance data", state.get("thread_id", None))
+    logger.info("QueryTools initialized for vehicle maintenance data.")
+    query_tools = QueryTools()
+    userPreferences = state.get("userPreferences")
+    agentPreferences = state.get("botPreferences")
+    userFilters = state.get("userFilters")
+    logger.info(f"loaded preferences")
+    result = await query_tools.obtain_maintenance_data(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)
+    logger.info(f"Vehicle maintenance data result: {result}")
     state["recommendation_data"] = result
     state["next_step"] = "recommendation_node"
     return AgentState(**state)

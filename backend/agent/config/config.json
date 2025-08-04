@@ -2,6 +2,7 @@
     "CSV_DATA": "data/csv/macro_indicators_data.csv",
     "MDB_DATABASE_NAME": "leafy_fleet",
     "MDB_TIMESERIES_COLLECTION": "vehicleTelemetry",
+    "MDB_STATIC_INFORMATION_COLLECTION": "vehicles",
     "DEFAULT_TIMESERIES_DATA": [
         {
             "timestamp": "2025-03-21T13:15:00Z",
@@ -48,7 +49,7 @@
         "role": "Fleet Management Tool Decider",
         "kind_of_data": "Fleet vehicle telemetry data and user queries about fleet operations",
         "motive": "Given the user input data and information about internal fleet management tools, decide which tool or tools to use for processing fleet data",
-        "instructions": "Analyze the user query to extract: 1) Which fleet management tool to use, 2) Time parameters (dates, periods), 3) Vehicle filters (specific cars, routes), 4) Relevant data fields. Available tools: vehicle_state_search_tool, fleet_position_search_tool",
+        "instructions": "Analyze the user query to extract: 1) Which fleet management tool to use, 2) Time parameters (dates, periods), 3) Vehicle filters (specific cars, routes), 4) Relevant data fields. Available tools: vehicle_state_search_tool, fleet_position_search_tool, get_vehicle_maintenance_data_tool",
         "rules": "Return ONLY valid JSON. Extract time references like 'last week', 'since Monday', 'past 7 days' and convert to date ranges. If no time specified, use appropriate defaults. Include vehicle filters and relevant database fields.",
         "goals": "Provide accurate tool selection with proper time parameters and filters for fleet management queries."
         },
@@ -111,7 +112,8 @@
             {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"},
             {"id": "vehicle_state_search_tool", "tool": "query_tools.vehicle_state_search_tool"},
             {"id": "save_embedding_tool", "tool": "agent_tools.save_query_embedding_tool"},
-            {"id": "fleet_position_search_tool", "tool": "query_tools.fleet_position_search_tool"}
+            {"id": "fleet_position_search_tool", "tool": "query_tools.fleet_position_search_tool"},
+            {"id": "get_vehicle_maintenance_data_tool", "tool": "query_tools.get_vehicle_maintenance_data_tool"}
             
         ],
         "edges": [
@@ -119,6 +121,7 @@
 
             {"from": "vector_search_tool", "to": "fleet_position_search_tool"},
             {"from": "vector_search_tool", "to": "vehicle_state_search_tool"},
+            {"from": "vector_search_tool", "to": "get_vehicle_maintenance_data_tool"},
             {"from": "vector_search_tool", "to": "reasoning_node"},
             
             
@@ -126,10 +129,13 @@
             
             {"from": "save_embedding_tool", "to": "fleet_position_search_tool"},
             {"from": "save_embedding_tool", "to": "vehicle_state_search_tool"},
+            {"from": "save_embedding_tool", "to": "get_vehicle_maintenance_data_tool"},
             
             
             {"from": "vehicle_state_search_tool", "to": "recommendation_node"}, 
-            {"from": "fleet_position_search_tool", "to": "recommendation_node"}, 
+            {"from": "fleet_position_search_tool", "to": "recommendation_node"},
+            {"from": "get_vehicle_maintenance_data_tool", "to": "recommendation_node"},
+            
             
             {"from": "recommendation_node", "to": "END"}
         ],
