@@ -1,3 +1,5 @@
+import time
+from typing import Optional
 import numpy as np
 import json
 from dataclasses import dataclass
@@ -246,6 +248,84 @@ async def create_cars_ONCE(num_cars: int):
                 logger.warning(f" Error creating static Car {car.car_id}: {e}")
 
         return cars
+
+async def create_maintenance_data():
+    """
+    Create mock maintenance data for all cars in the database
+    """
+
+    maintenance_dict = [
+        "Oil change",
+        "Tire rotation",
+        "Brake inspection",
+        "Battery replacement",
+        "Transmission fluid change",
+        "Coolant flush",
+        "Air filter replacement",
+        "Fuel system cleaning",
+        "Suspension check",
+        "Exhaust system inspection",
+        "Alignment check",
+        "Windshield wiper replacement",
+        "Headlight bulb replacement",
+        "Interior cleaning",
+        "Exterior detailing",
+        "Paint touch-up",
+        "Dent repair",
+        "Glass replacement",
+        "Wheel balancing",
+        "Engine tune-up"
+    ]
+
+
+    try:
+        async with HTTP_SESSION.get(f"{hostname}:9005/static") as response:
+            if response.status == 200:
+                static_entries = await response.json()
+                for entry in static_entries:
+                    car_id = entry["car_id"]
+                    maintenance_logs = []
+                    for _ in range(random.randint(1, 5)):  # Random number of maintenance logs per car
+                        log = Maintenance_Log(
+                            date=random_date("4/8/2025 1:30", "4/8/2025 16:50", random.random()),
+                            description=random.choice(maintenance_dict),
+                            cost=random.uniform(500, 10000)  # Random cost between 500 and 10000
+                        )
+                        maintenance_logs.append(log)
+                print("Maintenance data created successfully", maintenance_logs)
+
+    except Exception as e:
+        logger.error(f"Error creating maintenance data: {e}")
+
+    
+
+def str_time_prop(start, end, time_format, prop):
+    """Get a time at a proportion of a range of two formatted times.
+
+    start and end should be strings specifying times formatted in the
+    given format (strftime-style), giving an interval [start, end].
+    prop specifies how a proportion of the interval to be taken after
+    start.  The returned time will be in the specified format.
+    """
+
+    stime = time.mktime(time.strptime(start, time_format))
+    etime = time.mktime(time.strptime(end, time_format))
+
+    ptime = stime + prop * (etime - stime)
+
+    return time.strftime(time_format, time.localtime(ptime))
+
+
+def random_date(start, end, prop):
+    return str_time_prop(start, end, '%d/%m/%Y %H:%M:%S', prop)
+
+
+
+@dataclass
+class Maintenance_Log:
+    date: datetime
+    description: str
+    cost: Optional[float] = None
 
 
 """  
@@ -514,4 +594,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # print(random_date("1/1/2024 1:30:51", "1/1/2025 16:50:00", random.random()))
+    # asyncio.run(main())
+    asyncio.run(create_maintenance_data())

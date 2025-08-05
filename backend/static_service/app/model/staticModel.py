@@ -23,7 +23,10 @@ class PyObjectId(ObjectId):
     def __modify_schema__(cls, field_schema):  
         field_schema.update(type="string") 
 
-
+class MaintenanceLog(BaseModel):
+    date: datetime
+    description: str
+    cost: Optional[float] = None
 
 #  Class for the Static Model will no longer be nested 
 class VehicleModel(BaseModel):  
@@ -41,3 +44,4 @@ class VehicleModel(BaseModel):
     weight: float
     car_id: int # del 1 al 300, carID is used to connect with timeseriesModel, 
     # good if want to preload the data of 300 cars, else for easy comparision routes with carID
+
