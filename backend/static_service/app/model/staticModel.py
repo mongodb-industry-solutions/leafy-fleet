@@ -24,7 +24,7 @@ class PyObjectId(ObjectId):
         field_schema.update(type="string") 
 
 class MaintenanceLog(BaseModel):
-    date: datetime
+    date: str
     description: str
     cost: Optional[float] = None
 

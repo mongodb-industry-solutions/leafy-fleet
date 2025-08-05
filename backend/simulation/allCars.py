@@ -10,6 +10,9 @@ import aiohttp
 import logging
 import signal
 
+from fastapi.encoders import jsonable_encoder
+
+
 
 ROUTES = {}  # Global route map: {route_id: {"steps": np.array, "distancePerStep": float, "timePerStep": float}}
 
@@ -249,6 +252,12 @@ async def create_cars_ONCE(num_cars: int):
 
         return cars
 
+async def run_maintenance(): # Handler for create maintenance data
+        global HTTP_SESSION
+        HTTP_SESSION = aiohttp.ClientSession()
+        await create_maintenance_data()
+        await HTTP_SESSION.close()
+
 async def create_maintenance_data():
     """
     Create mock maintenance data for all cars in the database
@@ -282,17 +291,31 @@ async def create_maintenance_data():
         async with HTTP_SESSION.get(f"{hostname}:9005/static") as response:
             if response.status == 200:
                 static_entries = await response.json()
+                print(f"Static entries retrieved: {len(static_entries)}")
                 for entry in static_entries:
                     car_id = entry["car_id"]
                     maintenance_logs = []
                     for _ in range(random.randint(1, 5)):  # Random number of maintenance logs per car
                         log = Maintenance_Log(
-                            date=random_date("4/8/2025 1:30", "4/8/2025 16:50", random.random()),
+                            date=str(random_date("4/8/2025 1:30:00", "4/8/2025 16:50:00", random.random())),
                             description=random.choice(maintenance_dict),
                             cost=random.uniform(500, 10000)  # Random cost between 500 and 10000
                         )
                         maintenance_logs.append(log)
-                print("Maintenance data created successfully", maintenance_logs)
+                    
+                    # Send maintenance logs to the backend service
+                    json=jsonable_encoder(maintenance_logs)
+                    print(f"Creating maintenance data for car {car_id} with logs: {json}")
+                    async with HTTP_SESSION.put(
+                        f"{hostname}:9005/static/{car_id}",
+                        json=json
+                    ) as put_response:
+                        if put_response.status == 200:
+                            print(f"Maintenance data for car {car_id} created successfully")
+                        else:
+                            print(f"Failed to create maintenance data for car {car_id}: {put_response.status}")
+            
+        
 
     except Exception as e:
         logger.error(f"Error creating maintenance data: {e}")
@@ -595,5 +618,5 @@ async def main():
 
 if __name__ == "__main__":
     # print(random_date("1/1/2024 1:30:51", "1/1/2025 16:50:00", random.random()))
-    # asyncio.run(main())
-    asyncio.run(create_maintenance_data())
+    asyncio.run(main())
+    # asyncio.run(run_maintenance())
