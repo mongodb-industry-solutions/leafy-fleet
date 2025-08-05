@@ -111,7 +111,13 @@ class car_original:
                 "car_id": self.car_id
             }
             return static_doc
-  
+
+async def create_cars_handler(num_cars: int):
+    global HTTP_SESSION
+    HTTP_SESSION = aiohttp.ClientSession()
+    await create_cars_ONCE(num_cars)
+    await HTTP_SESSION.close()
+
 async def create_cars_ONCE(num_cars: int):
         FIRST_NAMES = [
             "Emma", "Liam", "Olivia", "Noah", "Ava", "Elijah", "Isabella", "Lucas", "Mia", "Mason",
@@ -202,7 +208,7 @@ async def create_cars_ONCE(num_cars: int):
             #    continue
             #lat, lng = ROUTES[route_id][0][0]
             lat, lng = random.uniform(-90, 90), random.uniform(-180, 180)  # Random coordinates for simplicity
-            car = Car(
+            car = car_original(
                 car_id=car_id,
                 driver_name= f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}",
                 current_route=route_id,
@@ -297,7 +303,7 @@ async def create_maintenance_data():
                     maintenance_logs = []
                     for _ in range(random.randint(1, 5)):  # Random number of maintenance logs per car
                         log = Maintenance_Log(
-                            date=str(random_date("4/8/2025 1:30:00", "4/8/2025 16:50:00", random.random())),
+                            date=str(random_date("4/8/2024 1:30:00", "4/8/2025 16:50:00", random.random())),
                             description=random.choice(maintenance_dict),
                             cost=random.uniform(500, 10000)  # Random cost between 500 and 10000
                         )
@@ -305,7 +311,7 @@ async def create_maintenance_data():
                     
                     # Send maintenance logs to the backend service
                     json=jsonable_encoder(maintenance_logs)
-                    print(f"Creating maintenance data for car {car_id} with logs: {json}")
+                    # print(f"Creating maintenance data for car {car_id} with logs: {json}")
                     async with HTTP_SESSION.put(
                         f"{hostname}:9005/static/{car_id}",
                         json=json
@@ -595,7 +601,7 @@ async def main():
     load_routes( "processed_routes.json")
     cars_correctly_running = len(ROUTES)
     total_cars = len(ROUTES)
-    cars = await create_cars(num_cars=10)  # Create 300 cars
+    cars = await create_cars_ONCE(num_cars=300)  # Create 300 cars
 
     
         
@@ -617,6 +623,16 @@ async def main():
 
 
 if __name__ == "__main__":
-    # print(random_date("1/1/2024 1:30:51", "1/1/2025 16:50:00", random.random()))
-    asyncio.run(main())
+
+    # Uncomment the following lines to run the main simulation or maintenance data creation
+
+    # To run simulations
+    # asyncio.run(main())
+
+    # To run maintenance data creation
     # asyncio.run(run_maintenance())
+
+    # To create cars once
+    # asyncio.run(create_cars_handler(300))
+
+    # print(random_date("1/1/2024 1:30:51", "1/1/2025 16:50:00", random.random()))
