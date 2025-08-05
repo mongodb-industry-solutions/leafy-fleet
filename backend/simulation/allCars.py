@@ -8,7 +8,6 @@ import aiohttp
 import logging
 import signal
 
-
 ROUTES = {}  # Global route map: {route_id: {"steps": np.array, "distancePerStep": float, "timePerStep": float}}
 
 HTTP_SESSION: aiohttp.ClientSession = None
@@ -398,7 +397,6 @@ class Car:
                     logger.info(f"Car {self.car_id} updated geozone: {self.current_geozone}")
                 # Send timeseries data every step
                 try:
-                
                     await HTTP_SESSION.post(
                         f"{hostname}:9002/timeseries",
                         json=self.to_document()
@@ -410,7 +408,7 @@ class Car:
                 #agregue logica chocar y checar si el carro esta parado
                 if self.is_engine_running==False:
                     logger.warning(f" Car {self.car_id} is not running, skipping step {self.step_index}")
-                    await asyncio.sleep(60) # Wait for a minute before next step
+                    await asyncio.sleep(600) # Wait for a minute before next step
                     await increment_cars_correctly_running()  
                     if self.is_crashed:
                         self.is_crashed = False  # Reset crash state after some time
@@ -421,12 +419,24 @@ class Car:
                     if self.engine_oil_level <= 0:
                         self.engine_oil_level = 1000  # Reset oil level after a leak
                         self.is_oil_leak = False  #
+                    
                     continue
                 await asyncio.sleep(time_per_step)
             print(f" Car {self.car_id} finished route {self.current_route}")
             await asyncio.sleep(10)
             self.route_index = 1 - self.route_index
             self.step_index = 0
+    async def add_session(self, session_id: str):  
+        """Append a new session ID to metadata['sessions']."""  
+        if not self.sessions:  
+            self.sessions = []  
+        self.sessions.append(session_id)  
+        logger.info(f"Added session {session_id} to car {self.car_id}")  
+  
+    async def clear_sessions(self):  
+        """Clear all session IDs."""  
+        self.sessions.clear()  
+        logger.info(f"Cleared all sessions for car {self.car_id}")  
 
 async def create_cars(num_cars: int):
     cars = []
@@ -484,34 +494,37 @@ async def shutdown_signal_handler():
         await HTTP_SESSION.close()
         logger.info("Session closed. Exiting.")   
 
-
-async def main():
-    global HTTP_SESSION
-    HTTP_SESSION = aiohttp.ClientSession()
-
-    load_routes( "processed_routes.json")
-    cars_correctly_running = len(ROUTES)
-    total_cars = len(ROUTES)
-    cars = await create_cars(num_cars=10)  # Create 300 cars
-
-    
-        
-    loop = asyncio.get_running_loop()
-    stop_event = asyncio.Event()
-
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, stop_event.set)
-#
-    tasks = [asyncio.create_task(car.run()) for car in cars]
-
-    try:
-        await stop_event.wait()
-        logger.info("Stop signal received, cancelling tasks...")
-    finally:
-        for task in tasks:
-            task.cancel()
-    await shutdown_signal_handler()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+async def signal_pause_handler():  
+    logger.info("Pause signal received, pausing simulation...")  
+    for task in asyncio.all_tasks():  
+        if not task.done():  
+            task.cancel()  
+  
+async def signal_resume_handler(tasks):  
+    logger.info("Resume signal received, restarting simulation...")  
+    for car in tasks:  
+        asyncio.create_task(car.run())  
+  
+async def main():  
+    global HTTP_SESSION  
+    HTTP_SESSION = aiohttp.ClientSession()  
+  
+    load_routes("processed_routes.json")  
+    cars_correctly_running = len(ROUTES)  
+    total_cars = len(ROUTES)  
+    cars = await create_cars(num_cars=10)  
+  
+    loop = asyncio.get_running_loop()  
+      
+    # Add signal handlers for pause and resume  
+    loop.add_signal_handler(signal.SIGINT, lambda: asyncio.create_task(signal_pause_handler()))  
+    loop.add_signal_handler(signal.SIGCONT, lambda: asyncio.create_task(signal_resume_handler(cars)))  
+  
+    tasks = [asyncio.create_task(car.run()) for car in cars]  
+  
+    try:  
+        await asyncio.Event().wait()  # Waiting for signal events.  
+    finally:  
+        for task in tasks:  
+            task.cancel()  
+    await shutdown_signal_handler()  
