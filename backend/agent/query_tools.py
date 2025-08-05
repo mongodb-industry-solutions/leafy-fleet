@@ -7,7 +7,6 @@ import logging
 from config.config_loader import ConfigLoader
 from config.prompts import get_chain_of_thoughts_prompt, get_llm_recommendation_prompt
 from utils import convert_objectids
-from bedrock.anthropic_chat_completions import BedrockAnthropicChatCompletions
 
 from loader import CSVLoader
 import csv
@@ -279,6 +278,12 @@ class QueryTools(MongoDBConnector):
                     # Add car ID range filter
                     match_stage["$or"].append({"car_id": {"$in": car_ids}})
 
+
+
+        """
+        Tal vez sea buena idea reconsiderar usar el LLM para los campos mas importantes
+        No se esta usando        
+        """
 
 
         if agent_filters:

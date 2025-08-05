@@ -9,6 +9,8 @@ import asyncio
 import websockets 
 import asyncio
 
+from async_workflow_runner import AsyncWorkflowRunner
+
 import json
 from bson import ObjectId
 from pydantic import BaseModel
@@ -117,19 +119,58 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
     await manager.send_to_thread("Agent started with query: " + query_reported, thread_id=thread_id)
     # thread_id = f"thread_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}" # Old definition of thread_id, this was moved to the session microservice
     initial_state["thread_id"] = thread_id
-    config = {"configurable": {"thread_id": thread_id}}
-    mongodb_checkpointer = AgentCheckpointer(database_name=MDB_DATABASE_NAME, collection_name=MDB_CHECKPOINTER_COLLECTION)
+    config = {"configurable": {"thread_id": thread_id}} # https://langchain-ai.github.io/langgraph/concepts/persistence/#threads
+    mongodb_checkpointer = AgentCheckpointer(database_name=MDB_DATABASE_NAME, collection_name=MDB_CHECKPOINTER_COLLECTION).create_mongodb_saver()
     logger.info("checkpointer state: " + str(mongodb_checkpointer))
     
     try:
         await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
         logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
-        
-        # Pass the AgentCheckpointer instance
-        workflow = await create_async_workflow()
-        logger.info(f"Workflow created for thread ID: {thread_id}")
-        final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
-        await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
+        with mongodb_checkpointer as checkpointer:
+            # Create the workflow graph with the checkpointerz
+            # Pass the AgentCheckpointer instance
+
+            """
+            Version 1: Use everything in the async_workflow_runner.py
+            Custom implementation of ainvoke that uses the checkpointer
+            gets the context manager error if checkpoint is used
+            """
+            
+            await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
+            logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
+            
+            # Pass the AgentCheckpointer instance
+            workflow = await create_async_workflow()
+            logger.info(f"Workflow created for thread ID: {thread_id}")
+            final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
+            await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
+            
+
+
+
+            """
+            Version 2: Use directly the ainvoke method of the workflow graph
+            This gives the error aget_tuple raise NotImplementedError
+            """
+            """
+            async_workflow = AsyncWorkflowRunner()
+            # async_workflow.checkpointer = checkpointer
+            workflow = async_workflow._build_langgraph_workflow(checkpointer=checkpointer)
+
+            logger.info(f"Workflow created for thread ID: {thread_id}")
+            logger.info(f"Workflow type: {type(workflow)}")
+            logger.info(f"Workflow has ainvoke method: {hasattr(workflow, 'ainvoke')}")
+
+            logger.info(f"Workflow created for thread ID: {thread_id}")
+            try:
+                final_state = await workflow.ainvoke(initial_state, config=config)
+                logger.info("Workflow invocation completed successfully")
+            except Exception as workflow_error:
+                logger.error(f"Workflow invocation failed: {type(workflow_error).__name__}: {str(workflow_error)}")
+                logger.error("Workflow error traceback:", exc_info=True)
+                raise  # Re-raise to be caught by outer exception handler
+            await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
+            """
 
         agent_profiles = []
         agent_profiles.append({

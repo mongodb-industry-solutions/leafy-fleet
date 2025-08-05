@@ -32,7 +32,7 @@ class AsyncWorkflowRunner:
         
         # Initialize LangGraph checkpointer if provided
         if checkpointer:
-            self.langgraph_checkpointer = self.checkpointer.create_mongodb_saver()
+            self.langgraph_checkpointer = self.checkpointer
             if self.langgraph_checkpointer:
                 logger.info("LangGraph MongoDB checkpointer initialized successfully")
             else:
@@ -55,7 +55,7 @@ class AsyncWorkflowRunner:
         module = importlib.import_module(module_name)
         return getattr(module, function_name)
         
-    def _build_langgraph_workflow(self):
+    def _build_langgraph_workflow(self, checkpointer=None):
         """
         Create the LangGraph StateGraph for the agent workflow based on the JSON config file.
 
@@ -90,8 +90,8 @@ class AsyncWorkflowRunner:
         graph.set_entry_point(graph_config["entry_point"])
 
         # Compile the graph
-        if self.langgraph_checkpointer:
-            return graph.compile(checkpointer=self.langgraph_checkpointer)
+        if checkpointer:
+            return graph.compile(checkpointer=checkpointer)
         else:
             return graph.compile()
 
