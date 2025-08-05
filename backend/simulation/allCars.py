@@ -627,7 +627,7 @@ if __name__ == "__main__":
     # Uncomment the following lines to run the main simulation or maintenance data creation
 
     # To run simulations
-    # asyncio.run(main())
+    asyncio.run(main())
 
     # To run maintenance data creation
     # asyncio.run(run_maintenance())
