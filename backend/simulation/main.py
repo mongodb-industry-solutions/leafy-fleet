@@ -4,29 +4,43 @@ import random
 import asyncio  
 import aiohttp  
 import logging  
-import argparse  
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List, Dict, Optional
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from pydantic import BaseModel
+import uvicorn
 import state_manager
+from geofence_manager import GeofenceManager  # geofence logic is here, avoiding gets to db throught the run
+
+# FastAPI app
+app = FastAPI(title="Car Simulation Microservice", version="1.0.0")
+
 # Global route map  
 ROUTES = {}  
   
+# Global Geofences
+geofence_manager = GeofenceManager()  
+
 # HTTP Session used globally  
 HTTP_SESSION: aiohttp.ClientSession = None  
-  
+
+# Global car registry and simulation control
+GLOBAL_CARS: Dict[int, 'Car'] = {}  # Dictionary: car_id -> Car instance
+SIMULATION_TASKS: List[asyncio.Task] = []  # Active simulation tasks
+CARS_LOCK = asyncio.Lock()  # Lock for accessing global cars registry
+
 # Logging setup  
-#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')  
 logging.basicConfig(  
     level=logging.INFO,  
     format='%(asctime)s - %(levelname)s - %(message)s',  
     handlers=[  
-        logging.FileHandler("simulation.log"),  # Write logs to "simulation.log"  
-        logging.StreamHandler()  # Keep logs in the console for interactive monitoring  
+        logging.FileHandler("simulation.log"),  
+        logging.StreamHandler()  
     ]  
 ) 
 logger = logging.getLogger(__name__)  
 
-  
 # Constants  
 constant_fuel_consumption_per_m = 0.0009  # ml/m  
 constant_oil_consumption_per_m = 0.0005  # ml/m  
@@ -34,8 +48,21 @@ hostname = "http://localhost"  # Backend service base URL
 state_lock = asyncio.Lock()  
   
 # Helpers for tracking simulation state  
-cars_correctly_running = 10  # Example starting value  
-total_cars = 10  
+cars_correctly_running = 300  # Updated for 300 cars
+total_cars = 300  
+
+# Pydantic models for API
+class SessionRequest(BaseModel):
+    session_id: str
+    range1: int  # 0-100: cars 1 to range1
+    range2: int  # 0-100: cars 101 to 101+range2-1  
+    range3: int  # 0-100: cars 201 to 201+range3-1
+
+class SimulationStatus(BaseModel):
+    state: str
+    total_cars: int
+    running_cars: int
+    registered_cars: int
 
 
 @dataclass
@@ -65,7 +92,7 @@ class Car:
     # Internal state
     performance_score: float =0 # From 0 to 1
     sessions: list = None  # List of session IDs, can be used for tracking or logging
-    sessions_lock: asyncio.Lock = asyncio.Lock()
+    sessions_lock: asyncio.Lock = None  # Will be initialized in __post_init__
     step_index: int = 0
     real_step: int = 0
     route_index: int = 0  # 0 or 1
@@ -77,6 +104,11 @@ class Car:
 
     def __post_init__(self):
         self.route_ids = [self.car_id, self.car_id + 1] if self.car_id % 2 == 1 else [self.car_id, self.car_id - 1]
+        # Initialize sessions list and lock properly
+        if self.sessions is None:
+            self.sessions = []
+        if self.sessions_lock is None:
+            self.sessions_lock = asyncio.Lock()
 
     async def update(self, move_distance_m: float, time_per_step: float):
         self.real_step+=1
@@ -85,7 +117,7 @@ class Car:
         self.traveled_distance_since_start += move_distance_m  # m
         self.fuel_level = max(self.fuel_level - move_distance_m * constant_fuel_consumption_per_m, 0)
         self.run_time += time_per_step
-        self.speed = max((move_distance_m / (time_per_step * 1000) * 3600 )+ random.uniform(-0.35, 0.25), 0) #  speed variation km/h,  non-negative
+        self.speed = max((self.traveled_distance / (time_per_step) * 3600 )+ random.uniform(-0.35, 0.25), 0) #  speed variation km/h,  non-negative
         self.speed_total+=self.speed
         self.average_speed = self.speed_total / self.real_step
         
@@ -107,44 +139,49 @@ class Car:
             logger.warning(f" Car {self.car_id} has an oil leak!")
             await decrement_cars_correctly_running()
         self.is_moving = self.speed > 0
-        self.performance_score = (self.real_step /self.steps_route)
+        self.performance_score = (self.real_step /self.steps_route) if self.steps_route > 0 else 0
         self.quality_score = cars_correctly_running/total_cars
-        self.availability_score = min(1, self.availability_score + (random.uniform(-0.02, 0.02)))
-        self.oee = self.quality_score * self.availability_score* self.performance_score
+        self.availability_score = min(1, max(0, self.availability_score + (random.uniform(-0.02, 0.02))))
+        self.oee = self.quality_score * self.availability_score * self.performance_score
 
+    async def get_sessions(self):
+        """Safely get a copy of current sessions."""
+        async with self.sessions_lock:
+            return self.sessions.copy() if self.sessions else []
 
     async def to_document(self):
-        async with self.sessions_lock:
-            
-            doc = {
-                "car_id": self.car_id,
-                "fuel_level": float(round(self.fuel_level, 1)),
-                "engine_oil_level": float(round(self.engine_oil_level, 1)),
-                "traveled_distance": float(round(self.traveled_distance, 4)),
-                "run_time": float(self.run_time),
-                "performance_score": float(self.performance_score),
-                "quality_score": float(self.quality_score),
-                "availability_score": float(self.availability_score),
-                "max_fuel_level": float(self.max_fuel_level),
-                "oee": float(self.oee),
-                "oil_temperature": float(self.oil_temperature),
-                "is_oil_leak": self.is_oil_leak,
-                "is_engine_running": self.is_engine_running,
-                "is_crashed": self.is_crashed,
-                "current_route": self.current_route,
-                "speed": float(round(self.speed, 2)),
-                "average_speed": float(round(self.average_speed, 2)),
-                "is_moving": self.is_moving,
-                "current_geozone": self.current_geozone,
-                "coordinates": {
-                "type": "Point",
-                "coordinates": [float(round(self.longitude, 7)), float(round(self.latitude, 7))]
-                },
-                "metadata": {
-                    "sessions": self.sessions if self.sessions else []  # Ensure sessions is always a list
-                            }
-            }
-            return doc
+        # Get a safe copy of sessions
+        sessions_copy = await self.get_sessions()
+        
+        doc = {
+            "car_id": self.car_id,
+            "fuel_level": float(round(self.fuel_level, 1)),
+            "engine_oil_level": float(round(self.engine_oil_level, 1)),
+            "traveled_distance": float(round(self.traveled_distance, 4)),
+            "run_time": float(self.run_time),
+            "performance_score": float(self.performance_score),
+            "quality_score": float(self.quality_score),
+            "availability_score": float(self.availability_score),
+            "max_fuel_level": float(self.max_fuel_level),
+            "oee": float(self.oee),
+            "oil_temperature": float(self.oil_temperature),
+            "is_oil_leak": self.is_oil_leak,
+            "is_engine_running": self.is_engine_running,
+            "is_crashed": self.is_crashed,
+            "current_route": self.current_route,
+            "speed": float(round(self.speed, 2)),
+            "average_speed": float(round(self.average_speed, 2)),
+            "is_moving": self.is_moving,
+            "current_geozone": self.current_geozone,
+            "coordinates": {
+            "type": "Point",
+            "coordinates": [float(round(self.longitude, 7)), float(round(self.latitude, 7))]
+            },
+            "metadata": {
+                "sessions": sessions_copy
+                        }
+        }
+        return doc
 
     async def run(self):
         try:
@@ -152,73 +189,67 @@ class Car:
                 if state_manager.is_paused():  
                     logger.info(f"Car {self.car_id}: Simulation paused.")  
                     while state_manager.is_paused():  
-                        await asyncio.sleep(1)  # Wait for the pause state to change  
+                        await asyncio.sleep(5)  # Wait for the pause state to change 10 seconds, will stop completly after 15 minutes. 
                 elif state_manager.is_stopped():  
                     logger.info(f"Car {self.car_id}: Simulation stopped. Exiting.")  
                     break  # Exit the simulation loop when stopped  
+                
                 self.current_route = self.route_ids[self.route_index]
+                if self.current_route not in ROUTES:
+                    logger.warning(f"Car {self.car_id}: Route {self.current_route} not found, skipping")
+                    await asyncio.sleep(10)
+                    continue
+                    
                 steps, dist_per_step, time_per_step = ROUTES[self.current_route]
                 self.steps_route += len(steps) # para que oee nunca se quede como 0 despues de inicio
+                
                 while self.step_index < len(steps) and state_manager.is_running():
-                        
-                            self.latitude, self.longitude = steps[self.step_index]
-                            await self.update(dist_per_step, time_per_step)
-                            
-                            #will add logging here instead of print
-                            #logger.info(f" Car {self.car_id} moved to ({self.latitude:.5f}, {self.longitude:.5f}) | total distance: {self.traveled_distance_since_start:.1f}m |  {self.step_index}")
-                            logger.info(f"Car {self.car_id} has {self.sessions}")
-                            if self.step_index % 10 == 0:
-                                try:
-                                    json_payload = {'coordinates': [float(self.longitude), float(self.latitude)]}  
-            
-                                    # Print or log the JSON payload  
-                                    #print(f"Sending JSON payload: {json_payload}")  
-                                    async with HTTP_SESSION.get(
-                                    f"{hostname}:9004/geofences/check",
-                                        json=json_payload  
-                                    ) as response:
-                                        if response.status == 200:
-                                            data = await response.json()
-                                            self.current_geozone = (
-                                                f"{data['geofence_name']}"
-                                                if data.get("geofence_name")
-                                                else "No active geofence"
-                                            )
-                                        else:
-                                            self.current_geozone = "Geofence check error"
-                                except Exception as e:
-                                    logger.warning(f" Geofence check error: {e}")
-                                    self.current_geozone = "Error checking geofence"
+                    self.latitude, self.longitude = steps[self.step_index]
+                    await self.update(dist_per_step, time_per_step)
+                    
+                    # Access sessions with proper locking (reduced logging frequency)
+                    if self.step_index % 50 == 0:  # Log less frequently
+                        current_sessions = await self.get_sessions()
+                        if current_sessions:  # Only log if there are sessions
+                            logger.info(f"Car {self.car_id} has {current_sessions}")
+                    if self.step_index % 10 == 0:
+                        try:
+                            self.current_geozone = geofence_manager.check_point_in_geofences(self.longitude, self.latitude)  
+                            logger.info(f"Car {self.car_id}: Current geozone: {self.current_geozone}")
+                        except Exception as e:
+                            logger.warning(f" Geofence check error: {e}")
+                            self.current_geozone = "Error checking geofence"
 
-                                #logger.info(f"Car {self.car_id} updated geozone: {self.current_geozone}")
-                            # Send timeseries data every step
-                            try:
-                                document = await self.to_document()  
-                                await HTTP_SESSION.post(
-                                    f"{hostname}:9002/timeseries",
-                                    json=document
-                                )
-                            except Exception as e:
-                                logger.warning(f" Error sending timeseries for Car {self.car_id}: {e}")
-                            self.step_index += 1
+                    # Send timeseries data every step
+                    try:
+                        document = await self.to_document()  
+                        await HTTP_SESSION.post(
+                            f"{hostname}:9002/timeseries",
+                            json=document
+                        )
+                    except Exception as e:
+                        logger.warning(f" Error sending timeseries for Car {self.car_id}: {e}")
+                    
+                    self.step_index += 1
 
-                            #agregue logica chocar y checar si el carro esta parado
-                            if self.is_engine_running==False:
-                                logger.warning(f" Car {self.car_id} is not running, skipping step {self.step_index}")
-                                await asyncio.sleep(60) # Wait for a minute before next step
-                                await increment_cars_correctly_running()  
-                                if self.is_crashed:
-                                    self.is_crashed = False  # Reset crash state after some time
-                                    self.is_engine_running = True  # Restart the engine after a crash
-                                if self.fuel_level <= 0:
-                                    self.fuel_level = self.max_fuel_level
-                                    self.is_engine_running = True  # Refuel and restart the engine
-                                if self.engine_oil_level <= 0:
-                                    self.engine_oil_level = 1000  # Reset oil level after a leak
-                                    self.is_oil_leak = False  
-                                continue
-                            await asyncio.sleep(time_per_step)
-                #print(f" Car {self.car_id} finished route {self.current_route}")
+                    # Handle car failures
+                    if self.is_engine_running==False:
+                        logger.warning(f" Car {self.car_id} is not running, skipping step {self.step_index}")
+                        await asyncio.sleep(60) # Wait for a minute before next step
+                        await increment_cars_correctly_running()  
+                        if self.is_crashed:
+                            self.is_crashed = False  # Reset crash state after some time
+                            self.is_engine_running = True  # Restart the engine after a crash
+                        if self.fuel_level <= 0:
+                            self.fuel_level = self.max_fuel_level
+                            self.is_engine_running = True  # Refuel and restart the engine
+                        if self.engine_oil_level <= 0:
+                            self.engine_oil_level = 1000  # Reset oil level after a leak
+                            self.is_oil_leak = False  
+                        continue
+                    await asyncio.sleep(time_per_step)
+                
+                # Finished route, switch to next one
                 await asyncio.sleep(10)
                 self.route_index = 1 - self.route_index
                 self.step_index = 0
@@ -234,35 +265,56 @@ class Car:
                 self.sessions = []      
         
             self.sessions.append(session_id)      
-            logger.info(f"Added  session {session_id} to car {self.car_id}. Current sessions: {self.sessions}")  
+            #logger.info(f"Added session {session_id} to car {self.car_id}. Current sessions: {self.sessions}")  
 
-  
     async def clear_sessions(self): 
         async with self.sessions_lock: 
             """Clear all session IDs."""  
-            self.sessions.clear()  
+            if self.sessions:
+                self.sessions.clear()  
             #logger.info(f"Cleared all sessions for car {self.car_id}")  
-  
-  
+
+
+# Car management functions
+async def register_car(car):
+    """Register a car in the global registry."""
+    async with CARS_LOCK:
+        GLOBAL_CARS[car.car_id] = car
+
+
+async def get_car_by_id(car_id):
+    """Get a car from the global registry by ID."""
+    async with CARS_LOCK:
+        return GLOBAL_CARS.get(car_id)
+
+async def get_all_cars():
+    """Get all cars from the global registry."""
+    async with CARS_LOCK:
+        return list(GLOBAL_CARS.values())
+
+async def clear_all_cars():
+    """Clear all cars from the global registry."""
+    async with CARS_LOCK:
+        GLOBAL_CARS.clear()
+
+# State tracking functions
 async def decrement_cars_correctly_running():  
     async with state_lock:  
         global cars_correctly_running  
         cars_correctly_running -= 1  
-  
-  
+
 async def increment_cars_correctly_running():  
     async with state_lock:  
         global cars_correctly_running  
         cars_correctly_running += 1  
-  
-  
+
 async def create_cars(num_cars: int):  
     """Initialize cars for simulation."""  
     cars = []  
     for car_id in range(1, num_cars + 1):  
-        route_id = car_id  
+        route_id = car_id % len(ROUTES) + 1 if ROUTES else car_id  # Cycle through available routes
         if route_id not in ROUTES:  
-            #logger.info(f"Skipping car {car_id}: no starting route {route_id}")  
+            logger.warning(f"Skipping car {car_id}: no route {route_id} available")
             continue  
   
         lat, lng = ROUTES[route_id][0][0]  
@@ -288,15 +340,16 @@ async def create_cars(num_cars: int):
             average_speed=0.0,
             is_moving=False,
             current_geozone="No Geofence found",
-            sessions=[] , # Initialize with an empty list
-            sessions_lock = asyncio.Lock()  
+            sessions=[]  # Initialize with an empty list
         ) 
-        cars.append(car)  
+        cars.append(car)
+        await register_car(car)
     return cars  
-  
-  
+
+
 def load_routes(filepath: str):
-        global ROUTES
+    global ROUTES
+    try:
         with open(filepath, "r") as f:
             raw = json.load(f)
         for key, val in raw.items():
@@ -305,141 +358,248 @@ def load_routes(filepath: str):
                 float(val["distancePerStep"]),
                 float(val["timePerStep"])
             )
-        #print(f" Loaded {len(ROUTES)} routes")
-        
-  
-async def shutdown_signal_handler():  
-    """Handle graceful shutdown."""  
-    #logger.info("Shutdown signal received, cleaning up...")  
-    if HTTP_SESSION:  
-        await HTTP_SESSION.close()  
-        #logger.info("Session closed. Exiting.")  
-  
-  
-async def signal_pause_handler(tasks):  
-    """Handle pause signal."""  
-    #logger.info("Pause signal received, pausing simulation...")  
-    for task in tasks:  
-        if not task.done():  
-            task.cancel()  
-  
-  
-async def signal_resume_handler(cars):  
-    """Handle resume signal."""  
-    #logger.info("Resume signal received, restarting simulation...")  
-    tasks = [asyncio.create_task(car.run()) for car in cars]  
-    return tasks  
-  
-  
-def parse_cli_args():  
-    """Parse command-line arguments."""  
-    parser = argparse.ArgumentParser(description="Linux Manager for Simulation Control")  
-    parser.add_argument("--start", action="store_true", help="Start the simulation")  
-    parser.add_argument("--stop", action="store_true", help="pause the simulation")  
-    parser.add_argument("--add-session", type=str, help="Add new session to metadata")  
-    return parser.parse_args()  
+        logger.info(f"Loaded {len(ROUTES)} routes")
+    except FileNotFoundError:
+        logger.error(f"Routes file {filepath} not found")
+    except Exception as e:
+        logger.error(f"Error loading routes: {e}")
+
+async def pause_simulation():
+    """Pause the simulation."""
+    if not state_manager.is_running():
+        raise HTTPException(status_code=400, detail="Simulation is not running")
+    
+    state_manager.set_state("paused")
+    logger.info("Simulation paused")
+
+async def resume_simulation():
+    """Resume the paused simulation."""
+    if not state_manager.is_paused():
+        raise HTTPException(status_code=400, detail="Simulation is not paused")
+    
+    state_manager.set_state("running")
+    logger.info("Simulation resumed")
+
+async def stop_simulation_internal():
+    """Internal function to stop simulation and clean up."""
+    global SIMULATION_TASKS
+    
+    # Set state to stopped
+    state_manager.set_state("stopped")
+    
+    # Cancel all tasks
+    for task in SIMULATION_TASKS:
+        if not task.done():
+            task.cancel()
+    
+    # Wait for tasks to complete with timeout
+    if SIMULATION_TASKS:
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*SIMULATION_TASKS, return_exceptions=True),
+                timeout=30.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Some tasks did not complete within timeout")
+    
+    SIMULATION_TASKS.clear()
+    await clear_all_cars()
+
+async def stop_simulation():
+    """Stop the simulation and clean up all resources."""
+    if state_manager.is_stopped():
+        raise HTTPException(status_code=400, detail="Simulation is already stopped")
+    
+    await stop_simulation_internal()
+    logger.info("Simulation stopped and cleaned up")
+
+# API Endpoints
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize the microservice."""
+    global HTTP_SESSION
+    HTTP_SESSION = aiohttp.ClientSession()
+    load_routes("processed_routes.json")
+    try:  
+        await geofence_manager.load_geofences("http://localhost:9004/geofences",HTTP_SESSION)  
+  # Load geofences from an API  
+    except Exception as e:  
+        logger.error(f"Failed to load geofences from API during startup: {str(e)}")
+    logger.info("Car Simulation Microservice started")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up resources on shutdown."""
+    global HTTP_SESSION
+    await stop_simulation_internal()
+    if HTTP_SESSION:
+        await HTTP_SESSION.close()
+    logger.info("Car Simulation Microservice stopped")
+
+@app.get("/")
+async def root():
+    """Health check endpoint."""
+    return {"message": "Car Simulation Microservice is running"}
+
+@app.get("/status", response_model=SimulationStatus)
+async def get_status():
+    """Get current simulation status."""
+    cars = await get_all_cars()
+    return SimulationStatus(
+        state=state_manager.get_state(),
+        total_cars=total_cars,
+        running_cars=cars_correctly_running,
+        registered_cars=len(cars)
+    )
+    
+@app.post("/start/{num_cars}")
+async def start_simulation_endpoint(num_cars: int):
+    """Start simulation with specified number of cars."""
+    if num_cars <= 0:
+        raise HTTPException(status_code=400, detail="Number of cars must be greater than 0")
+    
+    if num_cars > 300: #could change in future, just need more routes in advance!
+        raise HTTPException(status_code=400, detail="Maximum 300 cars allowed")
+    
+    if state_manager.is_running():
+        raise HTTPException(status_code=400, detail="Simulation is already running")
+    
+    # Clear any existing cars and tasks
+    await stop_simulation_internal()
+    
+    # Create cars
+    cars = await create_cars(num_cars=num_cars)
+    
+    # Update global counters
+    global total_cars, cars_correctly_running
+    total_cars = len(cars)
+    cars_correctly_running = total_cars
+    
+    # Start simulation
+    state_manager.set_state("running")
+    global SIMULATION_TASKS
+    SIMULATION_TASKS = [asyncio.create_task(car.run()) for car in cars]
+    
+    logger.info(f"Started simulation with {len(cars)} cars")
+    
+    return {
+        "message": f"Simulation started successfully",
+        "cars_created": len(cars),
+        "cars_correctly_running": cars_correctly_running,
+        "total_cars": total_cars,
+        "action": "start"
+    }
+
+@app.post("/pause")
+async def pause_simulation_endpoint():
+    """Pause the simulation."""
+    if not state_manager.is_running():
+        raise HTTPException(status_code=400, detail="Simulation is not running")
+    
+    state_manager.set_state("paused")
+    logger.info("Simulation paused")
+    return {"message": "Simulation paused", "action": "pause"}
+
+@app.post("/resume")
+async def resume_simulation_endpoint():
+    """Resume the paused simulation."""
+    if not state_manager.is_paused():
+        raise HTTPException(status_code=400, detail="Simulation is not paused")
+    
+    state_manager.set_state("running")
+    logger.info("Simulation resumed")
+    return {"message": "Simulation resumed", "action": "resume"}
+
+@app.post("/stop")
+async def stop_simulation_endpoint(background_tasks: BackgroundTasks):
+    """Stop the simulation and clean up all resources."""
+    if state_manager.is_stopped():
+        raise HTTPException(status_code=400, detail="Simulation is already stopped")
+    
+    # Run stop in background to avoid blocking the API response
+    background_tasks.add_task(stop_simulation_internal)
+    return {"message": "Simulation stopping...", "action": "stop"}
+
+@app.post("/sessions")
+async def add_sessions(request: SessionRequest):
+    """Add session to cars based on three ranges: 1-x1, 101-x2, 201-x3."""
+    if not state_manager.is_running():
+        raise HTTPException(status_code=400, detail="Simulation is not running")
+    
+    # Validate ranges
+    if not all(0 <= x <= 100 for x in [request.range1, request.range2, request.range3]):
+        raise HTTPException(status_code=400, detail="All ranges must be between 0 and 100")
+    
+    # Generate car ID lists based on ranges
+    car_ids = []
+    
+    # Range 1: cars 1 to range1 (if range1 > 0)
+    if request.range1 > 0:
+        car_ids.extend(list(range(1, request.range1 + 1)))
+    
+    # Range 2: cars 101 to 101+range2-1 (if range2 > 0)  
+    if request.range2 > 0:
+        car_ids.extend(list(range(101, 101 + request.range2)))
+    
+    # Range 3: cars 201 to 201+range3-1 (if range3 > 0)
+    if request.range3 > 0:
+        car_ids.extend(list(range(201, 201 + request.range3)))
+    
+    if not car_ids:
+        return {
+            "message": "No cars selected (all ranges are 0)",
+            "session_id": request.session_id,
+            "cars_updated": 0,
+            "ranges": {
+                "range1": f"1-{request.range1}" if request.range1 > 0 else "none",
+                "range2": f"101-{100 + request.range2}" if request.range2 > 0 else "none", 
+                "range3": f"201-{200 + request.range3}" if request.range3 > 0 else "none"
+            }
+        }
+    
+    # Add sessions to cars
+    cars_updated = 0
+    cars_not_found = []
+    
+    for car_id in car_ids:
+        car = await get_car_by_id(car_id)
+        if car:
+            await car.add_session(request.session_id)
+            cars_updated += 1
+        else:
+            cars_not_found.append(car_id)
+    
+    result = {
+        "message": f"Session {request.session_id} added to {cars_updated} cars",
+        "session_id": request.session_id,
+        "cars_updated": cars_updated,
+        "total_cars_requested": len(car_ids),
+        "ranges": {
+            "range1": f"1-{request.range1}" if request.range1 > 0 else "none",
+            "range2": f"101-{100 + request.range2}" if request.range2 > 0 else "none",
+            "range3": f"201-{200 + request.range3}" if request.range3 > 0 else "none"
+        }
+    }
+    
+    if cars_not_found:
+        result["cars_not_found"] = cars_not_found
+    
+    return result
+
+@app.delete("/sessions/{car_id}")
+async def clear_car_sessions(car_id: int):
+    """Clear all sessions from a specific car."""
+    if not state_manager.is_running():
+        raise HTTPException(status_code=400, detail="Simulation is not running")
+    
+    car = await get_car_by_id(car_id)
+    if not car:
+        raise HTTPException(status_code=404, detail=f"Car {car_id} not found")
+    
+    await car.clear_sessions()
+    return {"message": f"Sessions cleared for car {car_id}"}
 
 
-
-tasks = []  # Global list to track simulation tasks (make this global)  
-  
-async def spawn_tasks(cars):  
-    """Spawn asynchronous tasks for all cars."""  
-    global tasks  
-    tasks = [asyncio.create_task(car.run()) for car in cars]  
-  
-async def cancel_tasks():  
-    """Cancel all simulation tasks."""  
-    global tasks  
-    for task in tasks:  
-        task.cancel()  
-    await asyncio.gather(*tasks, return_exceptions=True)  # Gather with exceptions for cancelled tasks  
-    tasks.clear()  # Reset tasks list  
-
-  
-async def main():  
-    args = parse_cli_args()  
-  
-    global HTTP_SESSION  
-    HTTP_SESSION = aiohttp.ClientSession()  
-  
-    load_routes("processed_routes.json")  
-    cars = await create_cars(num_cars=10)  
-  
-      
-  
-    if args.start:  
-        if state_manager.is_stopped() or state_manager.is_paused():  
-            state_manager.set_state("running")  
-            logger.info("Simulation started/resumed.")  
-    
-            # Create tasks for all cars  
-            tasks = [asyncio.create_task(car.run()) for car in cars]  
-            # Concurrently run all car tasks using asyncio.gather  
-            await asyncio.gather(*tasks)  
-
-  
-    elif args.stop:  
-        if state_manager.is_running():  
-            state_manager.set_state("paused")  
-            logger.info("Simulation paused.")  
-            await cancel_tasks()  # Cancel running tasks  
-        elif state_manager.is_paused():  
-            logger.info("Simulation already paused.")  
-        elif state_manager.is_stopped():  
-            logger.info("Simulation is not running.")  
- 
-  
-    elif args.add_session:  
-        # Add dynamic sessions based on the syntax: --add-session <sessionID> 10 10 10  
-        session_args = args.add_session.split()  # Split input by spaces  
-        if len(session_args) != 4:  # Expect sessionID + three numbers  
-            logger.error("Invalid input. Please provide a session ID followed by three numbers separated by spaces (e.g., --add-session 'session123 10 20 30').")  
-            return  
-    
-        try:  
-            # Extract session ID and numbers  
-            session_id = session_args[0]  
-            number1, number2, number3 = map(int, session_args[1:])  
-    
-            # Validate input ranges (ensure numbers are between 0 and 100)  
-            if not all(0 <= num <= 100 for num in (number1, number2, number3)):  
-                logger.error("Numbers must be between 0 and 100. Please try again.")  
-                return  
-    
-            # Generate session ranges  
-            if number1 != 0:
-                sessions_1 = list(range(1, number1 + 1)) 
-            else:
-                sessions_1=[]
-            if number2!=0: 
-                sessions_2 = list(range(101, 101 + number2))
-            else:
-                sessions_2=[]
-            if number3!=0:   
-                sessions_3 = list(range(201, 201 + number3)) 
-            else:
-                sessions_3=[] 
-    
-            all_sessions = sessions_1 + sessions_2 + sessions_3  
-    
-            # Add the session ID and generated sessions to cars  
-            if state_manager.is_running():  
-                for car in cars:
-                    if car.car_id in all_sessions:  
-                        if not car.sessions:  
-                            car.sessions = []  # Ensure sessions list exists  
-                        await car.add_session(session_id)  # Add the session ID  
-            else:  
-                logger.info("Cannot add sessions. Simulation is not running.")  
-    
-        except ValueError:  
-            logger.error("Input parsing failed. Please provide valid integers for session ranges.")  
-    
-  
-  
-    await shutdown_signal_handler()  
-  
-  
-if __name__ == "__main__":  
-    asyncio.run(main())  
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

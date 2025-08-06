@@ -12,4 +12,11 @@ This simulation service creates virtual cars and moves them along predefined rou
 - **Sends telemetry data** (location, speed, fuel, etc.) to a backend microservice at each step.
 - **Checks geofence status** every 10 steps via a backend API (in app folder).
 
-
+## API CALLS
+POST /start/{num_cars}     # Start with N cars
+POST /pause                # Pause simulation  
+POST /resume               # Resume paused simulation
+POST /stop                 # Stop and cleanup
+POST /sessions             # Add sessions to car ranges
+GET  /status              # Get simulation status
+DELETE /cars/{id}/sessions # Clear car sessions
