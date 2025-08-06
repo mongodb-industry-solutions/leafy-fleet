@@ -39,7 +39,7 @@ class AsyncWorkflowRunner:
                 logger.warning("Failed to initialize LangGraph MongoDB checkpointer")
         
         # Build the LangGraph workflow
-        self.workflow_graph = self._build_langgraph_workflow()
+        self.workflow_graph = self._build_langgraph_workflow(checkpointer=checkpointer)
         
     def resolve_tool(self, tool_path):
         """
@@ -91,8 +91,21 @@ class AsyncWorkflowRunner:
 
         # Compile the graph
         if checkpointer:
-            return graph.compile(checkpointer=checkpointer)
+            print("===ASYNC WORKFLOW RUNNER===\nCompiling graph WITH checkpointer")
+            logger.info(f"Checkpointer type: {type(checkpointer)}")
+            logger.info(f"Checkpointer methods: {[method for method in dir(checkpointer) if not method.startswith('_')]}")
+
+            compiled_graph = graph.compile(checkpointer=checkpointer)
+
+            # Verify the checkpointer was actually attached
+            logger.info(f"Compiled graph type: {type(compiled_graph)}")
+            logger.info(f"Compiled graph has checkpointer: {hasattr(compiled_graph, 'checkpointer')}")
+            if hasattr(compiled_graph, 'checkpointer'):
+                logger.info(f"Compiled graph checkpointer: {compiled_graph.checkpointer}")
+                logger.info(f"Checkpointer is same object: {compiled_graph.checkpointer is checkpointer}")
+            return compiled_graph
         else:
+            print("===ASYNC WORKFLOW RUNNER===\nCompiling graph WITHOUT checkpointer")
             return graph.compile()
 
     async def ainvoke(self, initial_state: Dict[str, Any], config: Dict[str, Any] = None, thread_id: str = None, **kwargs) -> Dict[str, Any]:
@@ -109,13 +122,22 @@ class AsyncWorkflowRunner:
             Dict[str, Any]: Final state after workflow execution.
         """
         # Use LangGraph's built-in execution with automatic checkpointing
-        if self.langgraph_checkpointer and config:
+
+        has_checkpointer = hasattr(self.workflow_graph, 'checkpointer') and self.workflow_graph.checkpointer is not None
+        logger.info(f"Workflow has checkpointer: {has_checkpointer}")
+        logger.info(f"Config provided: {config is not None}")
+
+        if has_checkpointer and config:
             logger.info(f"Invoking LangGraph workflow with checkpointer for thread_id: {thread_id}")
-        
-            # Directly invoke the workflow and get the final state
-            final_state = await self.workflow_graph.ainvoke(initial_state, config=config)
-            await manager.send_to_thread(f"Workflow completed.", thread_id=thread_id)
-            return final_state
+
+            try: 
+                # Directly invoke the workflow and get the final state
+                final_state = await self.workflow_graph.ainvoke(initial_state, config=config)
+                await manager.send_to_thread(f"Workflow completed.", thread_id=thread_id)
+                return final_state
+            except Exception as e:
+                # Log the specific error to help debug
+                logger.error(f"LangGraph workflow error: {type(e).__name__}: {str(e)}")
         
         # Fallback to manual execution if no checkpointer
         logger.info("Invoking workflow without checkpointer (manual execution).")

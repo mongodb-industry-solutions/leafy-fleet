@@ -1,6 +1,6 @@
 import logging
 
-from langgraph.checkpoint.mongodb import MongoDBSaver
+from langgraph.checkpoint.mongodb import AsyncMongoDBSaver
 from db.mdb import MongoDBConnector
 from config.config_loader import ConfigLoader
 

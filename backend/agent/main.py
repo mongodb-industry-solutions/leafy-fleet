@@ -126,7 +126,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
     try:
         await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
         logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
-        with mongodb_checkpointer as checkpointer:
+        async with mongodb_checkpointer as checkpointer:
             # Create the workflow graph with the checkpointerz
             # Pass the AgentCheckpointer instance
 
@@ -140,7 +140,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
             
             # Pass the AgentCheckpointer instance
-            workflow = await create_async_workflow()
+            workflow = await create_async_workflow(checkpointer=checkpointer)
             logger.info(f"Workflow created for thread ID: {thread_id}")
             final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
             await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
