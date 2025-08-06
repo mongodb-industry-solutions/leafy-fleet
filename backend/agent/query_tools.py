@@ -69,6 +69,7 @@ class QueryTools(MongoDBConnector):
         self.chatcompletions_model_id = self.config.get("CHATCOMPLETIONS_MODEL_ID")
         self.chatcompletions_model_name = self.config.get("CHATCOMPLETIONS_MODEL_NAME")
         self.mdb_historical_recommendations_collection = self.config.get("MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION") # historical_recommendations
+        self.mdb_checkpointer_collection = self.config.get("MDB_CHECKPOINTER_COLLECTION")
 
         if collection_name:
             # Set the collection name
@@ -119,7 +120,7 @@ class QueryTools(MongoDBConnector):
         
         return result
 
-    async def vehicle_state_search(self, user_preferences: str = None, agent_filters: str = None, user_filters: str = None):
+    async def vehicle_state_search(self, user_preferences: str = None, agent_filters: str = None, user_filters: str = None, limit: int = 500):
         """
         Perform a vehicle state search based on the provided user preferences.
         """
@@ -187,14 +188,14 @@ class QueryTools(MongoDBConnector):
 
         logger.info(f"Final project stage: {project_stage}")
 
-        match_stage = self.build_match_stage(user_filters, agent_filters)
+        match_stage = self.build_match_stage(user_filters, agent_filters, user_preferences)
 
         pipeline = [
             {
                 "$match": match_stage
             },
             {
-                "$limit": 500  # Limit to 500 results
+                "$limit": limit  # Limit to 500 results
             },
             # Project only requested fields
             {
@@ -238,11 +239,11 @@ class QueryTools(MongoDBConnector):
 
         # logger.info(f"Sample: {result[:3]}")
 
-
+        
         return result
 
 
-    def build_match_stage(self, user_filters: str = None, agent_filters: str = None):
+    def build_match_stage(self, user_filters: str = None, agent_filters: str = None, user_preferences: str = None):
         """
         Build the match stage for the MongoDB query based on user preferences and agent filters.
         
@@ -252,7 +253,7 @@ class QueryTools(MongoDBConnector):
         
         """
         match_stage = {}
-
+        fleet_capacity = self.understand_fleet_number(user_preferences)
         if user_filters:
             match_stage["$or"] = []
             for fleet_prefs in user_filters:
@@ -261,11 +262,11 @@ class QueryTools(MongoDBConnector):
                     continue
                 if fleet_prefs:
                     if fleet_prefs == "Fleet 1":
-                        car_ids = list(range(0, 100))  # Car IDs 0-99
+                        car_ids = list(range(0, fleet_capacity[0]))  # Car IDs 0-99
                     elif fleet_prefs == "Fleet 2":
-                        car_ids = list(range(100, 200))  # Car IDs 100-199
+                        car_ids = list(range(100, fleet_capacity[1]))  # Car IDs 100-199
                     elif fleet_prefs == "Fleet 3":
-                        car_ids = list(range(200, 300))  # Car IDs 200-299
+                        car_ids = list(range(200, fleet_capacity[2]))  # Car IDs 200-299
                     elif fleet_prefs in ["Downtown", "Geofence 2"]:
                         # For geofence filters, use current_geozone field instead
                         match_stage["$or"].append({"current_geozone": fleet_prefs})
@@ -304,7 +305,7 @@ class QueryTools(MongoDBConnector):
     
     async def obtain_maintenance_data(self, user_preferences: str = None, agent_filters: str = None, user_filters: str = None):
         """
-        Obtain maintenance data for a specific car_id.
+        Obtain maintenance data for a specific car range based on user preferences and agent filters.
         """
 
         collection = self.get_collection(self.mdb_static_information_collection)
@@ -338,18 +339,18 @@ class QueryTools(MongoDBConnector):
                     "car_id": {"$gte": 200, "$lte": fleet_capacity[2]}  
                 }  
             }) 
-            # {
-            #     "$project": {
-            #         "_id": 0,
-            #         "car_id": 1,
-            #         "last_maintenance_date": 1,
-            #         "maintenance_history": 1,
-            #         "engine_oil_level": 1,
-            #         "oil_temperature": 1,
-            #         "ambient_temperature": 1
-            #     }
-            # }
+            
+        pipeline.append(
+        {
+            "$project": {
+                "_id": 0,
+                "car_id": 1,
+                "maintenance_log": 1
+            }
+        }
+        )
     
+
 
         logger.info(f"Pipeline for maintenance data: {pipeline}")
 
@@ -358,7 +359,9 @@ class QueryTools(MongoDBConnector):
 
         logger.info(f"Maintenance data result count: {len(result)}")
 
-        return "ok"
+        logger.info(f"Sample maintenance data: {result[:3]}")
+
+        return result
     
     def understand_fleet_number(self, user_preferences: str):
         """        Understand the fleet number from user preferences.
@@ -376,6 +379,22 @@ class QueryTools(MongoDBConnector):
                 fleet_numbers.append(preference[-1])
         return fleet_numbers
 
+    def obtain_checkpoint(self):
+
+        checkpoint_collection = self.get_collection(self.mdb_checkpointer_collection)
+
+        checkpoint = checkpoint_collection.find_one({}, {"_id": 0})
+        checkpoint = json.loads(json.dumps(checkpoint, default=str))  # Convert ObjectId to string for JSON serialization
+        logger.info(f"Checkpoint obtained: {checkpoint}")
+        if checkpoint:
+            # Convert ObjectId to string for JSON serialization
+            checkpoint = convert_objectids(checkpoint)
+        else:
+            logger.warning("No checkpoint found in the collection.")
+            checkpoint = {}
+        return checkpoint
+
+
 async def fleet_position_search_tool(state: dict) -> AgentState:
     await manager.send_to_thread("Performing fleet location search", state.get("thread_id", None))
 
@@ -383,7 +402,8 @@ async def fleet_position_search_tool(state: dict) -> AgentState:
     logger.info("QueryTools initialized for fleet location search.")
     result = await query_tools.fleet_position_search()
     logger.info(f"Fleet location search result count: {len(result)}")
-
+    checkpoint = query_tools.obtain_checkpoint()
+    state["checkpoint"] = checkpoint
     state["recommendation_data"] = result
     state["next_step"] = "recommendation_node"
     return AgentState(**state)
@@ -399,7 +419,8 @@ async def vehicle_state_search_tool(state: dict) -> AgentState:
     query_tools = QueryTools()
     result = await query_tools.vehicle_state_search(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)
     logger.info(f"Vehicle state search result count: {len(result)}")
-
+    checkpoint = query_tools.obtain_checkpoint()
+    state["checkpoint"] = checkpoint
     state["recommendation_data"] = result
     state["next_step"] = "recommendation_node"
     return AgentState(**state)
@@ -414,6 +435,8 @@ async def get_vehicle_maintenance_data_tool(state: dict) -> AgentState:
     logger.info(f"loaded preferences")
     result = await query_tools.obtain_maintenance_data(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)
     logger.info(f"Vehicle maintenance data result: {result}")
+    checkpoint = query_tools.obtain_checkpoint()
+    state["checkpoint"] = checkpoint
     state["recommendation_data"] = result
     state["next_step"] = "recommendation_node"
     return AgentState(**state)

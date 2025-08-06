@@ -80,11 +80,12 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
         Analyze the available data and provide a brief, actionable recommendation. Keep your response short and focused.
         
         IMPORTANT RULES:
-        - Provide only 2-3 sentences maximum
+        - Provide only 5 sentences maximum
         - Only address aspects you have data for
-        - If no relevant data is available for part of a question, skip that part entirely
+        - If no relevant data is available for part of a question, acknowledge it and skip that part entirely
         - Focus on immediate, actionable insights only
         - Do not speculate or provide generic advice without supporting data
+        - if its important mention the carID of important cars
 
         If no information is available, respond with:
         "I don't have enough information to provide a recommendation."

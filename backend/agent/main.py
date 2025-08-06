@@ -144,33 +144,6 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             logger.info(f"Workflow created for thread ID: {thread_id}")
             final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
             await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
-            
-
-
-
-            """
-            Version 2: Use directly the ainvoke method of the workflow graph
-            This gives the error aget_tuple raise NotImplementedError
-            """
-            """
-            async_workflow = AsyncWorkflowRunner()
-            # async_workflow.checkpointer = checkpointer
-            workflow = async_workflow._build_langgraph_workflow(checkpointer=checkpointer)
-
-            logger.info(f"Workflow created for thread ID: {thread_id}")
-            logger.info(f"Workflow type: {type(workflow)}")
-            logger.info(f"Workflow has ainvoke method: {hasattr(workflow, 'ainvoke')}")
-
-            logger.info(f"Workflow created for thread ID: {thread_id}")
-            try:
-                final_state = await workflow.ainvoke(initial_state, config=config)
-                logger.info("Workflow invocation completed successfully")
-            except Exception as workflow_error:
-                logger.error(f"Workflow invocation failed: {type(workflow_error).__name__}: {str(workflow_error)}")
-                logger.error("Workflow error traceback:", exc_info=True)
-                raise  # Re-raise to be caught by outer exception handler
-            await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
-            """
 
         agent_profiles = []
         agent_profiles.append({
@@ -185,7 +158,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             "query_reported": query_reported,
             "recommendation_text": final_state.get('recommendation_text', 'No recommendation found'),
             "recommendation_data": final_state.get('recommendation_data', []),
-            "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "created_at": datetime.datetime.now(),
             "checkpoint": final_state.get('checkpoint', None),
             "used_tools": final_state.get("used_tools", []),
             "agent_profiles": final_state.get('agent_profiles', []),

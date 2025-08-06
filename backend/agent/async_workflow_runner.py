@@ -132,7 +132,9 @@ class AsyncWorkflowRunner:
 
             try: 
                 # Directly invoke the workflow and get the final state
+                logger.info("Invoking workflow with checkpointer...")
                 final_state = await self.workflow_graph.ainvoke(initial_state, config=config)
+                logger.info(f"Workflow completed successfully with final state: {final_state}")
                 await manager.send_to_thread(f"Workflow completed.", thread_id=thread_id)
                 return final_state
             except Exception as e:

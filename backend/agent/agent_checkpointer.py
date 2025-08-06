@@ -73,4 +73,3 @@ if __name__ == "__main__":
 
     # Example usage
     mongodb_saver = AgentCheckpointer().create_mongodb_saver()
-    print(mongodb_saver)
