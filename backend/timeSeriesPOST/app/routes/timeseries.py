@@ -4,6 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from database import timeseries_coll
 from datetime import datetime
 from model.timeseriesModel import TimeseriesModel
+from typing import List  # Import List  
 
 router = APIRouter()
 
@@ -31,4 +32,11 @@ async def create_timeseries_entry(entry: TimeseriesModel):
         return {"message": "Error creating timeseries entry", "error": str(e)}  
     
 
+@router.post("/historic-batch")  
+async def create_historic_batch(entries: List[TimeseriesModel]):  
+    for doc in entries:  
+        doc.timestamp = doc.timestamp or datetime.utcnow()  
+    result = timeseries_coll.insert_many([entry.dict() for entry in entries])  
+    return JSONResponse(status_code=status.HTTP_201_CREATED,   
+                        content=jsonable_encoder({"message": f"{len(result.inserted_ids)} historical entries added"}))  
 
