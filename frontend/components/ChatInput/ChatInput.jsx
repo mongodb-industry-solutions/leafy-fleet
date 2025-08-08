@@ -46,8 +46,9 @@ const ChatInput = ({ onSendMessage }) => {
 
 
     const FOLLOWUP_QUESTIONS = [
-        "Which vehicles are due for maintenance or have reported issues this week?",
+        "If I want to reduce my fleet size 10%, what vehicles I should retire first?",
         "What is the current status and location of all vehicles in my fleet?",
+        "How should I prioritize which cars to send to maintenance today?"
     ];
 
     return (

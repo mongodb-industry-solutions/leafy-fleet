@@ -10,6 +10,7 @@ from utils import convert_objectids
 
 from loader import CSVLoader
 import csv
+from dateutil.parser import parse
 
 from websocketServer import manager
 
@@ -61,7 +62,6 @@ class QueryTools(MongoDBConnector):
         self.mdb_embeddings_collection = self.config.get("MDB_EMBEDDINGS_COLLECTION") # historical_recommendations
         self.mdb_embeddings_collection_vs_field = self.config.get("MDB_EMBEDDINGS_COLLECTION_VS_FIELD")
         self.mdb_vs_index = self.config.get("MDB_VS_INDEX")
-        self.default_similar_queries = self.config.get("DEFAULT_SIMILAR_QUERIES")
         self.mdb_agent_profiles_collection = self.config.get("MDB_AGENT_PROFILES_COLLECTION")
         self.agent_profile_chosen_id = self.config.get("AGENT_PROFILE_CHOSEN_ID")
         self.embeddings_model_id = self.config.get("EMBEDDINGS_MODEL_ID")
@@ -120,7 +120,7 @@ class QueryTools(MongoDBConnector):
         
         return result
 
-    async def vehicle_state_search(self, user_preferences: str = None, agent_filters: str = None, user_filters: str = None, limit: int = 500):
+    async def vehicle_state_search(self, user_preferences: str = None, agent_filters: str = None, user_filters: str = None, limit: int = 500, group: bool = False):
         """
         Perform a vehicle state search based on the provided user preferences.
         """
@@ -130,21 +130,22 @@ class QueryTools(MongoDBConnector):
         logger.info(f"Agent filters: {agent_filters}")
 
         # Field mapping - only include fields that exist in your collection
-        FIELD_MAPPING = {
-                      
-            "Performance": "performance_score",                
-            "Run Time": "run_time",                         
-            "Avaliability": "availability_score",      
-            "Quality": "quality_score",                       
-            "OEE": "oee",                              
-            "Gas efficiency": "fuel_efficiency",          
-            "Oil level": "engine_oil_level",             
-            "Last maintance": "last_maintenance_date",       
-            "Temperature": "oil_temperature",                
-            "Ambient temperature": "ambient_temperature",     
-            "Gas level": "fuel_level",                        
-            "Distance driven": "traveled_distance"        
-        }
+        FIELD_MAPPING = {  
+        "Performance": "performance_score",  
+        "Run Time": "run_time",  
+        "Avaliability": "availability_score",  
+        "Quality": "quality_score",  
+        "OEE": "oee",  
+        "Gas efficiency": "fuel_efficiency",  
+        "Oil level": "engine_oil_level",  
+        "Last maintance": "last_maintenance_date",  
+        "Temperature": "oil_temperature",  
+        "Ambient temperature": "ambient_temperature",  
+        "Gas level": "fuel_level",  
+        "Distance driven": "traveled_distance",  
+        "Geozone": "current_geozone",  
+        "Coordinates": "coordinates",  
+    }  
 
         mapped_user_preferences = {
             "0": [],
@@ -178,8 +179,7 @@ class QueryTools(MongoDBConnector):
             "_id": 0,
             "car_id": 1,
             "timestamp": 1,
-            "coordinates": 1
-        }
+        }   
 
         # Add the mapped fields
         for field in mapped_fields:
@@ -190,18 +190,46 @@ class QueryTools(MongoDBConnector):
 
         match_stage = self.build_match_stage(user_filters, agent_filters, user_preferences)
 
-        pipeline = [
+        logger.info(f"group: {group}")
+
+        if group:
+            pipeline = [
             {
                 "$match": match_stage
             },
             {
-                "$limit": limit  # Limit to 500 results
+                "$group": {
+                    "_id": "$car_id",
+                    "car_id": {"$first": "$car_id"},
+                    "timestamp": {"$first": "$timestamp"},
+                    "availability_score": {"$first": "$availability_score"},
+                    "current_route": {"$first": "$current_route"},
+                    "run_time": {"$first": "$run_time"},
+                    "performance_score": {"$first": "$performance_score"},
+                    "oil_temperature": {"$first": "$oil_temperature"},
+                    "current_geozone": {"$first": "$current_geozone"},
+                    "engine_oil_level": {"$first": "$engine_oil_level"},
+                    "is_crashed": {"$first": "$is_crashed"},
+                    "metadata": {"$first": "$metadata"},
+                    "average_speed": {"$first": "$average_speed"},
+                    "quality_score": {"$first": "$quality_score"},
+                    "is_moving": {"$first": "$is_moving"},
+                    "coordinates": {"$first": "$coordinates"},
+                    "oee": {"$first": "$oee"},
+                    "fuel_level": {"$first": "$fuel_level"},
+                    "max_fuel_level": {"$first": "$max_fuel_level"},
+                    "speed": {"$first": "$speed"},
+                    "is_engine_running": {"$first": "$is_engine_running"},
+                    "is_oil_leak": {"$first": "$is_oil_leak"},
+                    "traveled_distance": {"$first": "$traveled_distance"}
+                }
             },
-            # Project only requested fields
+            {
+                "$sort": {"timestamp": -1}
+            },
             {
                 "$project": project_stage
             },
-
             # Final sort
             {
                 "$sort": {
@@ -210,13 +238,34 @@ class QueryTools(MongoDBConnector):
             }
         ]
 
-        logger.info(f"Pipeline for vehicle state search: {pipeline}")
+        else:
+            pipeline = [
+                {
+                    "$match": match_stage
+                },
+                {
+                    "$sort": {"timestamp": -1}
+                },
+                {
+                    "$limit": limit  # Limit to 500 results
+                },
+                {
+                    "$project": project_stage
+                },
+                # Final sort
+                {
+                    "$sort": {
+                        "car_id": 1
+                    }
+                }
+            ]
 
+        logger.info(f"Pipeline for vehicle state search: {pipeline}")
         cursor = collection.aggregate(pipeline)
         result = list(cursor)
+        logger.info(f"Sample: {result[:3]}")
 
-
-        # We clean the outputs and only process whats in the user preferences
+         # We clean the outputs and only process whats in the user preferences
         for car in result:
             car_id = car.get("car_id")
             # Determine fleet index based on car_id
@@ -230,15 +279,16 @@ class QueryTools(MongoDBConnector):
                 else:
                     fleet_idx = None
 
+                # logger.info(mapped_user_preferences)
                 if fleet_idx is not None:
-                    allowed_fields = set(mapped_user_preferences[fleet_idx]) | {"car_id", "timestamp"}
+                    allowed_fields = set(mapped_user_preferences[fleet_idx])
+                    allowed_fields.add("car_id")
+                    allowed_fields.add("timestamp")
                     # Set to None any field not in allowed_fields
                     for field in list(car.keys()):
+                        # logger.info(f"Checking field: {field} in allowed fields: {allowed_fields}")
                         if field not in allowed_fields:
                             car[field] = None
-
-        # logger.info(f"Sample: {result[:3]}")
-
         
         return result
 
@@ -254,6 +304,7 @@ class QueryTools(MongoDBConnector):
         """
         match_stage = {}
         fleet_capacity = self.understand_fleet_number(user_preferences)
+        logger.info(f"Fleet capacity: {fleet_capacity}")
         if user_filters:
             match_stage["$or"] = []
             for fleet_prefs in user_filters:
@@ -262,14 +313,15 @@ class QueryTools(MongoDBConnector):
                     continue
                 if fleet_prefs:
                     if fleet_prefs == "Fleet 1":
-                        car_ids = list(range(0, fleet_capacity[0]))  # Car IDs 0-99
+                        car_ids1 = list(range(0, fleet_capacity[0]))  # Car IDs 0-99
                     elif fleet_prefs == "Fleet 2":
-                        car_ids = list(range(100, fleet_capacity[1]))  # Car IDs 100-199
+                        car_ids2 = list(range(100, fleet_capacity[1]))  # Car IDs 100-199
                     elif fleet_prefs == "Fleet 3":
-                        car_ids = list(range(200, fleet_capacity[2]))  # Car IDs 200-299
+                        car_ids3 = list(range(200, fleet_capacity[2]))  # Car IDs 200-299
                     elif fleet_prefs in ["Downtown", "Geofence 2"]:
                         # For geofence filters, use current_geozone field instead
                         match_stage["$or"].append({"current_geozone": fleet_prefs})
+                        logger.info(f"Match stage: {match_stage}")
                         continue
                     else:
                         # For other string values, treat as direct car_id match
@@ -277,14 +329,8 @@ class QueryTools(MongoDBConnector):
                         continue
                     
                     # Add car ID range filter
-                    match_stage["$or"].append({"car_id": {"$in": car_ids}})
-
-
-
-        """
-        Tal vez sea buena idea reconsiderar usar el LLM para los campos mas importantes
-        No se esta usando        
-        """
+                    match_stage["$or"].append({"car_id": {"$in": car_ids1}, "car_id": {"$in": car_ids2}, "car_id": {"$in": car_ids3}})
+                    # logger.info(f"Match stage: {match_stage}")
 
 
         if agent_filters:
@@ -295,11 +341,25 @@ class QueryTools(MongoDBConnector):
             # Access the nested time_range
             time_range = agent_filters.get("time_range", {})
             if time_range:
-                match_stage["timestamp"] = {
-                    "$gte": time_range.get("start_date"),
-                    "$lte": time_range.get("end_date")
-                }
-        logger.info(f"Match stage: {match_stage}")
+                try:
+                    start_date = time_range.get("start_date")
+                    end_date = time_range.get("end_date")
+
+                    # Parse and convert to ISO format
+                    if start_date:
+                        start_date = parse(start_date).isoformat()
+                    if end_date:
+                        end_date = parse(end_date).isoformat()
+
+                    match_stage["timestamp"] = {
+                        "$gte": start_date,
+                        "$lte": end_date
+                    }
+                except Exception as e:
+                    logger.error(f"Error parsing time_range: {e}")
+                    match_stage["current_geozone"] = {"$exists": True}
+                    match_stage["coordinates"] = {"$exists": True}
+                    logger.info(f"Match stage: {match_stage}")
 
         return match_stage
     
@@ -315,40 +375,39 @@ class QueryTools(MongoDBConnector):
 
 
         fleet_capacity = self.understand_fleet_number(user_preferences)
+        logger.info(f"Fleet capacity: {fleet_capacity}")
 
-        pipeline = []  
-  
-        # Add conditional stages based on fleet_capacity values  
-        if fleet_capacity[0] > 0:  
-            pipeline.append({  
-                "$match": {  
-                    "car_id": {"$gte": 0, "$lte": fleet_capacity[0]}  
-                }  
-            })  
-        
-        if fleet_capacity[1] > 0:  
-            pipeline.append({  
-                "$match": {  
-                    "car_id": {"$gte": 100, "$lte": fleet_capacity[1]}  
-                }  
-            })  
-        
-        if fleet_capacity[2] > 0:  
-            pipeline.append({  
-                "$match": {  
-                    "car_id": {"$gte": 200, "$lte": fleet_capacity[2]}  
-                }  
-            }) 
+        match_stage = {}
+        match_stage["$or"] = []
+
+        # Example: fleet_capacity like [50,150,250] meaning upper bounds (inclusive?) for fleets 1,2,3
+        # Decide inclusive vs exclusive. Here assume inclusive, so add +1 to stop.
+        if user_preferences:
+           
+            if fleet_capacity[0] > 0:
+                car_ids1 = list(range(0, fleet_capacity[0])) 
+            if fleet_capacity[1] > 0:
+                car_ids2 = list(range(100, fleet_capacity[1]+100))
+            if fleet_capacity[2] > 0:
+                car_ids3 = list(range(200, fleet_capacity[2]+200))
             
-        pipeline.append(
-        {
-            "$project": {
-                "_id": 0,
-                "car_id": 1,
-                "maintenance_log": 1
+            if car_ids1:
+                match_stage["$or"].append({"car_id": {"$in": car_ids1}})
+            if car_ids2:
+                match_stage["$or"].append({"car_id": {"$in": car_ids2}})
+            if car_ids3:
+                match_stage["$or"].append({"car_id": {"$in": car_ids3}})
+
+        pipeline = [
+            {"$match": match_stage},
+            {
+                "$project": {
+                    "_id": 0,
+                    "car_id": 1,
+                    "maintenance_log": 1
+                }
             }
-        }
-        )
+        ]
     
 
 
@@ -361,8 +420,32 @@ class QueryTools(MongoDBConnector):
 
         logger.info(f"Sample maintenance data: {result[:3]}")
 
-        return result
-    
+        result2 = await self.vehicle_state_search(user_preferences=user_preferences, agent_filters=agent_filters, user_filters=user_filters, group=True)
+
+
+        # Combine maintenance and state info
+        combined = []
+        combined.append(result)
+        combined.append(result2)
+
+        # Create a dictionary to merge results by car_id
+        combined_dict = {car["car_id"]: car for car in result}
+
+        for car in result2:
+            car_id = car.get("car_id")
+            if car_id in combined_dict:
+                # Merge fields from result2 into the existing car in combined_dict
+                combined_dict[car_id].update(car)
+            else:
+                # Add the car from result2 if it doesn't exist in result
+                combined_dict[car_id] = car
+
+        # Convert the merged dictionary back to a list
+        combined = list(combined_dict.values())
+
+        logger.info(f"sample combined data: {combined[:3]}")
+
+        return combined
     def understand_fleet_number(self, user_preferences: str):
         """        Understand the fleet number from user preferences.
 
@@ -385,7 +468,6 @@ class QueryTools(MongoDBConnector):
 
         checkpoint = checkpoint_collection.find_one({}, {"_id": 0})
         checkpoint = json.loads(json.dumps(checkpoint, default=str))  # Convert ObjectId to string for JSON serialization
-        logger.info(f"Checkpoint obtained: {checkpoint}")
         if checkpoint:
             # Convert ObjectId to string for JSON serialization
             checkpoint = convert_objectids(checkpoint)
@@ -418,7 +500,7 @@ async def vehicle_state_search_tool(state: dict) -> AgentState:
 
     query_tools = QueryTools()
     result = await query_tools.vehicle_state_search(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)
-    logger.info(f"Vehicle state search result count: {len(result)}")
+
     checkpoint = query_tools.obtain_checkpoint()
     state["checkpoint"] = checkpoint
     state["recommendation_data"] = result

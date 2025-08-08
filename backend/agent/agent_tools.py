@@ -68,7 +68,6 @@ class AgentTools(MongoDBConnector):
         self.mdb_embeddings_collection = self.config.get("MDB_EMBEDDINGS_COLLECTION") # historical_recommendations
         self.mdb_embeddings_collection_vs_field = self.config.get("MDB_EMBEDDINGS_COLLECTION_VS_FIELD")
         self.mdb_vs_index = self.config.get("MDB_VS_INDEX")
-        self.default_similar_queries = self.config.get("DEFAULT_SIMILAR_QUERIES")
         self.mdb_agent_profiles_collection = self.config.get("MDB_AGENT_PROFILES_COLLECTION")
         self.agent_profile_chosen_id = self.config.get("AGENT_PROFILE_CHOSEN_ID")
         self.embeddings_model_id = self.config.get("EMBEDDINGS_MODEL_ID")
@@ -81,26 +80,6 @@ class AgentTools(MongoDBConnector):
             # Set the collection name
             self.collection_name = collection_name
             self.collection = self.get_collection(self.collection_name)
-
-    def get_data_from_csv(self, state: dict) -> dict:
-        """
-        Reads data from a CSV file and dynamically infers field names.
-        """
-        message = "[Tool] Retrieved data from CSV file."
-        logger.info(message)
-
-        # Load CSV data
-        csv_loader = CSVLoader(filepath=self.csv_data, collection_name=self.mdb_timeseries_collection)
-        csv_filepath = csv_loader.filepath
-
-        data_records = []
-        with open(csv_filepath, "r") as file:
-            reader = csv.DictReader(file)  # Automatically infers field names from the header row
-            for row in reader:
-                data_records.append(row)
-
-        state.setdefault("updates", []).append(message)
-        return {"timeseries_data": data_records, "thread_id": state.get("thread_id", "")}
 
     def get_data_from_mdb(self, state: dict) -> dict:
         """
@@ -191,42 +170,26 @@ class AgentTools(MongoDBConnector):
                     },
               ]
                 # Execute the aggregation pipeline
-                results = list(self.collection.aggregate(pipeline))
+                results = self.collection.aggregate(pipeline)
 
-                # Format the results
-                for result in results:
-                    #Adjust all dates to be in the current day
+                results = list(results)
 
-                    # start_date = parse(result["time_range"]["start_date"])
-                    # end_date = parse(result["time_range"]["end_date"])
-                    # current_date = datetime.now(datetime.timezone.utc)
-                    # # Calculate the duration of the historical period
-                    # duration = end_date - start_date
-                    
-                    # # Set new end_date to current date and start_date based on duration
-                    # new_end_date = current_date
-                    # new_start_date = current_date - duration
-                    
-                    # # Update the time range
-                    # result["time_range"]["start_date"] = new_start_date.strftime("%Y-%m-%d")
-                    # result["time_range"]["end_date"] = new_end_date.strftime("%Y-%m-%d")
-                    
-                    if "_id" in result:
-                        # result["_id"] = str(result["_id"])
-                        # It's not necessary to process the _id field, so removing it!
-                        del result["_id"]
-                    if embedding_key in result:
-                        # Removing the embedding field from the results
-                        del result[embedding_key]
-                    # Remove if score is below 0.9
-                    if "score" in result and result["score"] < 0.9:
-                        logger.info(f"[MongoDB] Result with low score removed: {result}")
-                        results.remove(result)
-            # else: # In case there is no collection set
-            #     logger.info("[MongoDB] No collection set for vector search.")
-            #     logger.info("Setting default similar queries.")
-            #     similar_queries = self.default_similar_queries
-            #     state.setdefault("updates", []).append("[MongoDB] No collection set for vector search. Using default similar queries.")
+                logger.info(f"[MongoDB] Vector Search results: {type(results)}")
+
+                filtered_results = []
+                for i in results:
+                    if "_id" in i:
+                        del i["_id"]  # Remove the _id field from the results
+                        del i[embedding_key]  # Remove the embedding field from the results
+                        if "score" in i and i["score"] < 0.95:
+                            logger.info(f"[MongoDB] Vector Search result with low score: {i}")
+                            continue
+                    filtered_results.append(i)
+
+                results = filtered_results
+
+                logger.info(f"[MongoDB] Vector Search result: {i}")
+
             if results:
                 logger.info(f"[MongoDB] Retrieved similar data from vector search.")
                 state.setdefault("updates", []).append("[MongoDB] Retrieved similar data.")
@@ -235,16 +198,16 @@ class AgentTools(MongoDBConnector):
                 
 
 
-                logger.info(f"Similar queries - Vector Search results: {similar_queries}")
+                # logger.info(f"Similar queries - Vector Search results: {similar_queries}")
             else:
                 logger.info(f"[MongoDB] No similar data found. Returning default message.")
                 state.setdefault("updates", []).append("[MongoDB] No similar data found.")
-                similar_queries = [{"query": "No similar queries found", "recommendation": "No immediate action based on past data.", "score": 0.0}]
+                similar_queries = [{"query": "No similar queries found", "recommendation": "reasoning_node", "score": 0.0}]
         except Exception as e:
             logger.error(f"Error during MongoDB Vector Search operation: {e}")
             state.setdefault("updates", []).append("[MongoDB] Error during Vector Search operation.")
             similar_queries = [{"query": "MongoDB Vector Search operation error", "recommendation": "Please try again later.", "score": 0.0}]
-            self.add_used_tools(state, "vector_search_tool")
+            
             return similar_queries
 
         return similar_queries
@@ -256,10 +219,11 @@ class AgentTools(MongoDBConnector):
         profiler = AgentProfiles(collection_name=self.mdb_agent_profiles_collection)
         # Get the agent profile
         p = profiler.get_agent_profile(agent_id="DECIDING_AGENT") # For this first call to the agent, we use the DECIDING_AGENT profile
+        logger.info(f"Agent profile retrieved: {p}")
         # Get the Query Reported from the state
         query_reported = state["query_reported"]
 
-        state["agent_profile1"] = p["profile"]
+        
 
         CHAIN_OF_THOUGHTS_PROMPT = get_chain_of_thoughts_prompt(
             agent_profile=p["profile"],
@@ -301,15 +265,11 @@ class AgentTools(MongoDBConnector):
             next_step = "END"
 
         state.setdefault("updates", []).append("Chain-of-thought generated.")
+        state["chain_of_thought"] = chain_of_thought
+        state["selected_tool"] = next_step
+        state["agent_profile1"] = p["profile"]
         self.add_used_tools(state, "reasoning_node")
-        return {**state, "chain_of_thought": chain_of_thought, "selected_tool": next_step}
-    
-    @staticmethod
-    def process_data(state: AgentState) -> AgentState:
-        """Processes the data."""
-        state.setdefault("updates", []).append("Data processed.")
-        state["next_step"] = "embedding_node"
-        return state
+        return {**state}
 
     def get_query_embedding(self, state: AgentState) -> AgentState:
         """Generates the query embedding."""
@@ -374,7 +334,7 @@ class AgentTools(MongoDBConnector):
             self.get_collection(self.mdb_historical_recommendations_collection).insert_one(historical_recommendation)
             logger.info(f"[MongoDB] Historical recommendation saved")
             state.setdefault("updates", []).append("Query embedding generated!")
-            self.add_used_tools(state, "embedding_node")
+            
             logger.info("Query embedding generated!")
         except Exception as e:
             logger.error(f"Error generating query embedding: {e}")
@@ -384,82 +344,6 @@ class AgentTools(MongoDBConnector):
         # We go to the intended tool based on the response from the LLM
         
         return state
-
-    @staticmethod
-    def process_vector_search(state: AgentState) -> AgentState:
-        """Processes the vector search results."""
-        state.setdefault("updates", []).append("Vector search results processed.")
-        state["next_step"] = "persistence_node"
-        return state
-    
-    def persist_data(self, state: AgentState) -> AgentState:
-        """
-        Persists the data into MongoDB.
-        """
-        state.setdefault("updates", []).append("Persisting data to MongoDB...")
-        logger.info("[Action] Persisting data to MongoDB...")
-
-        try:
-            # Instantiate the TimeSeriesCollectionCreator class
-            logger.info("Checking Time Series Collection...")
-            ts_coll_result = TimeSeriesCollectionCreator().create_timeseries_collection(
-                    collection_name=self.mdb_timeseries_collection,
-                    time_field=self.mdb_timeseries_timefield,
-                    granularity=self.mdb_timeseries_granularity
-            )
-            logger.info(ts_coll_result)
-            # Get the MongoDB collection
-            timeseries_collection_name = self.mdb_timeseries_collection
-            timeseries_collection = self.get_collection(self.mdb_timeseries_collection)
-        except Exception as e:
-            logger.error(f"Error creating time series collection: {e}")
-            state.setdefault("updates", []).append("Error creating time series collection.")
-
-        if timeseries_collection is not None:
-            combined_data = {
-                "query_reported": state["query_reported"],
-                "timeseries": state["timeseries_data"],
-                "similar_queries": state["historical_recommendations_list"],
-                "thread_id": state.get("thread_id", "")
-            }
-            try:
-                # Persist each record in the time-series data
-                for record in combined_data["timeseries"]:
-                    try:
-                        # Parse timestamp and convert values dynamically
-                        record["timestamp"] = datetime.datetime.strptime(record["timestamp"], "%Y-%m-%dT%H:%M:%SZ")
-                        for key in record:
-                            if key != "timestamp" and key != "thread_id":
-                                record[key] = float(record[key])
-                    except Exception as e:
-                        logger.error(f"Error processing record: {e}")
-                    record["thread_id"] = state.get("thread_id", "")
-                    record = convert_objectids(record)
-                    # TODO: REMOVE THIS LOGGER STATEMENT
-                    logger.info(f"Persisting record: {record}")
-                    timeseries_collection.insert_one(record)
-
-                logger.info(f"[MongoDB] Data persisted in {timeseries_collection_name} collection.")
-
-                # Persist logs
-                coll_logs = self.db["logs"]
-                log_entry = {
-                    "thread_id": state.get("thread_id", ""),
-                    "query_reported": combined_data["query_reported"],
-                    "similar_queries": combined_data["similar_queries"],
-                    "created_at": datetime.datetime.now(datetime.timezone.utc)
-                }
-                log_entry = convert_objectids(log_entry)
-                coll_logs.insert_one(log_entry)
-                state.setdefault("updates", []).append("Data persisted to MongoDB.")
-            except Exception as e:
-                logger.error(f"Error persisting data to MongoDB: {e}")
-                state.setdefault("updates", []).append("Error persisting data to MongoDB.")
-        else:
-            state.setdefault("updates", []).append("No MongoDB collection set for persistence.")
-            logger.info("No MongoDB collection set for persistence.")
-
-        return {**state, "next_step": "recommendation_node"}
         
     def get_llm_recommendation(self, state: AgentState) -> AgentState:
         """Generates the LLM recommendation."""
@@ -480,7 +364,7 @@ class AgentTools(MongoDBConnector):
         # Instantiate the AgentProfiles class
         profiler = AgentProfiles(collection_name=self.mdb_agent_profiles_collection)
         # Get the agent profile
-        p = profiler.get_agent_profile(agent_id=self.agent_profile_chosen_id)
+        p = profiler.get_agent_profile(agent_id="RECOMMENDING_AGENT")
 
         state["agent_profile2"] = p["profile"]
 
@@ -490,7 +374,8 @@ class AgentTools(MongoDBConnector):
             agent_kind_of_data=p["kind_of_data"],
             critical_info="No critical info",
             timeseries_data=timeseries_data,
-            historical_recommendations_list=state.get("historical_recommendations_list", [])
+            historical_recommendations_list=state.get("historical_recommendations_list", []),
+            user_question = state["query_reported"]
         )
         # logger.info("LLM Recommendation Prompt:")
         # logger.info(LLM_RECOMMENDATION_PROMPT)
@@ -536,27 +421,122 @@ class AgentTools(MongoDBConnector):
         state["used_tools"] = used_tools
         return state
 
-# Define tools
-async def get_data_from_csv_tool(state: dict) -> dict:
-    """Reads data from a CSV file."""
-    await manager.broadcast("Reading seed data from CSV file")
-    agent_tools = AgentTools()
-    result = agent_tools.get_data_from_csv(state=state)
-    data_count = len(result.get("timeseries_data", []))
-    return result
+    def persist_data(self, state: AgentState) -> AgentState:
+        """
+        Persists the data into MongoDB.
+        """
+        state.setdefault("updates", []).append("Persisting data to MongoDB...")
+        logger.info("[Action] Persisting data to MongoDB...")
 
-async def get_data_from_mdb_tool(state: dict) -> dict:
-    """Reads data from a MongoDB collection."""
-    await manager.broadcast("Retrieving data from MongoDB")
-    # Load configuration
-    config = ConfigLoader()
-    # Get the MongoDB collection name
-    mdb_timeseries_collection = config.get("MDB_TIMESERIES_COLLECTION")
-    # Instantiate the AgentTools class
-    agent_tools = AgentTools(collection_name=mdb_timeseries_collection)
-    result = agent_tools.get_data_from_mdb(state)
-    await manager.broadcast("MongoDB data retrieved successfully")
-    return result
+        try:
+            # Instantiate the TimeSeriesCollectionCreator class
+            logger.info("Checking Time Series Collection...")
+            ts_coll_result = TimeSeriesCollectionCreator().create_timeseries_collection(
+                    collection_name=self.mdb_timeseries_collection,
+                    time_field=self.mdb_timeseries_timefield,
+                    granularity=self.mdb_timeseries_granularity
+            )
+            logger.info(ts_coll_result)
+            # Get the MongoDB collection
+            timeseries_collection_name = self.mdb_timeseries_collection
+            timeseries_collection = self.get_collection(self.mdb_timeseries_collection)
+        except Exception as e:
+            logger.error(f"Error creating time series collection: {e}")
+            state.setdefault("updates", []).append("Error creating time series collection.")
+
+        if timeseries_collection is not None:
+            combined_data = {
+                "query_reported": state["query_reported"],
+                "timeseries": state["timeseries_data"],
+                # "similar_queries": state["historical_recommendations_list"], 
+                "thread_id": state.get("thread_id", "")
+            }
+            try:
+                # Persist each record in the time-series data
+                for record in combined_data["timeseries"]:
+                    try:
+                        # Parse timestamp and convert values dynamically
+                        record["timestamp"] = datetime.datetime.strptime(record["timestamp"], "%Y-%m-%dT%H:%M:%SZ")
+                        for key in record:
+                            if key != "timestamp" and key != "thread_id":
+                                record[key] = float(record[key])
+                    except Exception as e:
+                        logger.error(f"Error processing record: {e}")
+                    record["thread_id"] = state.get("thread_id", "")
+                    record = convert_objectids(record)
+                    # TODO: REMOVE THIS LOGGER STATEMENT
+                    logger.info(f"Persisting record: {record}")
+                    timeseries_collection.insert_one(record)
+
+                logger.info(f"[MongoDB] Data persisted in {timeseries_collection_name} collection.")
+
+                # Persist logs
+                coll_logs = self.db["logs"]
+                log_entry = {
+                    "thread_id": state.get("thread_id", ""),
+                    "query_reported": combined_data["query_reported"],
+                    "similar_queries": combined_data["similar_queries"],
+                    "created_at": datetime.datetime.now(datetime.timezone.utc)
+                }
+                log_entry = convert_objectids(log_entry)
+                coll_logs.insert_one(log_entry)
+                state.setdefault("updates", []).append("Data persisted to MongoDB.")
+            except Exception as e:
+                logger.error(f"Error persisting data to MongoDB: {e}")
+                state.setdefault("updates", []).append("Error persisting data to MongoDB.")
+        else:
+            state.setdefault("updates", []).append("No MongoDB collection set for persistence.")
+            logger.info("No MongoDB collection set for persistence.")
+
+        return {**state, "next_step": "recommendation_node"}
+    
+def save_query_embedding(self, state: AgentState) -> AgentState:
+        """Saves the query embedding to the state."""
+        text = state.get("query_reported", "")
+        embedding = state.get("embedding_vector", [])
+        additional_fields = state.get("chain_of_thought", "")
+        additional_fields = json.loads(additional_fields)
+
+        try: 
+            # Instantiate the Embedder
+            embedder = Embedder(collection_name=self.mdb_embeddings_collection) # historical_recommendations collection
+            # embedding = embedder.get_embedding(text)
+
+
+            # Save the embedded question with the answer to MongoDB
+            historical_recommendation = {
+                "query": text,
+                "recommendation": state.get("selected_tool", ""),
+                "time_field": additional_fields.get("time_range", ""),
+                "fields": additional_fields.get("fields", []),
+                "embedding": embedding,
+                "thread_id": state.get("thread_id", ""),
+                "created_at": datetime.datetime.now(datetime.timezone.utc)
+            }
+
+            state["botPreferences"] = additional_fields
+
+            # logger.info(f"Bot preferences updated in state: {state.get('botPreferences', '')}")
+
+            # Convert ObjectIds to strings
+            # historical_recommendation = convert_objectids(historical_recommendation)
+            # Insert the historical recommendation into the MongoDB collection
+            self.get_collection(self.mdb_historical_recommendations_collection).insert_one(historical_recommendation)
+            logger.info(f"[MongoDB] Historical recommendation saved")
+            state.setdefault("updates", []).append("Query embedding generated!")
+            self.add_used_tools(state, "embedding_node")
+            logger.info("Query embedding generated!")
+        except Exception as e:
+            logger.error(f"Error generating query embedding: {e}")
+            state.setdefault("updates", []).append("Error generating query embedding; using dummy vector.")
+            embedding = [0.0] * 1024
+        
+        # We go to the intended tool based on the response from the LLM
+        
+        return state
+
+
+# Define tools
 
 async def vector_search_tool(state: dict) -> dict:
     """Performs a vector search in a MongoDB collection."""
@@ -567,13 +547,14 @@ async def vector_search_tool(state: dict) -> dict:
     mdb_embeddings_collection = config.get("MDB_EMBEDDINGS_COLLECTION")
     # Instantiate the AgentTools class
     agent_tools = AgentTools(collection_name=mdb_embeddings_collection)
+    agent_tools.add_used_tools(state, "vector_search_tool")
     result = agent_tools.vector_search(state=state)
 
     if result and len(result) > 0 and result[0].get("score", 0) > 0.95:
         # Check if tools exist in the recommendation field
         recommendation = result[0].get("recommendation", {})    
 
-        state["next_step"] = recommendation if recommendation else "reasoning_node"
+        state["next_step"] = recommendation
         logger.info(f"Next step set to: {state['next_step']}")
         agent_tools.add_used_tools(state, recommendation)
     else:
@@ -590,14 +571,8 @@ async def generate_chain_of_thought_tool(state: AgentState) -> AgentState:
     # If we come to the tool selecting LLM we always need to save the response, then we go to the tool
     state["response"] = result
     state["next_step"] = "save_embedding_tool"
+    agent_tools.add_used_tools(state, "reasoning_node")
     agent_tools.add_used_tools(state, result.get("selected_tool", ""))
-    return result
-
-async def process_data_tool(state: AgentState) -> AgentState:
-    """Processes the data."""
-    await manager.broadcast("Processing and analyzing data")
-    agent_tools = AgentTools()
-    result = agent_tools.process_data(state=state)
     return result
 
 async def get_query_embedding_tool(state: AgentState) -> AgentState:
@@ -606,22 +581,8 @@ async def get_query_embedding_tool(state: AgentState) -> AgentState:
     agent_tools = AgentTools()
     result = agent_tools.get_query_embedding(state=state)
     embedding_size = len(result.get("embedding_vector", []))
+    agent_tools.add_used_tools(state, "embedding_node")
     await manager.broadcast(f"Generated {embedding_size}-dimensional embedding")
-    return result
-
-async def process_vector_search_tool(state: AgentState) -> AgentState:
-    """Processes the vector search results."""
-    await manager.broadcast("Processing vector search results")
-    agent_tools = AgentTools()
-    result = agent_tools.process_vector_search(state=state)
-    return result
-
-async def persist_data_tool(state: AgentState) -> AgentState:
-    """Persists the data into MongoDB."""
-    await manager.broadcast("Saving data to MongoDB")
-    # Instantiate the AgentTools class
-    agent_tools = AgentTools()
-    result = agent_tools.persist_data(state=state)
     return result
 
 async def get_llm_recommendation_tool(state: AgentState) -> AgentState:
@@ -636,7 +597,27 @@ async def get_llm_recommendation_tool(state: AgentState) -> AgentState:
     result = agent_tools.get_llm_recommendation(state=state)
     return result
 
+async def save_query_embedding_tool(state: dict) -> dict:
+    """Saves the query embedding to the state."""
+    await manager.broadcast("Saving new question's result to MongoDB")
+    logger.info("Saving new question's result to MongoDB")
+    # Instantiate the AgentTools class
+    agent_tools = AgentTools()
+    result = agent_tools.save_query_embedding(state=state)
+    # We go to the intended tool based on the response from the LLM
+    selected_tool = state.get("selected_tool", {})
+    agent_tools.add_used_tools(state, "save_embedding_tool")
+    logger.info(f"Selected tool: {selected_tool}")
+    state["next_step"] = selected_tool if selected_tool else "end"
+    return result
 
+async def persist_data_tool(state: AgentState) -> AgentState:
+    """Persists the data into MongoDB."""
+    await manager.broadcast("Saving data to MongoDB")
+    # Instantiate the AgentTools class
+    agent_tools = AgentTools()
+    result = agent_tools.persist_data(state=state)
+    return result
 
 async def save_query_embedding_tool(state: dict) -> dict:
     """Saves the query embedding to the state."""
@@ -650,68 +631,3 @@ async def save_query_embedding_tool(state: dict) -> dict:
     logger.info(f"Selected tool: {selected_tool}")
     state["next_step"] = selected_tool if selected_tool else "end"
     return result
-
-# Routing functions for conditional edges
-def route_after_vector_search(state: dict) -> str:
-    """Route after vector search based on the results and score."""
-    
-    # Check if we have vector search results
-    historical_recommendations = state.get("historical_recommendations_list", [])
-    
-    if historical_recommendations and len(historical_recommendations) > 0:
-        # Check if we have a high-confidence match
-        first_result = historical_recommendations[0]
-        score = first_result.get("score", 0)
-        
-        if score > 0.95:
-            # High confidence - check if we have a specific tool recommendation
-            recommendation = first_result.get("recommendation", {})
-            if isinstance(recommendation, dict) and "tool" in recommendation:
-                tool_name = recommendation["tool"]
-                if "fleet_position" in tool_name:
-                    return "fleet_position_search_tool"
-                elif "vehicle_state" in tool_name:
-                    return "vehicle_state_search_tool"
-        
-        # Medium confidence - go to reasoning to decide
-        if score > 0.9:
-            return "reasoning_node"
-    
-    # No good matches - go to reasoning to decide
-    return "reasoning_node"
-
-def route_to_selected_tool(state: dict) -> str:
-    """Route to the tool selected by the reasoning node."""
-    
-    # Check what tool was selected by the reasoning/chain-of-thought process
-    selected_tool = state.get("selected_tool", {})
-    
-    # Handle if selected_tool is a dictionary with tools array
-    if isinstance(selected_tool, dict):
-        if "tools" in selected_tool:
-            tools = selected_tool["tools"]
-            if isinstance(tools, list) and len(tools) > 0:
-                tool_name = tools[0]
-            else:
-                tool_name = selected_tool.get("tool", "")
-        else:
-            tool_name = selected_tool.get("tool", "")
-    else:
-        # Handle if selected_tool is a string
-        tool_name = str(selected_tool)
-    
-    # Route based on the tool name
-    if "fleet_position" in tool_name:
-        return "fleet_position_search_tool"
-    elif "vehicle_state" in tool_name:
-        return "vehicle_state_search_tool"
-    
-    # Check next_step as fallback
-    next_step = state.get("next_step", "")
-    if "fleet_position" in next_step:
-        return "fleet_position_search_tool"
-    elif "vehicle_state" in next_step:
-        return "vehicle_state_search_tool"
-    
-    # Default to recommendation if no specific tool selected
-    return "default"

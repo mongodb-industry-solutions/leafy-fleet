@@ -144,20 +144,28 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             logger.info(f"Workflow created for thread ID: {thread_id}")
             final_state = await workflow.ainvoke(initial_state, config=config, thread_id=thread_id, query_reported=query_reported)
             await manager.send_to_thread(message="Workflow execution completed", thread_id=thread_id)
+            logger.info(f"Workflow execution completed for thread ID: {thread_id}")
 
         agent_profiles = []
-        agent_profiles.append({
-            "agent_profile_1": final_state.get("agent_profile1", {}),
-            "agent_profile_2": final_state.get("agent_profile2", {})
-        })
+        if final_state.get("agent_profile1"):
+            agent_profiles.append({
+                "agent_profile_1": final_state.get("agent_profile1"),
+                "agent_profile_2": final_state.get("agent_profile2")
+            })
+        else:
+            agent_profiles.append({
+                "agent_profile_2": final_state.get("agent_profile2")
+            })
+
         final_state["agent_profiles"] = agent_profiles
 
         # For some reason I get problems returning final_state
+        recommendation_data = final_state.get('recommendation_data')
         final_answer = {
             "thread_id": thread_id,
             "query_reported": query_reported,
             "recommendation_text": final_state.get('recommendation_text', 'No recommendation found'),
-            "recommendation_data": final_state.get('recommendation_data', []),
+            "recommendation_data": recommendation_data[:5],
             "created_at": datetime.datetime.now(),
             "checkpoint": final_state.get('checkpoint', None),
             "used_tools": final_state.get("used_tools", []),

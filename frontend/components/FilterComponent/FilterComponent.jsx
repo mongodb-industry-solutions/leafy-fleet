@@ -14,6 +14,11 @@ import {
 } from "@/redux/slices/UserSlice";
 const FilterComponent = () => {
   const dispatch = useDispatch();
+  const isSelected = useSelector((state) => state.Message.selectedMessage);
+  const message = useSelector((state) =>
+    state.Message.messageHistory.find((msg) => msg.id === isSelected?.id)
+  );
+
   const {
     fleet1Capacity,
     fleet2Capacity,
@@ -29,25 +34,8 @@ const FilterComponent = () => {
     fleet2Name: state.User.fleet2Name,
     fleet3Name: state.User.fleet3Name,
   }));
-  // Snippet taken from https://www.mongodb.design/component/code/live-example
-  const jsSnippet = `
-    import datetime from './';
-    const myVar = 42;
-    var myObj = {
-      someProp: ['arr', 'ay'],
-      regex: /([A-Z])\w+/
-    }
-    export default class myClass {
-      constructor(){
-        // access properties
-        this.myProp = false
-      }
-    }
-    function greeting(entity) {
-      return \`Hello, \${entity}! Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper.\`;
-    }
-    console.log(greeting('World'));
-    `;
+  console.log("Selected Message:", isSelected);
+  console.log("Message Data:", message);
 
   const setFilter = (label, checked) => {
     dispatch(setQueryFilters({ label, checked }));
@@ -178,57 +166,57 @@ const FilterComponent = () => {
           <div style={{ overflowY: "auto", maxHeight: "500px" }}>
             <div>
               <Body baseFontSize={16}>
-                <strong>Agent Sessions</strong>
+                <strong>Agent Profiles</strong>
               </Body>
               <Body baseFontSize={14}>
-                Contains session metadata and the thread ID.
+                Contains information about the agent's behavior and decisions.
               </Body>
-              <Code language="javascript">{jsSnippet}</Code>
+              <Code language="javascript">
+                {(message != null && message.agent_profiles) 
+                  ? (typeof message.agent_profiles === 'string' 
+                     ? message.agent_profiles 
+                     : JSON.stringify(message.agent_profiles, null, 2))
+                  : "Select a message"}
+              </Code>
             </div>
             <div>
-              <Body baseFontSize={16}>Historial Recommendations</Body>
+              <Body baseFontSize={16}>Historial Data</Body>
               <Body baseFontSize={14}>
-                Contains a query to other relevant questions to the selected
-                message
+                Contains information from telemetry and other data sources to formulate the response.
               </Body>
-              <Code language="javascript">{jsSnippet}</Code>
+              <Code language="javascript">
+                {(message != null && message.recommendation_data) 
+                  ? (typeof message.recommendation_data === 'string' 
+                     ? message.recommendation_data 
+                     : JSON.stringify(message.recommendation_data, null, 2))
+                  : "Select a message"}
+              </Code>
             </div>
             <div>
-              <Body baseFontSize={16}>Agent Profile</Body>
+              <Body baseFontSize={16}>Used tools</Body>
               <Body baseFontSize={14}>
-                This contains the identity of the agent, including instructions,
-                goals and constraints.
+                Tools used by the agent during the execution.
               </Body>
-              <Code language="javascript">{jsSnippet}</Code>
-            </div>
-            <div>
-              <Body baseFontSize={16}>Telemetry Data</Body>
-              <Body baseFontSize={14}>
-                Contains the telemetry data queried to answer this question.
-              </Body>
-              <Code language="javascript">{jsSnippet}</Code>
-            </div>
-            <div>
-              <Body baseFontSize={16}>Queries</Body>
-              <Body baseFontSize={14}>
-                Contains the queries made to the database during the agent's
-                execution.
-              </Body>
-              <Code language="javascript">{jsSnippet}</Code>
-            </div>
-            <div>
-              <Body baseFontSize={16}>Logs</Body>
-              <Body baseFontSize={14}>
-                Contains the logs generated during the agent's execution.
-              </Body>
-              <Code language="javascript">{jsSnippet}</Code>
+              <Code language="javascript">
+                {(message != null && message.used_tools) 
+                  ? (typeof message.used_tools === 'string' 
+                     ? message.used_tools 
+                     : JSON.stringify(message.used_tools, null, 2))
+                  : "Select a message"}
+              </Code>
             </div>
             <div>
               <Body baseFontSize={16}>Last Checkpoint</Body>
               <Body baseFontSize={14}>
                 Contains the last checkpoint data for the agent's execution.
               </Body>
-              <Code language="javascript">{jsSnippet}</Code>
+              <Code language="javascript">
+                {(message != null && message.checkpoint) 
+                  ? (typeof message.checkpoint === 'string' 
+                     ? message.checkpoint 
+                     : JSON.stringify(message.checkpoint, null, 2))
+                  : "Select a message"}
+              </Code>
             </div>
           </div>
         </ExpandableCard>

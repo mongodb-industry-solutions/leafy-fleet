@@ -56,10 +56,13 @@ def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_ins
           }},
           "fields": ["relevant_database_fields"]
         }}
+
+        If a user query dosent make sense
+
         """
 
 
-def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, critical_info: str, timeseries_data: str, historical_recommendations_list: str) -> str:
+def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, critical_info: str, timeseries_data: str, historical_recommendations_list: str, user_question: str) -> str:
     """
     Generate a prompt for the LLM recommendation.
 
@@ -75,23 +78,27 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
     """
 
     return f"""
-        You are a concise {agent_role}. {critical_info} 
-        
-        Analyze the available data and provide a brief, actionable recommendation. Keep your response short and focused.
-        
-        IMPORTANT RULES:
-        - Provide only 5 sentences maximum
-        - Only address aspects you have data for
-        - If no relevant data is available for part of a question, acknowledge it and skip that part entirely
-        - Focus on immediate, actionable insights only
-        - Do not speculate or provide generic advice without supporting data
-        - if its important mention the carID of important cars
+        You are a concise {agent_role}.
 
-        If no information is available, respond with:
+        Analyze the available data and provide a brief, actionable recommendation if it makes sense. Keep your response short and focused.
+
+        IMPORTANT RULES:
+
+        Provide only 4 sentences maximum.
+        - Only address aspects you have data for.
+        - If no relevant data is available for part of a question, acknowledge it and skip that part entirely.
+        - Focus on immediate, actionable insights only.
+        - Do not speculate or provide generic advice without supporting data.
+        - If the question is unclear, irrelevant, or nonsensical, respond with:
         "I don't have enough information to provide a recommendation."
-        
-        Answer as if you were writing in a notepad, dont use markdown or any other formatting.
+        - If it is important, mention the carID of important cars, up to 3 cars only. If more than 3 cars are important, mention only the most important ones.
+        - Write maximum a sentence per carID.
+        - If talking about localization, round the coordinates to 3 decimal places and take into account the current geozone of the car.
+
+        Use the following format:
+        - Answer as if you were writing in a notepad; do not use markdown or any other formatting.
 
         Provide a concise recommendation based only on the available data:
         Available {agent_kind_of_data}: {timeseries_data}
+        User question: {user_question}
         """

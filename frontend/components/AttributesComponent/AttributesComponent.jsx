@@ -4,39 +4,39 @@ import Checkbox from "@leafygreen-ui/checkbox";
 import styles from "./AttributesComponent.module.css";
 import { Subtitle } from "@leafygreen-ui/typography";
 
-const ALL_ATTRIBUTES = [
-  "Oil level",
-  "Gas level",
-  "Last maintance",
-  "Ambient temperature",
-  "Temperature",
-  "OEE",
+const ALL_ATTRIBUTES = [  
   "Gas efficiency",
+  "Oil level",
+  "Last maintance",
+  "Temperature",
+  "Ambient temperature",
+  "Gas level",
   "Distance driven",
-  "Latitude",
   "Performance",
   "Run Time",
-  "Longitude",
   "Avaliability",
-  "Quality"
+  "Quality",
+  "OEE",
+  "Current Geozone",
+  "Coordinates",
 ];
 
-const ATTR_KEY_MAP = {
-  "Oil level": "oil-level",
-  "Gas level": "gas-level",
-  "Last maintance": "last-maintance",
-  "Ambient temperature": "ambient-temperature",
-  "Temperature": "temperature",
-  "OEE": "oee",
-  "Gas efficiency": "gas-efficiency",
-  "Distance driven": "distance-driven",
-  "Latitude": "latitude",
-  "Performance": "performance",
-  "Run Time": "run-time",
-  "Longitude": "longitude",
-  "Avaliability": "avaliability",
-  "Quality": "quality"
-};
+const ATTR_KEY_MAP = {  
+  "Performance": "performance_score",  
+  "Run Time": "run_time",  
+  "Avaliability": "availability_score",  
+  "Quality": "quality_score",  
+  "OEE": "oee",  
+  "Gas efficiency": "fuel_efficiency",  
+  "Oil level": "engine_oil_level",  
+  "Last maintance": "last_maintenance_date",  
+  "Temperature": "oil_temperature",  
+  "Ambient temperature": "ambient_temperature",  
+  "Gas level": "fuel_level",  
+  "Distance driven": "traveled_distance",  
+  "Current Geozone": "current_geozone",  
+  "Coordinates": "coordinates",  
+};  
 
 const AttributesComponent = () => {
   const dispatch = useDispatch();
@@ -78,10 +78,10 @@ const AttributesComponent = () => {
             key={attr}
             data-lgid={ATTR_KEY_MAP[attr]}
             label={attr}
-            checked={currentAttributes.includes(attr)}
+            checked={["Coordinates", "Current Geozone", "Run Time", "OEE", "Avaliability", "Quality", "Performance"].includes(attr)}
             onChange={() => handleCheckboxChange(attr)}
             // Optionally disable some checkboxes if needed:
-            disabled={["Latitude", "Performance", "Run Time", "Longitude", "Avaliability", "Quality"].includes(attr)}
+            disabled={["Coordinates", "Current Geozone", "Run Time", "OEE", "Avaliability", "Quality", "Performance"].includes(attr)}
           />
         ))}
       </div>

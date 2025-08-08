@@ -33,10 +33,7 @@
     "MDB_EMBEDDINGS_COLLECTION_VS_FIELD": "embedding",
     "MDB_VS_INDEX": "agentic_framework_queries_vs_idx",
     "MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION": "historical_recommendations",
-    "SIMILAR_QUERIES": [
-        {"query": "GDP growth slowing", "recommendation": "Consider increasing bond assets to mitigate risks from potential economic slowdown."},
-        {"query": "Interest rates rising", "recommendation": "Shift focus to bond assets as higher rates may impact borrowing-sensitive sectors."}
-    ],
+
     "MDB_CHAT_HISTORY_COLLECTION": "chat_history",
     "MDB_CHECKPOINTER_COLLECTION": "checkpoints",
     "MDB_LOGS_COLLECTION": "logs",
@@ -45,9 +42,9 @@
     "AGENT_PROFILE_CHOSEN_ID": "DECIDING_AGENT",
     "DECIDING_AGENT": {
         "agent_id": "DECIDING_AGENT",
-        "profile": "Fleet Management Tool Decider",
+        "profile": "Fleet Management Tool Decider Agent",
         "role": "Fleet Management Tool Decider",
-        "kind_of_data": "Fleet vehicle telemetry data and user queries about fleet operations",
+        "kind_of_data": "User question and a knowledge of internal tools to choose",
         "motive": "Given the user input data and information about internal fleet management tools, decide which tool or tools to use for processing fleet data",
         "instructions": "Analyze the user query to extract: 1) Which fleet management tool to use, 2) Time parameters (dates, periods), 3) Vehicle filters (specific cars, routes), 4) Relevant data fields. Available tools: vehicle_state_search_tool, fleet_position_search_tool, get_vehicle_maintenance_data_tool",
         "rules": "Return ONLY valid JSON. Extract time references like 'last week', 'since Monday', 'past 7 days' and convert to date ranges. If no time specified, use appropriate defaults. Include vehicle filters and relevant database fields.",
@@ -65,7 +62,7 @@
     },
     "RECOMMENDING_AGENT": {
         "agent_id": "RECOMMENDING_AGENT",
-        "profile": "Default Agent Profile",
+        "profile": "Recommendation agent profile",
         "role": "Fleet Manager Advisor",
         "kind_of_data": "Vehicle time series data",
         "motive": "analyze the data and provide fleet management recommendations",
@@ -103,17 +100,14 @@
     "AGENT_WORKFLOW_GRAPH": {
         "nodes": [
             {"id": "reasoning_node", "tool": "agent_tools.generate_chain_of_thought_tool"},
-            {"id": "data_from_csv", "tool": "agent_tools.get_data_from_csv_tool"},
-            {"id": "process_data", "tool": "agent_tools.process_data_tool"},
             {"id": "embedding_node", "tool": "agent_tools.get_query_embedding_tool"},
             {"id": "vector_search_tool", "tool": "agent_tools.vector_search_tool"},
-            {"id": "process_vector_search", "tool": "agent_tools.process_vector_search_tool"},
-            {"id": "persistence_node", "tool": "agent_tools.persist_data_tool"},
             {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"},
             {"id": "vehicle_state_search_tool", "tool": "query_tools.vehicle_state_search_tool"},
             {"id": "save_embedding_tool", "tool": "agent_tools.save_query_embedding_tool"},
             {"id": "fleet_position_search_tool", "tool": "query_tools.fleet_position_search_tool"},
-            {"id": "get_vehicle_maintenance_data_tool", "tool": "query_tools.get_vehicle_maintenance_data_tool"}
+            {"id": "get_vehicle_maintenance_data_tool", "tool": "query_tools.get_vehicle_maintenance_data_tool"},
+            {"id": "persistence_node", "tool": "agent_tools.persist_data_tool"}
             
         ],
         "edges": [

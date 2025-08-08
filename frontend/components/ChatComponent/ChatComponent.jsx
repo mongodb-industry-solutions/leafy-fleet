@@ -39,13 +39,16 @@ const ChatComponent = () => {
     fleet3Capacity: state.User.fleet3Capacity,
   }));
 
-  
-
-    const userPreferences = [
+  const userPreferences = [
     [...fleet1Atributes, fleet1Capacity],
     [...fleet2Atributes, fleet2Capacity],
     [...fleet3Atributes, fleet3Capacity],
-    ];
+  ];
+
+  console.log(
+    "All messages: ",
+    useSelector((state) => state.Message.messageHistory)
+  );
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
@@ -130,8 +133,7 @@ const ChatComponent = () => {
           userMessageText
         )}&thread_id=abc123&filters=${encodeURIComponent(
           JSON.stringify(filters)
-        )}&preferences=${encodeURIComponent(JSON.stringify(userPreferences)
-        )}`,
+        )}&preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`,
         {
           method: "GET",
           headers: {
@@ -153,15 +155,14 @@ const ChatComponent = () => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-      
 
       const text = await res.text();
       // console.log("Response text:", text);
       try {
-         // Parse JSON if valid
+        // Parse JSON if valid
         const parsedData = JSON.parse(text);
         console.log("Parsed data:", parsedData);
-        data.recommendation_text = parsedData.recommendation_text;
+        data = parsedData; // Use the parsed data
       } catch (jsonParseError) {
         console.error("Error parsing JSON:", jsonParseError);
         data = {
@@ -169,12 +170,19 @@ const ChatComponent = () => {
         }; // Fallback
       }
 
-      // console.log("Received data:", data);
+      console.log("Received data:", data);
       dispatch(setIsChatbotThinking(false));
       dispatch(
         updateMessageText({
           id: botResponseMessage.id,
           text: data.recommendation_text,
+          agent_profiles: data.agent_profiles,
+          checkpoint: data.checkpoint,
+          created_at: data.created_at,
+          recommendation_data: data.recommendation_data,
+          reported_query: data.query_reported,
+          thread_id: data.thread_id,
+          used_tools: data.used_tools,
         })
       );
     } catch (error) {
@@ -186,8 +194,8 @@ const ChatComponent = () => {
   return (
     <div className={styles.chatComponent}>
       <div className={styles.messagesContainer}>
-        {messages.map((msg) => (
-          <div key={msg.id}>
+        {messages.map((msg, idx) => (
+          <div key={`${msg.id}-${idx}`}>
             <TextBubbleComponent
               user={msg.sender}
               text={msg.text}

@@ -10,6 +10,13 @@ const MessageSlice = createSlice({
         text: "Hello! I am your AI assistant. How can I help you today?",
         sender: "bot",
         completed: true,
+        agent_profiles: " ",
+        checkpoint: " ",
+        created_at: " ",
+        recommendation_data: " ",
+        reported_query: " ", // This is the user question
+        thread_id: " ",
+        used_tools: " ",
       },
     ],
     selectedMessage: 0,
@@ -44,11 +51,33 @@ const MessageSlice = createSlice({
       state.currentThought = action.payload.thought;
     },
     updateMessageText: (state, action) => {
-      state.messageHistory = state.messageHistory.map((msg) =>
-        msg.id === action.payload.id
-          ? { ...msg, text: action.payload.text }
-          : msg
+      console.log("Updating message text:", action.payload);
+      console.log("Message history before update:", state.messageHistory);
+
+      // Find the index of the message to update
+      const messageIndex = state.messageHistory.findIndex(
+        (msg) => msg.id === action.payload.id
       );
+
+      if (messageIndex !== -1) {
+        // Create a new message object with updated properties
+        const updatedMessage = {
+          ...state.messageHistory[messageIndex],
+          text: action.payload.text,
+          agent_profiles: action.payload.agent_profiles,
+          checkpoint: action.payload.checkpoint,
+          created_at: action.payload.created_at,
+          recommendation_data: action.payload.recommendation_data,
+          reported_query: action.payload.reported_query,
+          thread_id: action.payload.thread_id,
+          used_tools: action.payload.used_tools,
+        };
+
+        // Replace the message at the specific index
+        state.messageHistory[messageIndex] = updatedMessage;
+      }
+
+      console.log("Message history after update:", state.messageHistory);
     },
     setThinkingMessageId: (state, action) => {
       state.thinkingMessageId = action.payload;
@@ -63,6 +92,6 @@ export const {
   setAnimationMessage,
   setLatestThought,
   updateMessageText,
-  setThinkingMessageId
+  setThinkingMessageId,
 } = MessageSlice.actions;
 export default MessageSlice.reducer;
