@@ -45,10 +45,6 @@ const ChatComponent = () => {
     [...fleet3Atributes, fleet3Capacity],
   ];
 
-  console.log(
-    "All messages: ",
-    useSelector((state) => state.Message.messageHistory)
-  );
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
@@ -161,7 +157,6 @@ const ChatComponent = () => {
       try {
         // Parse JSON if valid
         const parsedData = JSON.parse(text);
-        console.log("Parsed data:", parsedData);
         data = parsedData; // Use the parsed data
       } catch (jsonParseError) {
         console.error("Error parsing JSON:", jsonParseError);
@@ -169,8 +164,6 @@ const ChatComponent = () => {
           recommendation_text: "Invalid response format.",
         }; // Fallback
       }
-
-      console.log("Received data:", data);
       dispatch(setIsChatbotThinking(false));
       dispatch(
         updateMessageText({

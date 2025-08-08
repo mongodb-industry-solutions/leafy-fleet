@@ -84,7 +84,8 @@ async def read_root(request: Request):
 
 @app.get("/run-agent")
 async def run_agent(query_reported: str = Query("Default query reported by the user", 
-                                                description="Query reported text"), thread_id: str = Query(..., description="Thread ID for the session"), 
+                                                description="Query reported text"), 
+                                                thread_id: str = Query(..., description="Thread ID for the session"), 
                                                 filters = Query(..., description="User selected checkbox filters"), 
                                                 preferences = Query(..., description="User preferences for the query")): #This is a literal string, not a list or anything
     """Run the agent with the given query.
@@ -121,21 +122,9 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
     initial_state["thread_id"] = thread_id
     config = {"configurable": {"thread_id": thread_id}} # https://langchain-ai.github.io/langgraph/concepts/persistence/#threads
     mongodb_checkpointer = AgentCheckpointer(database_name=MDB_DATABASE_NAME, collection_name=MDB_CHECKPOINTER_COLLECTION).create_mongodb_saver()
-    logger.info("checkpointer state: " + str(mongodb_checkpointer))
     
     try:
-        await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
-        logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
         async with mongodb_checkpointer as checkpointer:
-            # Create the workflow graph with the checkpointerz
-            # Pass the AgentCheckpointer instance
-
-            """
-            Version 1: Use everything in the async_workflow_runner.py
-            Custom implementation of ainvoke that uses the checkpointer
-            gets the context manager error if checkpoint is used
-            """
-            
             await manager.send_to_thread(message="Starting agent workflow execution...", thread_id=thread_id)
             logger.info(f"Starting agent workflow execution for thread ID: {thread_id}")
             
@@ -202,15 +191,10 @@ async def websocket_endpoint(websocket: WebSocket, thread_id: str = Query(..., d
     """
     await manager.connect(websocket, thread_id=thread_id)
     try:
-        # This loop is essential. It keeps the connection open.
-        # You could also receive messages from the client here if needed.
         while True:
-            # We wait for a message from the client. If they disconnect,
-            # a WebSocketDisconnect exception will be raised.
             await websocket.receive_text()
-            # Note: In a real app, you might want to process the received text.
-            # For this example, we just keep the connection alive.
-            
+            # we just keep the connection alive, this is not even a method that exists.
+
     except WebSocketDisconnect:
         manager.disconnect(websocket) 
     

@@ -123,11 +123,14 @@ class QueryTools(MongoDBConnector):
     async def vehicle_state_search(self, user_preferences: str = None, agent_filters: str = None, user_filters: str = None, limit: int = 500, group: bool = False):
         """
         Perform a vehicle state search based on the provided user preferences.
+        Filters through user preferences which are the features selected by the user while configuring the fleet and user filters which are the filters selected by the user on the right of the UI.
+        
+        Returns a list of vehicle states based on the user preferences and agent filters.
         """
         collection = self.get_collection(self.mdb_timeseries_collection)
         
-        logger.info(f"User preferences: {user_preferences}")
-        logger.info(f"Agent filters: {agent_filters}")
+        logger.info(f"[MongoDB] Starting vehicle state search")
+        
 
         # Field mapping - only include fields that exist in your collection
         FIELD_MAPPING = {  
@@ -160,7 +163,6 @@ class QueryTools(MongoDBConnector):
                     FIELD_MAPPING[field] for field in fleet_prefs if field in FIELD_MAPPING
                 ]
 
-        logger.info(f"Mapped user preferences: {mapped_user_preferences}")
 
         # Collect unique mapped fields
         mapped_fields = set()
@@ -186,11 +188,9 @@ class QueryTools(MongoDBConnector):
             if field is not None:  # Double check for None
                 project_stage[field] = 1
 
-        logger.info(f"Final project stage: {project_stage}")
 
         match_stage = self.build_match_stage(user_filters, agent_filters, user_preferences)
 
-        logger.info(f"group: {group}")
 
         if group:
             pipeline = [
@@ -260,10 +260,8 @@ class QueryTools(MongoDBConnector):
                 }
             ]
 
-        logger.info(f"Pipeline for vehicle state search: {pipeline}")
         cursor = collection.aggregate(pipeline)
         result = list(cursor)
-        logger.info(f"Sample: {result[:3]}")
 
          # We clean the outputs and only process whats in the user preferences
         for car in result:
@@ -279,14 +277,12 @@ class QueryTools(MongoDBConnector):
                 else:
                     fleet_idx = None
 
-                # logger.info(mapped_user_preferences)
                 if fleet_idx is not None:
                     allowed_fields = set(mapped_user_preferences[fleet_idx])
                     allowed_fields.add("car_id")
                     allowed_fields.add("timestamp")
                     # Set to None any field not in allowed_fields
                     for field in list(car.keys()):
-                        # logger.info(f"Checking field: {field} in allowed fields: {allowed_fields}")
                         if field not in allowed_fields:
                             car[field] = None
         
@@ -369,13 +365,9 @@ class QueryTools(MongoDBConnector):
         """
 
         collection = self.get_collection(self.mdb_static_information_collection)
-        logger.info(f"User preferences: {user_preferences}")
-        logger.info(f"Agent filters: {agent_filters}")
-        logger.info(f"User filters: {user_filters}")
-
+        logger.info(f"[MongoDB] Starting vehicle maintenance data search")
 
         fleet_capacity = self.understand_fleet_number(user_preferences)
-        logger.info(f"Fleet capacity: {fleet_capacity}")
 
         match_stage = {}
         match_stage["$or"] = []
@@ -408,25 +400,10 @@ class QueryTools(MongoDBConnector):
                 }
             }
         ]
-    
-
-
-        logger.info(f"Pipeline for maintenance data: {pipeline}")
-
         cursor = collection.aggregate(pipeline)
         result = list(cursor)
-
-        logger.info(f"Maintenance data result count: {len(result)}")
-
-        logger.info(f"Sample maintenance data: {result[:3]}")
-
+        # We need to obtain at least the lastest vehicle state data to make a good recommendation
         result2 = await self.vehicle_state_search(user_preferences=user_preferences, agent_filters=agent_filters, user_filters=user_filters, group=True)
-
-
-        # Combine maintenance and state info
-        combined = []
-        combined.append(result)
-        combined.append(result2)
 
         # Create a dictionary to merge results by car_id
         combined_dict = {car["car_id"]: car for car in result}
@@ -443,11 +420,10 @@ class QueryTools(MongoDBConnector):
         # Convert the merged dictionary back to a list
         combined = list(combined_dict.values())
 
-        logger.info(f"sample combined data: {combined[:3]}")
-
         return combined
     def understand_fleet_number(self, user_preferences: str):
-        """        Understand the fleet number from user preferences.
+        """       
+        Understand the fleet number from user preferences.
 
         Args:
             user_preferences (str): User preferences string.
@@ -483,7 +459,6 @@ async def fleet_position_search_tool(state: dict) -> AgentState:
     query_tools = QueryTools()
     logger.info("QueryTools initialized for fleet location search.")
     result = await query_tools.fleet_position_search()
-    logger.info(f"Fleet location search result count: {len(result)}")
     checkpoint = query_tools.obtain_checkpoint()
     state["checkpoint"] = checkpoint
     state["recommendation_data"] = result
@@ -514,9 +489,7 @@ async def get_vehicle_maintenance_data_tool(state: dict) -> AgentState:
     userPreferences = state.get("userPreferences")
     agentPreferences = state.get("botPreferences")
     userFilters = state.get("userFilters")
-    logger.info(f"loaded preferences")
     result = await query_tools.obtain_maintenance_data(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)
-    logger.info(f"Vehicle maintenance data result: {result}")
     checkpoint = query_tools.obtain_checkpoint()
     state["checkpoint"] = checkpoint
     state["recommendation_data"] = result

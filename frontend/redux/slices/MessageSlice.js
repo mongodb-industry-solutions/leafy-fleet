@@ -51,9 +51,6 @@ const MessageSlice = createSlice({
       state.currentThought = action.payload.thought;
     },
     updateMessageText: (state, action) => {
-      console.log("Updating message text:", action.payload);
-      console.log("Message history before update:", state.messageHistory);
-
       // Find the index of the message to update
       const messageIndex = state.messageHistory.findIndex(
         (msg) => msg.id === action.payload.id
@@ -77,7 +74,6 @@ const MessageSlice = createSlice({
         state.messageHistory[messageIndex] = updatedMessage;
       }
 
-      console.log("Message history after update:", state.messageHistory);
     },
     setThinkingMessageId: (state, action) => {
       state.thinkingMessageId = action.payload;

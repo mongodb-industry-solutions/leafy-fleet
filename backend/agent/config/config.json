@@ -106,8 +106,7 @@
             {"id": "vehicle_state_search_tool", "tool": "query_tools.vehicle_state_search_tool"},
             {"id": "save_embedding_tool", "tool": "agent_tools.save_query_embedding_tool"},
             {"id": "fleet_position_search_tool", "tool": "query_tools.fleet_position_search_tool"},
-            {"id": "get_vehicle_maintenance_data_tool", "tool": "query_tools.get_vehicle_maintenance_data_tool"},
-            {"id": "persistence_node", "tool": "agent_tools.persist_data_tool"}
+            {"id": "get_vehicle_maintenance_data_tool", "tool": "query_tools.get_vehicle_maintenance_data_tool"}
             
         ],
         "edges": [

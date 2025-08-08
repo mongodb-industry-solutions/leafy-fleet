@@ -55,20 +55,32 @@ const FilterComponent = () => {
             <div className={styles.checkboxGroup}>
               <h3 className={styles.groupTitle}>Geofences</h3>
               <Checkbox
-                onChange={(e) => setFilter("Geofence 1", e.target.checked)}
-                label="Geofence 1"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("Geofence 2", e.target.checked)}
-                label="Geofence 2"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("Downtown", e.target.checked)}
+                onChange={(e) => setFilter("downtown", e.target.checked)}
                 label="Downtown"
               />
               <Checkbox
-                onChange={(e) => setFilter("North", e.target.checked)}
-                label="North"
+                onChange={(e) => setFilter("utxa", e.target.checked)}
+                label="University of Texas at Austin"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("north_austin", e.target.checked)}
+                label="North Austin"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("capitol_area", e.target.checked)}
+                label="Capitol Area"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("south_austin", e.target.checked)}
+                label="South Austin"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("east_austin", e.target.checked)}
+                label="East Austin"
+              />
+              <Checkbox
+                onChange={(e) => setFilter("west_austin", e.target.checked)}
+                label="West Austin"
               />
             </div>
             <div className={styles.checkboxGroup}>
@@ -172,23 +184,24 @@ const FilterComponent = () => {
                 Contains information about the agent's behavior and decisions.
               </Body>
               <Code language="javascript">
-                {(message != null && message.agent_profiles) 
-                  ? (typeof message.agent_profiles === 'string' 
-                     ? message.agent_profiles 
-                     : JSON.stringify(message.agent_profiles, null, 2))
+                {message != null && message.agent_profiles
+                  ? typeof message.agent_profiles === "string"
+                    ? message.agent_profiles
+                    : JSON.stringify(message.agent_profiles, null, 2)
                   : "Select a message"}
               </Code>
             </div>
             <div>
               <Body baseFontSize={16}>Historial Data</Body>
               <Body baseFontSize={14}>
-                Contains information from telemetry and other data sources to formulate the response.
+                Contains information from telemetry and other data sources to
+                formulate the response.
               </Body>
               <Code language="javascript">
-                {(message != null && message.recommendation_data) 
-                  ? (typeof message.recommendation_data === 'string' 
-                     ? message.recommendation_data 
-                     : JSON.stringify(message.recommendation_data, null, 2))
+                {message != null && message.recommendation_data
+                  ? typeof message.recommendation_data === "string"
+                    ? message.recommendation_data
+                    : JSON.stringify(message.recommendation_data, null, 2)
                   : "Select a message"}
               </Code>
             </div>
@@ -198,10 +211,10 @@ const FilterComponent = () => {
                 Tools used by the agent during the execution.
               </Body>
               <Code language="javascript">
-                {(message != null && message.used_tools) 
-                  ? (typeof message.used_tools === 'string' 
-                     ? message.used_tools 
-                     : JSON.stringify(message.used_tools, null, 2))
+                {message != null && message.used_tools
+                  ? typeof message.used_tools === "string"
+                    ? message.used_tools
+                    : JSON.stringify(message.used_tools, null, 2)
                   : "Select a message"}
               </Code>
             </div>
@@ -211,10 +224,10 @@ const FilterComponent = () => {
                 Contains the last checkpoint data for the agent's execution.
               </Body>
               <Code language="javascript">
-                {(message != null && message.checkpoint) 
-                  ? (typeof message.checkpoint === 'string' 
-                     ? message.checkpoint 
-                     : JSON.stringify(message.checkpoint, null, 2))
+                {message != null && message.checkpoint
+                  ? typeof message.checkpoint === "string"
+                    ? message.checkpoint
+                    : JSON.stringify(message.checkpoint, null, 2)
                   : "Select a message"}
               </Code>
             </div>
