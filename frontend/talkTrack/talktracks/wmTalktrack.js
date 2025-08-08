@@ -26,6 +26,18 @@ export default function whyMongoDBTalktrackSection() {
         "Vector Search",
         "MongoDB's vector search capabilities allow for efficient searching and retrieval of high-dimensional data, making it ideal for applications like image and text similarity."
       ),
+      bodyComponent(
+        "Geospatial Queries",
+        "MongoDB's vector search capabilities allow for efficient searching and retrieval of high-dimensional data, making it ideal for applications like image and text similarity."
+      ),
+      bodyComponent(
+        "RAG (Retrieval-Augmented Generation)",
+        "MongoDB's vector search capabilities allow for efficient searching and retrieval of high-dimensional data, making it ideal for applications like image and text similarity."
+      ),
+      bodyComponent(
+        "Time series collections",
+        "MongoDB's vector search capabilities allow for efficient searching and retrieval of high-dimensional data, making it ideal for applications like image and text similarity."
+      ),
     ],
   });
 }
