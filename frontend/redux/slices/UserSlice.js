@@ -42,6 +42,8 @@ const UserSlice = createSlice({
     ],
     editFleet: 1,
     queryFilters: [],
+    isLoggedIn: false
+
   },
   reducers: {
     setSelectedUser: (state, action) => {
@@ -93,6 +95,12 @@ const UserSlice = createSlice({
       }
     },
   },
+  setLoggedFleet: (state, action) => {
+      state.isLoggedIn = action.payload; // Set the login status based on the action payload
+    }
+
+}
+
 });
 
 export const {
@@ -109,6 +117,7 @@ export const {
   setFleet3Attributes,
   setEditFleet,
   setQueryFilters,
+  setLoggedFleet
 } = UserSlice.actions;
 
 export default UserSlice.reducer;

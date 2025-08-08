@@ -1,7 +1,7 @@
 
 
 
-# Sessiond & Messages
+# Sessions & Messages
 
 This should be the main enpoint that the app interacts with in regards to request information. 
 This endpoint will serve as the filter for querying and obtaning the correct car information for a gven session
