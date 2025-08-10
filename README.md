@@ -1,6 +1,6 @@
 # Agentic Framework
 
-This repository hosts the `agentic-framework`, designed for building adaptable and reusable intelligent ai agentic workflows. The framework provides robust support for integrating and managing tools for AI-driven operations, ideal for varied domains and industry requirements.
+This repository hosts `leady-fleet`, designed as an assistant RAG Agent capable of understanding a user's query, searching trough timeseries data and generating an aswer with an insight that satisfies the original question
 
 ## Goal
 

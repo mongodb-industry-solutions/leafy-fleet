@@ -6,33 +6,32 @@ import {
 } from "./components/talktrackComponent.js";
 import overviewTalktrackSection from "./talktracks/overviewTalktrack.js";
 import whyMongoDBTalktrackSection from "./talktracks/wmTalktrack.js";
-import image from "../public/Arquitecture.png";
 
 export function talktrackDemo(talktrackRequirement) {
 
   if (talktrackRequirement === "/chat") {
     return combineTalktrackSections(
       chatTalktrackSection(),
-      BTSTalktrackSection(image),
+      BTSTalktrackSection(),
       whyMongoDBTalktrackSection()
     );
   }
   if (talktrackRequirement === "/charts") {
     return combineTalktrackSections(
       chartsTalktrackSection(),
-      BTSTalktrackSection(image),
+      BTSTalktrackSection(),
       whyMongoDBTalktrackSection()
     );
   }
   if (talktrackRequirement === "/overview") {
     return combineTalktrackSections(
       overviewTalktrackSection(),
-      BTSTalktrackSection(image),
+      BTSTalktrackSection(),
       whyMongoDBTalktrackSection()
     );
   }
   return combineTalktrackSections(
-    BTSTalktrackSection(image),
+    BTSTalktrackSection(),
     whyMongoDBTalktrackSection()
   );
 }
