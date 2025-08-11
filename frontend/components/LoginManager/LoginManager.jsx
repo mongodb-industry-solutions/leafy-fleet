@@ -143,6 +143,7 @@ const LoginManager = () => {
         backdrop="static"
         className="flex"
         style={{ maxHeight: "800px" }}
+        keyboard={false}
       >
         <Container className="p-4">
           <div className="text-center p-2 bg-white cursor-pointer">
