@@ -39,3 +39,4 @@ async def create_historic_batch(entries: List[TimeseriesModel]):
     result = timeseries_coll.insert_many([entry.dict() for entry in entries])  
     return JSONResponse(status_code=status.HTTP_201_CREATED,   
                         content=jsonable_encoder({"message": f"{len(result.inserted_ids)} historical entries added"}))  
+
