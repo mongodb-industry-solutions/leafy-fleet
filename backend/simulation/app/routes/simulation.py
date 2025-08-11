@@ -88,9 +88,10 @@ async def start_simulation_endpoint(num_cars: int):
     if num_cars <= 0:  
         raise HTTPException(status_code=400, detail="Number of cars must be greater than 0")  
   
-    if is_running():  
+    if is_running() or is_paused():  
         raise HTTPException(status_code=400, detail="Simulation is already running")  
-  
+    
+
     # Stop any active simulation to ensure a clean slate  
     await stop_simulation_internal()  
   
