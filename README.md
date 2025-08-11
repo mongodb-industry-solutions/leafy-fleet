@@ -16,8 +16,8 @@ The current workflow is intentionally simple, showcasing the core capabilities o
 
 - **Multi-Step Diagnostic Workflow:**  
   The agent processes a query by:
-  1. **Reading Timeseries Data:** Ingests data from a CSV file (In a production setup, this will be replaced by an API).
-  2. **Generating an Embedding:** Uses Cohere English V3 embedding model to generate embeddings.
+  1. **Understanding the Query:** The agent adds an embedding to the query using the VoyageAI model Voyage-3.5 to search similar questions via embedding Vectors.
+  2. **Tool Selecting:** Selects from a set of predefined tools based on the query context.
   3. **Atlas Vector Search:** Searches for similar queries in MongoDB Atlas using the generated embedding.
   4. **Data Persistence:** Saves timeseries data, session logs, and recommendations in MongoDB Atlas.
   5. **Final Recommendation:** Uses Anthropic Claude 3 Haiku model to generate a final recommendation.
@@ -26,10 +26,10 @@ The current workflow is intentionally simple, showcasing the core capabilities o
   Automatically retrieves (or creates if missing) a default agent profile from MongoDB that contains instructions, rules, and goals.
 
 - **Session & Run Document Tracking:**  
-  Each diagnostic run is assigned a unique thread ID and logged. Specific run documents from various collections (eg. agent_sessions, agent_profiles, historical_recommendations, logs, queries, checkpoints, timeseries_data, etc) can be retrieved for detailed analysis.
+  Each diagnostic run is assigned a unique thread ID and logged. Specific run documents from various collections (eg. agent_profiles, historical_recommendations, logs, queries, checkpoints, timeseries_data, etc) can be retrieved for detailed analysis.
 
 - **User-Friendly Frontend:**  
-  A dashboard displays the agent’s real-time workflow updates (chain-of-thought, final recommendation, update messages) in one column, and the corresponding MongoDB run documents in the other column.
+  A dashboard displays the agent’s real-time workflow updates (chain-of-thought, final recommendation, update messages) and the corresponding MongoDB run documents.
 
 ## Why MongoDB?
 
@@ -53,16 +53,18 @@ MongoDB is seamlessly integrated with LangGraph, making it a powerful memory pro
 
 MongoDB Atlas supports native vector search, enabling fast and efficient similarity searches on embedding vectors. This is critical for matching current queries with historical data, thereby enhancing diagnostic accuracy and providing more relevant recommendations.
 
+### Geospatial Queries
+
+MongoDB’s geospatial capabilities allow for advanced location-based queries, which can be useful in scenarios where timeseries data is tied to specific geographic locations.
+
 ## Tech Stack
 
 ### Backend 
 
 - [MongoDB Atlas](https://www.mongodb.com/atlas/database) for the database.
 - [FastAPI](https://fastapi.tiangolo.com/) for building the API.
-- [Poetry](https://python-poetry.org/) for dependency management.
 - [LangGraph](https://www.langchain.com/langgraph) for designing the agent workflows.
 - [LangChain](https://www.langchain.com/) to interact and build with LLMs.
-- [Pandas](https://pandas.pydata.org/) for data manipulation.
 - [Uvicorn](https://www.uvicorn.org/) for ASGI server.
 - [Docker](https://www.docker.com/) for containerization.
 
@@ -87,20 +89,15 @@ Before you begin, ensure you have met the following requirements:
 
 - **MongoDB Atlas** account - [Register Here](https://account.mongodb.com/account/register)
 - **Python >=3.10,<3.11** - If you are Mac user, you can install Python 3.10.11 using this [link](https://www.python.org/ftp/python/3.10.11/python-3.10.11-macos11.pkg).
-- **Poetry** (install via [Poetry's official documentation](https://python-poetry.org/docs/#installation))
 
 ## Getting Started
 
 ### Create a New Repository
 
-1. Navigate to the repository template on GitHub and click on **Use this template**.
+1. Navigate to the repository on GitHub and click on **Fork**.
 2. Create a new repository.
-3. **Do not** check the "Include all branches" option.
-4. Define a repository name following the naming convention: `<project_name>-<highlighted_feature>`. For example, `leafy-bank-macro-indicators-agent` (use hyphens to separate words).
-   - The **industry** and **project name** are required; you can be creative with the highlighted feature.
-5. Provide a clear description for the repository, such as: "A repository template to easily create new demos by following the same structure."
-6. Set the visibility to **Internal**.
-7. Click **Create repository**.
+3. Include the main branch only.
+4. Define a repository name following the naming convention: `<project_name>-<highlighted_feature>`. For example, `leafy-fleet-taxi-implementation` (use hyphens to separate words).
 
 ### GitHub Desktop Setup
 
@@ -117,6 +114,8 @@ Before you begin, ensure you have met the following requirements:
 ## Setup Instructions
 
 ### Step 1: Include meaningful CSV data for your use case
+
+# Fer Ayudame a crear el coso de como crear los coches 
 
 1. Go to [CSV folder](/backend/data/csv/) and include your CSV file. The data should be relevant to your use case and respect the following guidelines:
    - The CSV file should contain a header row with column names.
