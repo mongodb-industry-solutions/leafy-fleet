@@ -8,9 +8,9 @@ print("Doing database connection...")
 
 MONGODB_URL = os.getenv("MONGODB_URI")
 DATABASE_NAME = "leafy_fleet"
-SESSIONS_COLLECTION = "sessions"
+STATIC_COLLECTION = "vehicles"
 
 
 mdb_conn = MongoClient(MONGODB_URL)
 db_fleet = mdb_conn[DATABASE_NAME]
-sessions_coll = db_fleet[SESSIONS_COLLECTION]
+vehicles_coll = db_fleet[STATIC_COLLECTION]

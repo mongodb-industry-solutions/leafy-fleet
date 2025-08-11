@@ -42,6 +42,9 @@ class VehicleModel(BaseModel):
     car_id: int # del 1 al 300, carID is used to connect with timeseriesModel, 
     # good if want to preload the data of 300 cars, else for easy comparision routes with carID
 
+class Metadata(BaseModel):
+    sessions: List[str] = []
+
 #Class for the Timeseries Model
 class TimeseriesModel(BaseModel):
     """
@@ -61,6 +64,7 @@ class TimeseriesModel(BaseModel):
     performance_score: float # From 0 to 100, used to check whether the vehicle is achieving its objective, visiting all needed keypoints
     quality_score: float # From 0 to 100, for example that the package was delivered on to the correct house instead of the neighbours house, in our simulation this can be also always 100% correct
     availability_score: float # From 0 to 100, also for OEE, run time vs planned time, in our case run time of a route with traffic vs a planned route without traffic
+    oee: float
     max_fuel_level: float # In ml, no creo que se ocupe
     oil_temperature: float # In Celsius
     is_oil_leak: bool
@@ -73,8 +77,8 @@ class TimeseriesModel(BaseModel):
     average_speed: float # Field(default=0.0, description="Average speed of the vehicle in km/h over the route")
     is_moving: bool # Field(default=True, description="Indicates if the vehicle is currently moving")
     current_geozone: str # will update every 10 steps
-    vin: int
     coordinates: dict = Field(
         default_factory=lambda: {"type": "Point", "coordinates": [0.0, 0.0]},
         description="GeoJSON Point coordinates for the vehicle's location"
     )
+    metadata: Metadata

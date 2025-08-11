@@ -22,11 +22,12 @@ import {
   setFleet2Name,
   setFleet3Name,
   setSelectedFleets,
-  setEditFleet
+  setEditFleet,
+  setLoggedFleet
 } from "@/redux/slices/UserSlice";
-import { Option, OptionGroup, Select, Size } from "@leafygreen-ui/select";
+import { Option, Select, Size } from "@leafygreen-ui/select";
 import Button from "@leafygreen-ui/button";
-import Code from "@leafygreen-ui/code";
+import { usePathname } from "next/navigation";   
 import DocumentFleetComponent from "../DocumentFleetComponent/DocumentFleetComponent";
 
 const LoginManager = () => {
@@ -34,12 +35,19 @@ const LoginManager = () => {
   const selectedUser = useSelector(
     (state) => state.User.selectedUser
   );
-const editFleet = useSelector((state) => state.User.editFleet);
+  const editFleet = useSelector((state) => state.User.editFleet);
 
   const selectedFleets = useSelector((state) =>state.User.selectedFleets);
 
   // Used to know if default value is needed
-  const fleet1Size = useSelector((state) => state.User.fleet1Capacity)
+
+  const fleet1Size = useSelector((state) => state.User.fleet1Capacity) === 0;
+  const fleet2Size = useSelector((state) => state.User.fleet2Capacity) === 0;
+  const fleet3Size = useSelector((state) => state.User.fleet3Capacity) === 0;
+  const fleet1Name = useSelector((state) => state.User.fleet1Name);
+  const fleet2Name = useSelector((state) => state.User.fleet2Name);
+  const fleet3Name = useSelector((state) => state.User.fleet3Name);
+
 
   // Dispatch actions based on user input or component logic
   const dispatchFleetCapacity = (indexFleet, fleetCapacity) => {
@@ -69,7 +77,11 @@ const editFleet = useSelector((state) => state.User.editFleet);
   };
   const handleFleetNameChange = (indexFleet, fleetName) => {
     dispatchFleetName(indexFleet, fleetName.target.value);
+
   };
+  
+
+  const isLoggedIn = useSelector((state) => state.User.isLoggedIn); 
 
   const [open, setOpen] = useState(false);
 
@@ -84,22 +96,43 @@ const editFleet = useSelector((state) => state.User.editFleet);
       setOpen(true);
     } else {
       setOpen(false);
-      dispatch(setFleet1Capacity(50));
-      dispatch(setFleet2Capacity(50));
-      dispatch(setFleet3Capacity(50));
+      dispatch(setLoggedFleet(true)); 
+      dispatch(setFleet1Capacity(20));
+      dispatch(setFleet2Capacity(10));
+      dispatch(setFleet3Capacity(20));
+      dispatch(setFleet1Name("Fleet 1"));
+      dispatch(setFleet2Name("Fleet 2"));
+      dispatch(setFleet3Name("Fleet 3"));
+      dispatch(setSelectedFleets({ selectedFleets: 3 }));
+
     }
   };
 
   const handleClose = () => {
     setOpen(false);
+    dispatch(setLoggedFleet(true)); 
     if (fleet1Size == 0) {
       dispatch(setFleet1Capacity(20));
       dispatch(setFleet2Capacity(0));
       dispatch(setFleet3Capacity(0));
     }
+    if(fleet1Name === ""){
+      dispatch(setFleet1Name("Fleet 1"));
+    }
+
   };
 
-  return (
+  const pathname = usePathname(); // Get the current route  
+  const pathsRequiringLogin = ["/chat", "/charts", "/overview"]; // Paths requiring login  
+  
+  const shouldShowLoginPopup = pathsRequiringLogin.includes(pathname);  
+  
+  if (isLoggedIn) {  
+    return null;  
+  }
+
+  if (shouldShowLoginPopup) {  
+    return ( 
       <div>
       <LoginComp modalObserver={modalObserver} />
 
@@ -269,6 +302,9 @@ const editFleet = useSelector((state) => state.User.editFleet);
       </Modal>
     </div>
   );
+}
+  return null;  
+  
 };
 
 module.exports = LoginManager;
