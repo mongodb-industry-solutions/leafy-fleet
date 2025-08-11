@@ -1,7 +1,9 @@
-import json  
 import os  
+import json  
+import logging  
   
 STATE_FILE = "simulation_state.json"  
+logger = logging.getLogger(__name__)  
   
 def get_state():  
     """Retrieve simulation state from state file."""  

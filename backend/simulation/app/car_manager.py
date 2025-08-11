@@ -44,7 +44,8 @@ async def create_cars(num_cars: int):
             average_speed=0.0,
             is_moving=False,
             current_geozone="No Geofence found",
-            sessions=[] 
+            sessions=[],
+            is_historic=False 
         )  
   
         # Add car to list and register in the GLOBAL_CARS registry  

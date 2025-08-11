@@ -9,20 +9,19 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware  
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from pydantic import BaseModel
+from pydantic_settings import BaseSettings  
 import uvicorn
 import state_manager 
 from geofence_manager import GeofenceManager  # geofence logic is here, avoiding gets to db throught the run
-from routes.simulation import stop_simulation_internal, SIMULATION_TASKS
+from routes.simulation import stop_simulation_internal
 from routes.sessions import router as sessions_api  
 from routes.simulation import router as simulation_api
 from route_manager import load_routes, ROUTES  
-from global_context import HTTP_SESSION, set_session,get_session
-
+from global_context import  set_session,get_session, constant_fuel_consumption_per_m, constant_oil_consumption_per_m, hostname, geofences_service, timeseries_post
 
 # FastAPI app
 app = FastAPI(title="Car Simulation Microservice", version="1.0.0")
-
+import os  
 app.add_middleware(  
     CORSMiddleware,  
     allow_origins=["*"],  
@@ -32,12 +31,12 @@ app.add_middleware(
 )  
 
 
-# Global route map  
+
   
 # Global Geofences
 geofence_manager = GeofenceManager()  
-# HTTP Session used globally  
-
+# telemetry global time for history  
+latest_telemetry= datetime.now().timestamp()-3600
 
 # Logging setup  
 logging.basicConfig(  
@@ -50,15 +49,26 @@ logging.basicConfig(
 ) 
 logger = logging.getLogger(__name__)  
 
-# Constants  
-constant_fuel_consumption_per_m = 0.0009  # ml/m  
-constant_oil_consumption_per_m = 0.0005  # ml/m  
-hostname = "http://localhost"  # Backend service base URL  
+
 state_lock = asyncio.Lock()  
   
 # Helpers for tracking simulation state  
 cars_correctly_running = 300  # Updated for 300 cars
 total_cars = 300  
+
+def convert_numpy_types(obj):
+        """Convert numpy types to native Python types for JSON serialization."""
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {key: convert_numpy_types(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_numpy_types(item) for item in obj]
+        return obj
 
 
 
@@ -84,6 +94,7 @@ class Car:
     speed: float # Average speed of the vehicle in km/h
     average_speed: float # Average speed of the vehicle in km/h over the route
     is_moving: bool #  if the vehicle is currently moving
+    is_historic: bool  #useful to know if should skip asyncio or not.
     
     steps_route:int =0 
     # Internal state
@@ -114,10 +125,9 @@ class Car:
         self.traveled_distance_since_start += move_distance_m  # m
         self.fuel_level = max(self.fuel_level - move_distance_m * constant_fuel_consumption_per_m, 0)
         self.run_time += time_per_step
-        raw_speed = (move_distance_m / time_per_step) * 3600 + random.uniform(-0.35, 0.25)  
-        logger.info(f"Raw Speed Calculation: {raw_speed} km/h")  
-        self.speed = min(max(raw_speed, 0), 180)  
-        self.speed_total+=self.speed
+        self.speed = max(((move_distance_m / 1000) / (time_per_step / 3600)), 0) + random.uniform(-4.35, 4.25) #  speed variation km/h,  non-negative
+        self.speed = max(self.speed, 0)  # Ensure non-negative
+
         self.average_speed = self.speed_total / self.real_step
         
         
@@ -188,11 +198,11 @@ class Car:
                 if session is None:  
                     raise RuntimeError("HTTP_SESSION is not initialized. Check startup_event.")  
 
-                if state_manager.is_paused():  
+                if  state_manager.is_paused():  
                     logger.info(f"Car {self.car_id}: Simulation paused.")  
-                    while state_manager.is_paused():  
+                    while  state_manager.is_paused():  
                         await asyncio.sleep(5)  # Wait for the pause state to change 10 seconds, will stop completly after 15 minutes. 
-                elif state_manager.is_stopped():  
+                elif  state_manager.is_stopped():  
                     logger.info(f"Car {self.car_id}: Simulation stopped. Exiting.")  
                     break  # Exit the simulation loop when stopped  
                 
@@ -205,7 +215,7 @@ class Car:
                 steps, dist_per_step, time_per_step = ROUTES[self.current_route]
                 self.steps_route += len(steps) # para que oee nunca se quede como 0 despues de inicio
                 
-                while self.step_index < len(steps) and state_manager.is_running():
+                while self.step_index < len(steps) and  state_manager.is_running():
                     self.latitude, self.longitude = steps[self.step_index]
                     await self.update(dist_per_step, time_per_step)
                     # Access sessions with proper locking (reduced logging frequency)
@@ -223,9 +233,9 @@ class Car:
 
                     # Send timeseries data every step
                     try:
-                        document = await self.to_document()  
+                        document = await self.to_document() 
                         await session.post(
-                            f"{hostname}:9002/timeseries",
+                            f"{timeseries_post}:9002/timeseries",
                             json=document
                         )
                     except Exception as e:
@@ -257,7 +267,179 @@ class Car:
         except asyncio.CancelledError:  
             logger.info(f"Car {self.car_id} simulation task cancelled.")
         except Exception as e:  
-            logger.error(f"Car {self.car_id}: Unexpected error occurred: {e}")       
+            logger.error(f"Car {self.car_id}: Unexpected error occurred: {e}") 
+
+    async def update_history(self, move_distance_m: float, time_per_step: float):
+        self.real_step+=1
+        self.engine_oil_level = max(self.engine_oil_level - move_distance_m * constant_oil_consumption_per_m, 0)
+        self.traveled_distance += (move_distance_m ) # km 
+        self.traveled_distance_since_start += move_distance_m  # m
+        self.fuel_level = max(self.fuel_level - move_distance_m * constant_fuel_consumption_per_m, 0)
+        self.run_time += time_per_step
+        self.speed = max(((move_distance_m / 1000) / (time_per_step / 3600)), 0) + random.uniform(-4.35, 4.25) #  speed variation km/h,  non-negative
+        self.speed = max(self.speed, 0)  # Ensure non-negative
+
+        self.average_speed = self.speed_total / self.real_step
+        self.is_moving = self.speed > 0
+        self.performance_score = (self.real_step /self.steps_route) if self.steps_route > 0 else 0
+        self.quality_score = cars_correctly_running/total_cars
+        self.availability_score = min(1, max(0, self.availability_score + (random.uniform(-0.02, 0.02))))
+        self.oee = self.quality_score * self.availability_score * self.performance_score    
+    
+    async def run_history(self, session):
+        """Run historic simulation for this car - emulates run() logic but for past data."""
+        logger.info(f"Car {self.car_id}: Starting history simulation")
+        
+        try:
+            # Calculate target steps for 1 hour of simulation
+            target_duration_seconds = 3600  # 1 hour
+            total_steps_processed = 0
+            batch_data = []
+            batch_size = 350  # Larger batch for efficiency
+            start_time = datetime.now()
+            counter=start_time.timestamp()-target_duration_seconds
+            # Initialize route switching variables (same as run function)
+            route_step_index = 0
+            route_index = 0  # Start with first route (0 or 1)
+            
+            while counter < start_time.timestamp():
+                # Get current route (same logic as run function)
+                self.current_route = self.route_ids[route_index]
+                
+                if self.current_route not in ROUTES:
+                    logger.warning(f"Car {self.car_id}: Route {self.current_route} not found in history, skipping")
+                    break
+                    
+                steps, dist_per_step, time_per_step = ROUTES[self.current_route]
+                self.steps_route = len(steps)  # Update for performance calculation
+                
+                #logger.info(f"Car {self.car_id}: History processing route {self.current_route} with {len(steps)} steps")
+                
+                # Process steps in current route (same logic as run function)
+                while route_step_index < len(steps) and counter < start_time.timestamp():
+                    try:
+                        # Update position (same as run function)
+                        self.latitude, self.longitude = steps[route_step_index]
+                        
+                        # Update car state using history method
+                        await self.update_history(dist_per_step, time_per_step)
+                        
+                        # Check geofence every 10 steps (same as run function)
+                        if route_step_index % 10 == 0:
+                            try:
+                                self.current_geozone = geofence_manager.check_point_in_geofences(self.longitude, self.latitude)  
+                            except Exception as e:
+                                logger.warning(f"Car {self.car_id}: Geofence check error in history: {e}")
+                                self.current_geozone = "Error checking geofence"
+                        
+                        # Create document with historical timestamp
+                        data_point = await self.to_document()
+                        counter+=time_per_step
+                        # Set timestamp to simulate past data (going backwards from current time)
+                        historical_timestamp = counter
+                        data_point["timestamp"] = datetime.fromtimestamp(historical_timestamp).isoformat()
+                        
+                        batch_data.append(data_point)
+                        route_step_index += 1
+                        total_steps_processed += 1
+                        
+                        # Send batch when full (optimized for history)
+                        if len(batch_data) >= batch_size:
+                            success = await self._send_historic_batch(session, batch_data)
+                            if success:
+                                logger.info(f"Car {self.car_id}: Sent history batch of {len(batch_data)} records")
+                                batch_data = []
+                            else:
+                                logger.error(f"Car {self.car_id}: Failed to send history batch - stopping history simulation")
+                                return  # Exit gracefully instead of breaking inner loop
+                        
+                        # Handle car failures in history (same logic as run function, but no sleep)
+                        if not self.is_engine_running:
+                            logger.info(f"Car {self.car_id}: Engine stopped in history at step {route_step_index}")
+                            # Reset conditions immediately in history (no waiting)
+                            if self.is_crashed:
+                                self.is_crashed = False
+                                self.is_engine_running = True
+                            if self.fuel_level <= 0:
+                                self.fuel_level = self.max_fuel_level
+                                self.is_engine_running = True
+                            if self.engine_oil_level <= 0:
+                                self.engine_oil_level = 1000
+                                self.is_oil_leak = False
+                                self.is_engine_running = True
+                            
+                    except Exception as e:
+                        logger.error(f"Car {self.car_id}: Error processing history step {route_step_index}: {e}")
+                        continue
+                
+                # Finished current route - switch to next route (same as run function)
+                route_index = 1 - route_index  # Switch between 0 and 1
+                route_step_index = 0  # Reset step index for new route
+                
+                logger.info(f"Car {self.car_id}: Switched to route {self.route_ids[route_index]} for history")
+            
+            # Send remaining batch data
+            if batch_data:
+                success = await self._send_historic_batch(session, batch_data)
+                if success:
+                    logger.info(f"Car {self.car_id}: Sent final history batch of {len(batch_data)} records")
+                else:
+                    logger.warning(f"Car {self.car_id}: Failed to send final history batch - simulation may have been stopped")
+            
+            elapsed_time = (datetime.now() - start_time).total_seconds()
+            logger.info(f"Car {self.car_id}: Completed history simulation - {total_steps_processed} steps in {elapsed_time:.2f}s")
+            
+        except Exception as e:
+            logger.error(f"Car {self.car_id}: Unexpected error during history simulation: {e}")
+            import traceback
+            logger.error(f"Car {self.car_id}: History traceback: {traceback.format_exc()}")
+    
+    async def _send_historic_batch(self, session, batch_data):
+        """Send batch data to historic API endpoint."""
+        try:
+            # Check if session is closed before attempting request
+            if session.closed:
+                logger.warning(f"Car {self.car_id}: Session is closed, cannot send batch")
+                return False
+                
+            # Debug: Log the request details
+            logger.info(f"Car {self.car_id}: Preparing to send {len(batch_data)} records to /historic-batch")
+            
+            # Convert numpy types to regular Python types
+            formatted_data = convert_numpy_types(batch_data)
+            
+            # Debug: Log first item to check format
+            if formatted_data:
+                logger.debug(f"Car {self.car_id}: Sample coordinates: {formatted_data[0].get('coordinates', 'None')}")
+            
+            # Make the API call
+            response = await session.post(
+                "http://localhost:9002/historic-batch",
+                json=formatted_data,
+                headers={"Content-Type": "application/json"}
+            )
+            # Debug: Log response details            
+            if response.status == 201:
+                response_text = await response.text()
+                logger.info(f"Car {self.car_id}: API success: {response_text}")
+                return True
+            else:
+                response_text = await response.text()
+                logger.error(f"Car {self.car_id}: API error {response.status}: {response_text}")
+                return False
+                
+        except RuntimeError as e:
+            if "Session is closed" in str(e):
+                logger.warning(f"Car {self.car_id}: HTTP session was closed - simulation likely stopped")
+                return False
+            else:
+                logger.error(f"Car {self.car_id}: Runtime error sending batch: {e}")
+                return False
+        except Exception as e:
+            logger.error(f"Car {self.car_id}: Error sending batch to API: {e}")
+            import traceback
+            logger.error(f"Car {self.car_id}: API call traceback: {traceback.format_exc()}")
+            return False
     
     async def add_session(self, session_id: str):  
         async with self.sessions_lock:
@@ -294,28 +476,38 @@ async def startup_event():
     """Initialize the microservice."""
     session = aiohttp.ClientSession()  
     set_session(session)
-
+    global latest_telemetry 
+    latest_telemetry= datetime.now().timestamp()-3600
     load_routes("processed_routes.json")
     try:  
-        await geofence_manager.load_geofences("http://localhost:9004/geofences",session) 
+        print(geofences_service)
+        await geofence_manager.load_geofences(f"{geofences_service}:9004/geofences",session) 
 
   # Load geofences from an API  
     except Exception as e:  
         logger.error(f"Failed to load geofences from API during startup: {str(e)}")
     logger.info("Car Simulation Microservice started")
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
     
-    await stop_simulation_internal()
+    # Stop simulation first (this will handle task cleanup)
+    try:
+        await stop_simulation_internal()
+    except Exception as e:
+        logger.error(f"Error during simulation cleanup: {e}")
+    
+    # Close session after all tasks are done
     session = get_session()  
-    if session:
+    if session and not session.closed:
         await session.close()  
     set_session(None)
+    
     logger.info("Car Simulation Microservice stopped")
 
-app.include_router(sessions_api, prefix="/sessions")  
+app.include_router(sessions_api, prefix="")  
 app.include_router(simulation_api, prefix="/simulation")  
 
 if __name__ == "__main__":

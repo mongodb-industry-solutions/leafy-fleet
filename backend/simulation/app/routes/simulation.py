@@ -1,6 +1,7 @@
 import asyncio  
 from fastapi import APIRouter, HTTPException, BackgroundTasks  
 from car_manager import create_cars, get_all_cars, clear_all_cars  
+from car_history_manager import clear_h_all_cars
 from state_manager import is_running, is_stopped, is_paused, set_state  
 from global_context import get_session  # Import HTTP_SESSION management functions  
 import logging  
@@ -10,7 +11,7 @@ router = APIRouter()
   
 # Global simulation tasks list  
 SIMULATION_TASKS = []  
-  
+HISTORY_TASKS = []
   
 async def stop_simulation():  
     """Stop the simulation and clean up all resources."""  
@@ -21,31 +22,43 @@ async def stop_simulation():
     logger.info("Simulation stopped and cleaned up")  
   
   
+
 async def stop_simulation_internal():  
     """Internal function to stop simulation and clean up tasks."""  
     global SIMULATION_TASKS  
-  
-    # Update simulation state  
+    global HISTORY_TASKS
+
+    # Update simulation state first
     set_state("stopped")  
-  
-    # Cancel running tasks  
-    for task in SIMULATION_TASKS:  
+    
+    # Cancel all running tasks first
+    all_tasks = SIMULATION_TASKS + HISTORY_TASKS
+    for task in all_tasks:  
         if not task.done():  
             task.cancel()  
-  
-    # Await and handle task completion  
-    if SIMULATION_TASKS:  
+    
+    # Wait for tasks to complete with proper timeout
+    if all_tasks:  
         try:  
             await asyncio.wait_for(  
-                asyncio.gather(*SIMULATION_TASKS, return_exceptions=True),  
-                timeout=30.0,  
+                asyncio.gather(*all_tasks, return_exceptions=True),  
+                timeout=10.0,  # Reduced timeout since we cancelled them
             )  
+            logger.info("All simulation and history tasks stopped successfully")
         except asyncio.TimeoutError:  
             logger.warning("Some tasks did not complete within timeout")  
+        except Exception as e:
+            logger.warning(f"Exception during task cleanup: {e}")
   
-    SIMULATION_TASKS.clear()  # Reset task list  
-    await clear_all_cars()  # Clear all cars from the registry  
-  
+    # Clear task lists
+    SIMULATION_TASKS.clear()  
+    HISTORY_TASKS.clear()
+    
+    # Clear cars after tasks are done
+    await clear_h_all_cars()
+    await clear_all_cars()
+    
+    logger.info("Simulation cleanup completed")
   
 async def pause_simulation():  
     """Pause the simulation."""  
@@ -91,7 +104,7 @@ async def start_simulation_endpoint(num_cars: int):
     SIMULATION_TASKS = [asyncio.create_task(car.run(session)) for car in cars]  
     logger.info(f"Spawned {len(SIMULATION_TASKS)} simulation tasks.")  
   
-    set_state("running")  
+    set_state("paused")  
     return {"message": f"Started simulation with {len(cars)} cars."}  
   
   

@@ -21,7 +21,7 @@ class GeofenceManager:
             async with session.get(url) as response:  
                 if response.status == 200:  
                     data = await response.json()  # Parse the response as JSON  
-                    self.geofences = []  # Clear any existing geofences  
+                    geofences = []  # Clear any existing geofences  
   
                     # Process fetched geofences  
                     for geofence in data.get("geofences", []):  
@@ -31,7 +31,7 @@ class GeofenceManager:
                             "geometry": polygon  
                         })  
   
-                    logger.info(f"Loaded {len(self.geofences)} geofences into memory from API.")  
+                    logger.info(f"Loaded {len(geofences)} geofences into memory from API.")  
                 else:  
                     logger.error(f"Failed to fetch geofences. HTTP status: {response.status}")  
         except Exception as e:  

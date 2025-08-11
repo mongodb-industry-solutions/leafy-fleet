@@ -10,7 +10,7 @@ from typing import List, Dict, Optional
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 import uvicorn
-import state_manager
+import app.state_manager
 from geofence_manager import GeofenceManager  # geofence logic is here, avoiding gets to db throught the run
 
 # FastAPI app

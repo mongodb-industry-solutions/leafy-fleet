@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks  
-from state_manager import is_running  
+from state_manager import is_running , set_state,is_paused,is_stopped 
 import logging
-from car_manager import get_car_by_id, get_all_cars  
+from car_manager import get_car_by_id, get_all_cars
+from car_history_manager import get_h_car_by_id, get_h_all_cars, create_hist_cars
 from pydantic import BaseModel
+from .simulation import HISTORY_TASKS
+from global_context import get_session  # Import HTTP_SESSION management functions  
 
-
+import asyncio
 # Pydantic models for API
 class SessionRequest(BaseModel):
     session_id: str
@@ -19,7 +22,7 @@ router = APIRouter()
 @router.post("/sessions")
 async def add_sessions(request: SessionRequest):
     """Add session to cars based on three ranges: 1-x1, 101-x2, 201-x3."""
-    if not is_running():
+    if is_stopped():
         raise HTTPException(status_code=400, detail="Simulation is not running")
     
     # Validate ranges
@@ -52,18 +55,20 @@ async def add_sessions(request: SessionRequest):
                 "range3": f"201-{200 + request.range3}" if request.range3 > 0 else "none"
             }
         }
-    
     # Add sessions to cars
     cars_updated = 0
     cars_not_found = []
-    
-    for car_id in car_ids:
-        car = await get_car_by_id(car_id)
-        if car:
-            await car.add_session(request.session_id)
-            cars_updated += 1
-        else:
-            cars_not_found.append(car_id)
+    if is_running or is_paused:
+        for car_id in car_ids:
+            car = await get_car_by_id(car_id)
+            hc = await get_h_car_by_id(car_id)
+            if car:
+                await car.add_session(request.session_id)
+                cars_updated += 1
+                if hc:
+                    await hc.add_session(request.session_id)
+            else:
+                cars_not_found.append(car_id)
     
     result = {
         "message": f"Session {request.session_id} added to {cars_updated} cars",
@@ -76,10 +81,28 @@ async def add_sessions(request: SessionRequest):
             "range3": f"201-{200 + request.range3}" if request.range3 > 0 else "none"
         }
     }
-    
+    if is_paused:
+        global HISTORY_TASKS
+        session = get_session()
+        hc = await create_hist_cars(request.range1, request.range2, request.range3, request.session_id)
+        
+        if not hc:
+            logger.error("No historic cars were created")
+            raise HTTPException(status_code=500, detail="Failed to create historic cars")
+        
+        HISTORY_TASKS = []
+        for car in hc:
+            try:
+                task = asyncio.create_task(car.run_history(session))
+                HISTORY_TASKS.append(task)
+                logger.info(f"Created task for car {car.car_id}")
+            except Exception as e:
+                logger.error(f"Failed to create task for car {car.car_id}: {e}")
+        
+        logger.info(f"Spawned {len(HISTORY_TASKS)} simulation tasks.")
+        set_state("running")
     if cars_not_found:
         result["cars_not_found"] = cars_not_found
-    
     return result
 
 @router.delete("/sessions/{car_id}")
