@@ -46,9 +46,9 @@ const ChatInput = ({ onSendMessage }) => {
 
 
     const FOLLOWUP_QUESTIONS = [
-        "If I want to reduce my fleet size 10%, what vehicles I should retire first?",
-        "Where are all my vehicles located in real-time?",
-        "What are the most common types of repairs across my fleet?"
+        "If I wish to reduce my fleet size by 10%, what vehicles I should retire first and why?",
+        "What are the top three types of maintenance scheduled across my fleet?",
+        "Can I skip the next scheduled maintenance for carId 8?",
     ];
 
     return (

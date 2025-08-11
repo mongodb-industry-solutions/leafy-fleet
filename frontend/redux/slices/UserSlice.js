@@ -94,13 +94,10 @@ const UserSlice = createSlice({
         );
       }
     },
-  },
-  setLoggedFleet: (state, action) => {
+    setLoggedFleet: (state, action) => {
       state.isLoggedIn = action.payload; // Set the login status based on the action payload
     }
-
-}
-
+  }
 });
 
 export const {

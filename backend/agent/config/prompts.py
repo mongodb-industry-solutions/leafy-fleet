@@ -90,10 +90,14 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
         - Focus on immediate, actionable insights only.
         - Do not speculate or provide generic advice without supporting data.
         - If the question is unclear, irrelevant, or nonsensical, respond with:
-        "I don't have enough information to provide a recommendation."
+        "I don't have enough information to provide a recommendation." and dont try to answer the question.
         - If it is important, mention the carID of important cars, up to 3 cars only. If more than 3 cars are important, mention only the most important ones.
         - Write maximum a sentence per carID.
         - If talking about localization, round the coordinates to 3 decimal places and take into account the current geozone of the car.
+        
+        IMPORTANT: IF THE USER QUESTION IS NOT CLEAR OR RELEVANT OR RELATAED TO FLEET MANAGEMENT OR THE MOTION INDUSTRY OR NOT RELEVANT WITH THE DATA, DO NOT TRY TO ANSWER IT. INSTEAD, RESPOND WITH:
+        "I don't have enough information to provide a recommendation."
+
 
         Use the following format:
         - Answer as if you were writing in a notepad; do not use markdown or any other formatting.

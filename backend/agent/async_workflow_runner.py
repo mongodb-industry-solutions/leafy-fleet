@@ -86,6 +86,19 @@ class AsyncWorkflowRunner:
             else:
                 graph.add_edge(from_node, to_node)
 
+        # Add conditional edges
+        conditional_edges = graph_config.get("conditional_edges", [])
+        for conditional_edge in conditional_edges:
+            from_node = conditional_edge["from"]
+            condition_function = self.resolve_tool(f"agent_tools.{conditional_edge['condition']}")
+            condition_map = conditional_edge["condition_map"]
+            
+            graph.add_conditional_edges(
+                from_node,
+                condition_function,
+                condition_map
+            )
+
         # Set entry point
         graph.set_entry_point(graph_config["entry_point"])
 
@@ -123,9 +136,9 @@ class AsyncWorkflowRunner:
         """
         # Use LangGraph's built-in execution with automatic checkpointing
 
-        has_checkpointer = self.workflow_graph.checkpointer is not None
-        # logger.info(f"Workflow has checkpointer: {has_checkpointer}")
-        # logger.info(f"Config provided: {config is not None}")
+        has_checkpointer = hasattr(self.workflow_graph, 'checkpointer') and self.workflow_graph.checkpointer is not None
+        logger.info(f"Workflow has checkpointer: {has_checkpointer}")
+        logger.info(f"Config provided: {config is not None}")
 
         if has_checkpointer and config:
             logger.info(f"Invoking LangGraph workflow with checkpointer for thread_id: {thread_id}")
@@ -140,39 +153,39 @@ class AsyncWorkflowRunner:
             except Exception as e:
                 # Log the specific error to help debug
                 logger.error(f"LangGraph workflow error: {type(e).__name__}: {str(e)}")
-        else:
-            # Fallback to manual execution if no checkpointer
-            logger.info("Invoking workflow without checkpointer (manual execution).")
-            state = initial_state.copy()
-            edge_map = {}
-            for edge in self.graph_config["edges"]:
-                edge_map.setdefault(edge["from"], []).append(edge["to"])
-            node_tools = {node["id"]: self.resolve_tool(node["tool"]) for node in self.graph_config["nodes"]}
-            current_node = self.graph_config["entry_point"]
-            steps = 0
-
-            while current_node and current_node != "END":
-                steps += 1
-                if current_node not in node_tools:
-                    await manager.send_to_thread(f"Node {current_node} not found in tools", thread_id=thread_id)
-                    break
-                tool_function = node_tools[current_node]
-                result = await tool_function(state)
-                if isinstance(result, dict):
-                    state.update(result)
-                
-                # Check for dynamic jump
-                next_step = state.get("next_step")
-                if next_step and next_step != current_node:
-                    current_node = next_step
-                    state["next_step"] = None  # Optionally clear after use
-                else:
-                    # Default: follow the first outgoing edge
-                    next_nodes = edge_map.get(current_node, [])
-                    current_node = next_nodes[0] if next_nodes else "END"
         
-            await manager.send_to_thread(f"Workflow completed after {steps} steps.", thread_id=thread_id)
-            return state
+        # Fallback to manual execution if no checkpointer
+        logger.info("Invoking workflow without checkpointer (manual execution).")
+        state = initial_state.copy()
+        edge_map = {}
+        for edge in self.graph_config["edges"]:
+            edge_map.setdefault(edge["from"], []).append(edge["to"])
+        node_tools = {node["id"]: self.resolve_tool(node["tool"]) for node in self.graph_config["nodes"]}
+        current_node = self.graph_config["entry_point"]
+        steps = 0
+
+        while current_node and current_node != "END":
+            steps += 1
+            if current_node not in node_tools:
+                await manager.send_to_thread(f"Node {current_node} not found in tools", thread_id=thread_id)
+                break
+            tool_function = node_tools[current_node]
+            result = await tool_function(state)
+            if isinstance(result, dict):
+                state.update(result)
+            
+            # Check for dynamic jump
+            next_step = state.get("next_step")
+            if next_step and next_step != current_node:
+                current_node = next_step
+                state["next_step"] = None  # Optionally clear after use
+            else:
+                # Default: follow the first outgoing edge
+                next_nodes = edge_map.get(current_node, [])
+                current_node = next_nodes[0] if next_nodes else "END"
+        
+        await manager.send_to_thread(f"Workflow completed after {steps} steps.", thread_id=thread_id)
+        return state
 
 
 

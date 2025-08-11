@@ -214,24 +214,42 @@ class AgentTools(MongoDBConnector):
             logger.info(f"[LLM] Chain-of-Thought Reasoning: {JSON_chain_of_thought}")
             logger.info(f"[LLM] Chain-of-Thought Reasoning: {chain_of_thought}")
 
-            next_step = JSON_chain_of_thought.get("tool")
-            state["next_step"] = "save_embedding_tool"
+            next_step = JSON_chain_of_thought.get("tool", "vehicle_state_search_tool")
+            
+            # Map the LLM response to valid query tools
+            tool_mapping = {
+                "vehicle_state_search_tool": "vehicle_state_search_tool",
+                "fleet_position_search_tool": "fleet_position_search_tool", 
+                "get_vehicle_maintenance_data_tool": "get_vehicle_maintenance_data_tool",
+                "vehicle_state_search": "vehicle_state_search_tool",
+                "fleet_position_search": "fleet_position_search_tool",
+                "maintenance_data": "get_vehicle_maintenance_data_tool",
+                "vehicle_health": "get_vehicle_maintenance_data_tool",
+                "location": "fleet_position_search_tool",
+                "position": "fleet_position_search_tool"
+            }
+            
+            # Resolve the tool name
+            resolved_tool = tool_mapping.get(next_step, "vehicle_state_search_tool")
+            
+            logger.info(f"[LLM] Resolved tool: {resolved_tool}")
+            
+            state["next_step"] = resolved_tool  # This will be used by the router
+            state["chain_of_thought"] = chain_of_thought
             state["response"] = next_step
 
         except Exception as e:
             logger.error(f"Error generating chain of thought: {e}")
-            chain_of_thought = (
-                "1. Consume data.\n"
-                "2. Generate an embedding for the query.\n"
-                "3. Perform a vector search on past recommendations.\n"
-                "4. Persist data into MongoDB.\n"
-                "5. Generate a final summary and recommendation."
-            )
-            next_step = "END"
+            chain_of_thought = '{"tool": "vehicle_state_search_tool", "time_range": "last_7_days", "fields": ["default"]}'
+            
+            # Fallback to default tool
+            state["next_step"] = "vehicle_state_search_tool"
+            state["chain_of_thought"] = chain_of_thought
+            state["response"] = "vehicle_state_search_tool"
 
         state.setdefault("updates", []).append("Chain-of-thought generated.")
-        state["chain_of_thought"] = chain_of_thought
-        state["selected_tool"] = next_step
+        # chain_of_thought is already set above
+        state["selected_tool"] = state.get("next_step", "vehicle_state_search_tool")
         state["agent_profile1"] = p["profile"]
         self.add_used_tools(state, "reasoning_node")
         return {**state}
@@ -316,11 +334,10 @@ class AgentTools(MongoDBConnector):
         logger.info("[Final Answer] Generating final recommendation...")
         
         # Use default timeseries data if none is provided
-        timeseries_data = state.get("recommendation_data", [])
-        if not timeseries_data:
-            state.setdefault("updates", []).append("No timeseries data; using default values.")
-            logger.warning("[Warning] No timeseries data available. Using default values.")
-            timeseries_data = self.default_timeseries_data
+        timeseries_data = state.get("recommendation_data")
+
+        logger.info(f"[LLM] Timeseries data: {timeseries_data[0:3]}")
+        logger.info(f"[LLM] Timeseries data length: {len(timeseries_data)}")
 
         # Instantiate the AgentProfiles class
         profiler = AgentProfiles(collection_name=self.mdb_agent_profiles_collection)
@@ -381,13 +398,27 @@ async def vector_search_tool(state: dict) -> dict:
         recommendation = result[0]['recommendation']  
         logger.info(f"Recommendation from vector search: {recommendation}")
 
-        state["next_step"] = recommendation
-        logger.info(f"Next step set to: {state['next_step']}")
-        agent_tools.add_used_tools(state, recommendation)
+        # Map the recommendation to valid query tools
+        tool_mapping = {
+            "vehicle_state_search_tool": "vehicle_state_search_tool",
+            "fleet_position_search_tool": "fleet_position_search_tool", 
+            "get_vehicle_maintenance_data_tool": "get_vehicle_maintenance_data_tool",
+            "vehicle_state_search": "vehicle_state_search_tool",
+            "fleet_position_search": "fleet_position_search_tool",
+            "maintenance_data": "get_vehicle_maintenance_data_tool"
+        }
+        
+        resolved_tool = tool_mapping.get(recommendation, "vehicle_state_search_tool")
+        state["next_step"] = resolved_tool
+        state["vector_search_found_match"] = True  # Flag for routing
+        logger.info(f"Vector search found high-confidence match, routing directly to: {resolved_tool}")
+        agent_tools.add_used_tools(state, resolved_tool)
     else:
+        state["vector_search_found_match"] = False  # Flag for routing
         state["next_step"] = "reasoning_node"
+        logger.info("Vector search found no high-confidence match, routing to reasoning node")
     # search_results = len(result.get("historical_recommendations_list", []))
-    return result
+    return state
 
 async def generate_chain_of_thought_tool(state: AgentState) -> AgentState:
     """Generates the chain of thought for the agent."""
@@ -395,11 +426,16 @@ async def generate_chain_of_thought_tool(state: AgentState) -> AgentState:
     await manager.send_to_thread("Deciding which tools to use next", state.get("thread_id", ""))
 
     result = agent_tools.generate_chain_of_thought(state=state)
-    # If we come to the tool selecting LLM we always need to save the response, then we go to the tool
-    state["response"] = result
-    state["next_step"] = "save_embedding_tool"
-    agent_tools.add_used_tools(state, "reasoning_node")
-    agent_tools.add_used_tools(state, result.get("selected_tool", ""))
+    
+    # The next_step should already be set by generate_chain_of_thought method
+    # Just ensure we pass through the state properly
+    updated_state = {**state, **result}
+    
+    agent_tools.add_used_tools(updated_state, "reasoning_node")
+    selected_tool = updated_state.get("selected_tool", "vehicle_state_search_tool")
+    agent_tools.add_used_tools(updated_state, selected_tool)
+    
+    return updated_state
     return result
 
 async def get_query_embedding_tool(state: AgentState) -> AgentState:
@@ -437,3 +473,68 @@ async def save_query_embedding_tool(state: dict) -> dict:
     logger.info(f"Selected tool: {selected_tool}")
     state["next_step"] = selected_tool if selected_tool else "end"
     return result
+
+async def router_tool(state: dict) -> dict:
+    """Router tool that prepares state for conditional routing."""
+    logger.info("Router tool: preparing for conditional routing")
+    
+    # The routing decision should already be set in state["next_step"] 
+    # by the reasoning_node or vector_search_tool
+    next_step = state.get("next_step", "vehicle_state_search_tool")
+    
+    logger.info(f"Router tool directing to: {next_step}")
+    await manager.broadcast(f"Routing to {next_step}")
+    
+    # Ensure the next_step is valid
+    valid_tools = [
+        "vehicle_state_search_tool", 
+        "fleet_position_search_tool", 
+        "get_vehicle_maintenance_data_tool"
+    ]
+    
+    if next_step not in valid_tools:
+        logger.warning(f"Invalid routing target: {next_step}, defaulting to vehicle_state_search_tool")
+        next_step = "vehicle_state_search_tool"
+        state["next_step"] = next_step
+    
+    return state
+
+def route_to_query_tool(state: dict) -> str:
+    """
+    Condition function that determines which query tool to route to.
+    This function is used by LangGraph's conditional edges.
+    
+    Returns:
+        str: The name of the query tool to route to
+    """
+    next_step = state.get("next_step", "vehicle_state_search_tool")
+    
+    valid_tools = [
+        "vehicle_state_search_tool", 
+        "fleet_position_search_tool", 
+        "get_vehicle_maintenance_data_tool"
+    ]
+    
+    if next_step in valid_tools:
+        logger.info(f"Conditional routing to: {next_step}")
+        return next_step
+    else:
+        logger.warning(f"Invalid routing target: {next_step}, defaulting to vehicle_state_search_tool")
+        return "vehicle_state_search_tool"
+
+def route_from_vector_search(state: dict) -> str:
+    """
+    Condition function that determines whether to go to router_node or reasoning_node
+    based on whether vector search found a high-confidence match.
+    
+    Returns:
+        str: Either "router_node" or "reasoning_node"
+    """
+    found_match = state.get("vector_search_found_match", False)
+    
+    if found_match:
+        logger.info("Vector search found high-confidence match, routing to router_node")
+        return "router_node"
+    else:
+        logger.info("Vector search found no high-confidence match, routing to reasoning_node")
+        return "reasoning_node"

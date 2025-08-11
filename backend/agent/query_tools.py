@@ -191,6 +191,27 @@ class QueryTools(MongoDBConnector):
 
         match_stage = self.build_match_stage(user_filters, agent_filters, user_preferences)
 
+        pipeline = [
+            {
+                "$match": match_stage
+            },
+            {
+                "$sort": {"timestamp": -1}
+            },
+            {
+                "$limit": limit  # Limit to 500 results
+            },
+            {
+                "$project": project_stage
+            },
+            # Final sort
+            {
+                "$sort": {
+                    "car_id": 1
+                }
+            }
+        ]
+
 
         if group:
             pipeline = [
@@ -238,30 +259,13 @@ class QueryTools(MongoDBConnector):
             }
         ]
 
-        else:
-            pipeline = [
-                {
-                    "$match": match_stage
-                },
-                {
-                    "$sort": {"timestamp": -1}
-                },
-                {
-                    "$limit": limit  # Limit to 500 results
-                },
-                {
-                    "$project": project_stage
-                },
-                # Final sort
-                {
-                    "$sort": {
-                        "car_id": 1
-                    }
-                }
-            ]
+       
+        
 
         cursor = collection.aggregate(pipeline)
         result = list(cursor)
+
+        logger.info(f"Sample: {result[:3]}")
 
          # We clean the outputs and only process whats in the user preferences
         for car in result:
@@ -360,32 +364,33 @@ class QueryTools(MongoDBConnector):
         """
         Obtain maintenance data for a specific car range based on user preferences and agent filters.
         """
-
         collection = self.get_collection(self.mdb_static_information_collection)
         logger.info(f"[MongoDB] Starting vehicle maintenance data search")
 
         fleet_capacity = self.understand_fleet_number(user_preferences)
+        logger.info(f"Fleet capacity from user preferences: {fleet_capacity}")
 
         match_stage = {}
         match_stage["$or"] = []
 
-        # Example: fleet_capacity like [50,150,250] meaning upper bounds (inclusive?) for fleets 1,2,3
-        # Decide inclusive vs exclusive. Here assume inclusive, so add +1 to stop.
+        # Fix the car ID ranges to match the logic in build_match_stage
         if user_preferences:
-           
-            if fleet_capacity[0] > 0:
-                car_ids1 = list(range(0, fleet_capacity[0])) 
-            if fleet_capacity[1] > 0:
-                car_ids2 = list(range(100, fleet_capacity[1]+100))
-            if fleet_capacity[2] > 0:
-                car_ids3 = list(range(200, fleet_capacity[2]+200))
-            
-            if car_ids1:
+            if len(fleet_capacity) > 0 and fleet_capacity[0] > 0:
+                car_ids1 = list(range(0, fleet_capacity[0]))  # 0 to fleet_capacity[0]-1
                 match_stage["$or"].append({"car_id": {"$in": car_ids1}})
-            if car_ids2:
+                logger.info(f"Fleet 1 car IDs: {car_ids1[:5]}...{car_ids1[-5:] if len(car_ids1) > 5 else car_ids1}")
+                
+            if len(fleet_capacity) > 1 and fleet_capacity[1] > 0:
+                car_ids2 = list(range(100, 100 + fleet_capacity[1]))  # 100 to 100+fleet_capacity[1]-1
                 match_stage["$or"].append({"car_id": {"$in": car_ids2}})
-            if car_ids3:
+                logger.info(f"Fleet 2 car IDs: {car_ids2[:5]}...{car_ids2[-5:] if len(car_ids2) > 5 else car_ids2}")
+                
+            if len(fleet_capacity) > 2 and fleet_capacity[2] > 0:
+                car_ids3 = list(range(200, 200 + fleet_capacity[2]))  # 200 to 200+fleet_capacity[2]-1
                 match_stage["$or"].append({"car_id": {"$in": car_ids3}})
+                logger.info(f"Fleet 3 car IDs: {car_ids3[:5]}...{car_ids3[-5:] if len(car_ids3) > 5 else car_ids3}")
+
+        logger.info(f"Match stage for maintenance data: {match_stage}")
 
         pipeline = [
             {"$match": match_stage},
@@ -397,10 +402,20 @@ class QueryTools(MongoDBConnector):
                 }
             }
         ]
+        
         cursor = collection.aggregate(pipeline)
         result = list(cursor)
-        # We need to obtain at least the lastest vehicle state data to make a good recommendation
-        result2 = await self.vehicle_state_search(user_preferences=user_preferences, agent_filters=agent_filters, user_filters=user_filters, group=True)
+        logger.info(f"Maintenance data results count: {len(result)}")
+        
+        # We need to obtain at least the latest vehicle state data to make a good recommendation
+        logger.info("Calling vehicle_state_search for additional data...")
+        result2 = await self.vehicle_state_search(
+            user_preferences=user_preferences, 
+            agent_filters=agent_filters, 
+            user_filters=user_filters, 
+            group=True
+        )
+        logger.info(f"Vehicle state search results count: {len(result2)}")
 
         # Create a dictionary to merge results by car_id
         combined_dict = {car["car_id"]: car for car in result}
@@ -416,8 +431,11 @@ class QueryTools(MongoDBConnector):
 
         # Convert the merged dictionary back to a list
         combined = list(combined_dict.values())
+        logger.info(f"Combined results count: {len(combined)}")
 
         return combined
+    
+
     def understand_fleet_number(self, user_preferences: str):
         """       
         Understand the fleet number from user preferences.
@@ -460,6 +478,7 @@ async def fleet_position_search_tool(state: dict) -> AgentState:
     state["checkpoint"] = checkpoint
     state["recommendation_data"] = result
     state["next_step"] = "recommendation_node"
+    logger.info(f"Next step: {state['next_step']}")
     return AgentState(**state)
 
 async def vehicle_state_search_tool(state: dict) -> AgentState:
@@ -481,6 +500,8 @@ async def vehicle_state_search_tool(state: dict) -> AgentState:
     state["checkpoint"] = checkpoint
     state["recommendation_data"] = result
     state["next_step"] = "recommendation_node"
+    logger.info(f"Next step: {state['next_step']}")
+    logger.info(f"Result count: {len(result)}")
     return AgentState(**state)
 
 async def get_vehicle_maintenance_data_tool(state: dict) -> AgentState:
@@ -495,4 +516,5 @@ async def get_vehicle_maintenance_data_tool(state: dict) -> AgentState:
     state["checkpoint"] = checkpoint
     state["recommendation_data"] = result
     state["next_step"] = "recommendation_node"
+    logger.info(f"Next step: {state['next_step']}")
     return AgentState(**state)

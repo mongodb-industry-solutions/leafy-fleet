@@ -134,6 +134,7 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
             logger.info(f"Workflow execution completed for thread ID: {thread_id}")
 
         agent_profiles = []
+        logger.info(f"Calling the agent profiles")
         if final_state.get("agent_profile1"):
             agent_profiles.append({
                 "agent_profile_1": final_state.get("agent_profile1"),
@@ -146,15 +147,17 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
 
         final_state["agent_profiles"] = agent_profiles
 
+        logger.info(f"Preparing final answer")
         # For some reason I get problems returning final_state
         recommendation_data = final_state.get('recommendation_data')
+        logger.info(f"obtained recommendation data")
         final_answer = {
             "thread_id": thread_id,
             "query_reported": query_reported,
             "recommendation_text": final_state.get('recommendation_text', 'No recommendation found'),
             "recommendation_data": recommendation_data[:5],
             "created_at": datetime.datetime.now(),
-            "checkpoint": final_state.get('checkpoint', None),
+            "checkpoint": final_state.get('checkpoint', []),
             "used_tools": final_state.get("used_tools", []),
             "agent_profiles": final_state.get('agent_profiles', []),
         }

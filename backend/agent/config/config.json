@@ -27,7 +27,7 @@
         "kind_of_data": "User question and a knowledge of internal tools to choose",
         "motive": "Given the user input data and information about internal fleet management tools, decide which tool or tools to use for processing fleet data",
         "instructions": "Analyze the user query to extract: 1) Which fleet management tool to use, 2) Time parameters (dates, periods), 3) Vehicle filters (specific cars, routes), 4) Relevant data fields. Available tools: vehicle_state_search_tool, fleet_position_search_tool, get_vehicle_maintenance_data_tool",
-        "rules": "Return ONLY valid JSON. Extract time references like 'last week', 'since Monday', 'past 7 days' and convert to date ranges. If no time specified, use appropriate defaults. Include vehicle filters and relevant database fields.",
+        "rules": "Return ONLY valid JSON. Extract time references like 'last week', 'since Monday', 'past 7 days' and convert to date ranges. If no time specified, use a timerange from today to today. Include vehicle filters and relevant database fields.",
         "goals": "Provide accurate tool selection with proper time parameters and filters for fleet management queries."
         },
     "DEFAULT_AGENT_PROFILE": {
@@ -60,6 +60,7 @@
             {"id": "embedding_node", "tool": "agent_tools.get_query_embedding_tool"},
             {"id": "vector_search_tool", "tool": "agent_tools.vector_search_tool"},
             {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"},
+            {"id": "router_node", "tool": "agent_tools.router_tool"},
             {"id": "vehicle_state_search_tool", "tool": "query_tools.vehicle_state_search_tool"},
             {"id": "save_embedding_tool", "tool": "agent_tools.save_query_embedding_tool"},
             {"id": "fleet_position_search_tool", "tool": "query_tools.fleet_position_search_tool"},
@@ -68,26 +69,31 @@
         ],
         "edges": [
             {"from": "embedding_node", "to": "vector_search_tool"},
-
-            {"from": "vector_search_tool", "to": "fleet_position_search_tool"},
-            {"from": "vector_search_tool", "to": "vehicle_state_search_tool"},
-            {"from": "vector_search_tool", "to": "get_vehicle_maintenance_data_tool"},
-            {"from": "vector_search_tool", "to": "reasoning_node"},
-            
-            
             {"from": "reasoning_node", "to": "save_embedding_tool"},
-            
-            {"from": "save_embedding_tool", "to": "fleet_position_search_tool"},
-            {"from": "save_embedding_tool", "to": "vehicle_state_search_tool"},
-            {"from": "save_embedding_tool", "to": "get_vehicle_maintenance_data_tool"},
-            
-            
+            {"from": "save_embedding_tool", "to": "router_node"},
             {"from": "vehicle_state_search_tool", "to": "recommendation_node"}, 
             {"from": "fleet_position_search_tool", "to": "recommendation_node"},
             {"from": "get_vehicle_maintenance_data_tool", "to": "recommendation_node"},
-            
-            
             {"from": "recommendation_node", "to": "END"}
+        ],
+        "conditional_edges": [
+            {
+                "from": "vector_search_tool",
+                "condition": "route_from_vector_search",
+                "condition_map": {
+                    "router_node": "router_node",
+                    "reasoning_node": "reasoning_node"
+                }
+            },
+            {
+                "from": "router_node",
+                "condition": "route_to_query_tool",
+                "condition_map": {
+                    "vehicle_state_search_tool": "vehicle_state_search_tool",
+                    "fleet_position_search_tool": "fleet_position_search_tool", 
+                    "get_vehicle_maintenance_data_tool": "get_vehicle_maintenance_data_tool"
+                }
+            }
         ],
         "entry_point": "embedding_node"
     }
