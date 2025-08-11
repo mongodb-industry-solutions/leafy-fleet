@@ -292,19 +292,16 @@ class QueryTools(MongoDBConnector):
     def build_match_stage(self, user_filters: str = None, agent_filters: str = None, user_preferences: str = None):
         """
         Build the match stage for the MongoDB query based on user preferences and agent filters.
-        
-        User Filters are to be used in the match stage
-        User Preferences are to be used in the project stage
-        
-        
         """
         match_stage = {}
         fleet_capacity = self.understand_fleet_number(user_preferences)
         logger.info(f"Fleet capacity: {fleet_capacity}")
-        if user_filters:
+
+        # Handle empty user_filters
+        if user_filters and len(user_filters) > 0:
             match_stage["$or"] = []
             for fleet_prefs in user_filters:
-                if fleet_prefs == "Last 30 min" or fleet_prefs == "Last hour" or fleet_prefs == "Last 2 hours" :
+                if fleet_prefs == "Last 30 min" or fleet_prefs == "Last hour" or fleet_prefs == "Last 2 hours":
                     logger.info(f"Skipping preference")
                     continue
                 if fleet_prefs:
@@ -323,18 +320,18 @@ class QueryTools(MongoDBConnector):
                         # For other string values, treat as direct car_id match
                         match_stage["$or"].append({"car_id": fleet_prefs})
                         continue
-                    
+
                     # Add car ID range filter
                     match_stage["$or"].append({"car_id": {"$in": car_ids1}, "car_id": {"$in": car_ids2}, "car_id": {"$in": car_ids3}})
-                    # logger.info(f"Match stage: {match_stage}")
+        else:
+            logger.info("No user filters provided. Returning all data.")
+            match_stage = {}  # No filtering applied
 
-
+        # Handle agent_filters
         if agent_filters:
-            # agent_filters is already a dict, no need to parse JSON
             if isinstance(agent_filters, str):
                 agent_filters = json.loads(agent_filters)
-            
-            # Access the nested time_range
+
             time_range = agent_filters.get("time_range", {})
             if time_range:
                 try:
@@ -472,6 +469,10 @@ async def vehicle_state_search_tool(state: dict) -> AgentState:
     userPreferences = state.get("userPreferences")
     userFilters = state.get("userFilters")
     agentPreferences = state.get("botPreferences")
+
+    logger.info(f"User Preferences: {userPreferences}")
+    logger.info(f"User Filters: {userFilters}")
+    logger.info(f"Agent Preferences: {agentPreferences}")
 
     query_tools = QueryTools()
     result = await query_tools.vehicle_state_search(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)

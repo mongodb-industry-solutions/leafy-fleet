@@ -2,7 +2,7 @@ import importlib
 from langgraph.graph import StateGraph, END
 from agent_state import AgentState
 from config.config_loader import ConfigLoader
-
+import asyncio
 
 def resolve_tool(tool_path):
     """
@@ -91,12 +91,12 @@ async def create_workflow_graph(checkpointer=None):
 
 
 if __name__ == "__main__":
-    # Example usage
-    workflow = create_workflow_graph()
+    async def main():
+        workflow = await create_workflow_graph()
+        # Graph compilation and visualization
+        graph = workflow.get_graph()
+        # Print the graph in ASCII format
+        ascii_graph = graph.draw_ascii()
+        print(ascii_graph)
 
-    # Graph compilation and visualization
-    graph = workflow.get_graph()
-
-    # Print the graph in ASCII format
-    ascii_graph = graph.draw_ascii()
-    print(ascii_graph)
+    asyncio.run(main())

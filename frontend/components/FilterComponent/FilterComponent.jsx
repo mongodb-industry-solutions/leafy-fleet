@@ -75,12 +75,33 @@ const FilterComponent = () => {
                 label="South Austin"
               />
               <Checkbox
-                onChange={(e) => setFilter("east_austin", e.target.checked)}
-                label="East Austin"
+                onChange={(e) => setFilter("airport_zone", e.target.checked)}
+                label="Airport Zone"
               />
               <Checkbox
-                onChange={(e) => setFilter("west_austin", e.target.checked)}
-                label="West Austin"
+                onChange={(e) =>
+                  setFilter("south_east_austin", e.target.checked)
+                }
+                label="South East Austin"
+              />
+
+              <Checkbox
+                onChange={(e) =>
+                  setFilter("south_west_austin", e.target.checked)
+                }
+                label="South West Austin"
+              />
+              <Checkbox
+                onChange={(e) =>
+                  setFilter("barton_creek", e.target.checked)
+                }
+                label="Barton Creek"
+              />
+              <Checkbox
+                onChange={(e) =>
+                  setFilter("georgetown", e.target.checked)
+                }
+                label="Georgetown"
               />
             </div>
             <div className={styles.checkboxGroup}>

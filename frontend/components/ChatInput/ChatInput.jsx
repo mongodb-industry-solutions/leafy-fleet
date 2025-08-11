@@ -72,7 +72,7 @@ const ChatInput = ({ onSendMessage }) => {
                     onKeyDown={(e) => {
                         // console.log("Key pressed:", e.key);
                         if (e.key === 'Enter') {
-                            handleSubmit(e.target.value);
+                            handleSubmit();
                         }
                     }}
                     value={value}

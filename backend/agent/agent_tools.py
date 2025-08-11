@@ -59,12 +59,10 @@ class AgentTools(MongoDBConnector):
         self.config = config
 
         # Get configuration values
-        self.csv_data = self.config.get("CSV_DATA")
         self.mdb_timeseries_collection = self.config.get("MDB_TIMESERIES_COLLECTION")
         self.mdb_timeseries_timefield = self.config.get("MDB_TIMESERIES_TIMEFIELD")
         self.mdb_timeseries_granularity = self.config.get("MDB_TIMESERIES_GRANULARITY")
-        self.default_timeseries_data = self.config.get("DEFAULT_TIMESERIES_DATA")
-        self.critical_conditions_config = self.config.get("CRITICAL_CONDITIONS")
+
         self.mdb_embeddings_collection = self.config.get("MDB_EMBEDDINGS_COLLECTION") # historical_recommendations
         self.mdb_embeddings_collection_vs_field = self.config.get("MDB_EMBEDDINGS_COLLECTION_VS_FIELD")
         self.mdb_vs_index = self.config.get("MDB_VS_INDEX")
@@ -101,15 +99,22 @@ class AgentTools(MongoDBConnector):
         embedding = state.get("embedding_vector", [])
 
         try:
-            logger.info("Checking Vector Search Index...")
-            # Instantiate the VectorSearchIDXCreator class
-            vector_index_creator = VectorSearchIDXCreator()
-            vector_index_creator_result = vector_index_creator.create_index()
-            logger.info(vector_index_creator_result)
+            # Check if the index exists
+            search_indexes = list(self.collection.list_search_indexes())
+            index_names = [idx['name'] for idx in search_indexes]
+            if self.mdb_vs_index in index_names:
+                logger.info(f"Vector Search index '{self.mdb_vs_index}' already exists.")
+                vector_index_creator_result = index_name = self.mdb_vs_index
+                
+            else:
+                logger.info(f"Vector Search index '{self.mdb_vs_index}' does not exist. Creating...")
+                vector_index_creator = VectorSearchIDXCreator()
+                vector_index_creator_result = vector_index_creator.create_index()
+                index_name = vector_index_creator_result.get("agentic_framework_queries_vs_idx", self.mdb_vs_index)
         except Exception as e:
             logger.error(f"[MongoDB] Error checking vector search index: {e}")
             state.setdefault("updates", []).append("[MongoDB] Error checking vector search.")
-        index_name = vector_index_creator_result.get("index_name", self.mdb_vs_index)
+            index_name = vector_index_creator_result.get("agentic_framework_queries_vs_idx", self.mdb_vs_index)
         try:
             logger.info(f"[MongoDB] Performing vector search in collection: {self.collection_name} with index: {index_name}")
             # Perform vector search
@@ -161,7 +166,7 @@ class AgentTools(MongoDBConnector):
             else:
                 logger.info(f"[MongoDB] No similar data found. Returning default message.")
                 state.setdefault("updates", []).append("[MongoDB] No similar data found.")
-                similar_queries = [{"query": "No similar queries found", "recommendation": "reasoning_node", "score": 0.0}]
+                similar_queries = None
         except Exception as e:
             logger.error(f"Error during MongoDB Vector Search operation: {e}")
             state.setdefault("updates", []).append("[MongoDB] Error during Vector Search operation.")
@@ -205,6 +210,9 @@ class AgentTools(MongoDBConnector):
             # Generate a chain of thought based on the prompt
             chain_of_thought = chat_completions.predict(CHAIN_OF_THOUGHTS_PROMPT)
             JSON_chain_of_thought = json.loads(chain_of_thought)
+
+            logger.info(f"[LLM] Chain-of-Thought Reasoning: {JSON_chain_of_thought}")
+            logger.info(f"[LLM] Chain-of-Thought Reasoning: {chain_of_thought}")
 
             next_step = JSON_chain_of_thought.get("tool")
             state["next_step"] = "save_embedding_tool"
@@ -314,10 +322,6 @@ class AgentTools(MongoDBConnector):
             logger.warning("[Warning] No timeseries data available. Using default values.")
             timeseries_data = self.default_timeseries_data
 
-        # # Evaluate critical conditions
-        # critical_conditions = self.evaluate_critical_conditions(timeseries_data)
-        # critical_info = "CRITICAL ALERT: " + ", ".join(critical_conditions) + "\n\n" if critical_conditions else ""
-
         # Instantiate the AgentProfiles class
         profiler = AgentProfiles(collection_name=self.mdb_agent_profiles_collection)
         # Get the agent profile
@@ -372,9 +376,10 @@ async def vector_search_tool(state: dict) -> dict:
     agent_tools.add_used_tools(state, "vector_search_tool")
     result = agent_tools.vector_search(state=state)
 
-    if result and len(result) > 0 and result[0].get("score", 0) > 0.95:
+    if result and len(result) > 0 and result[0]['score'] > 0.95:
         # Check if tools exist in the recommendation field
-        recommendation = result[0].get("recommendation", {})    
+        recommendation = result[0]['recommendation']  
+        logger.info(f"Recommendation from vector search: {recommendation}")
 
         state["next_step"] = recommendation
         logger.info(f"Next step set to: {state['next_step']}")

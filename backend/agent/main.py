@@ -7,7 +7,6 @@ import logging
 import datetime
 import asyncio  
 import websockets 
-import asyncio
 
 from async_workflow_runner import AsyncWorkflowRunner
 
@@ -15,16 +14,11 @@ import json
 from bson import ObjectId
 from pydantic import BaseModel
 
-from fastapi import FastAPI, HTTPException, Request, Query
+from fastapi import FastAPI, HTTPException, Request, Query, APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import APIRouter
-from fastapi import WebSocket, WebSocketDisconnect
 
 from config.config_loader import ConfigLoader
 from utils import convert_objectids, format_document
-
-from db.mdb import MongoDBConnector
 
 from agent_workflow_graph import create_workflow_graph
 from async_workflow_runner import create_async_workflow
@@ -76,6 +70,10 @@ app.add_middleware(
 )
 
 router = APIRouter()
+
+# Connect to MongoDB to get a single instance of the database
+mongo_client = MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME).connect_to_db()
+
 
 @app.get("/")
 async def read_root(request: Request):
@@ -168,20 +166,21 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
         logger.info(f"[Error] An error occurred during execution: {e}")
         logger.info(f"You can resume this session later using thread ID: {thread_id}")
         try:
-            with MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME) as mdb_connector: 
-                session_metadata = {
-                    "thread_id": thread_id,
-                    # "query_number": query_number,
-                    "query_reported": query_reported,
-                    "created_at": datetime.datetime.now(datetime.timezone.utc),
-                    "status": "error",
-                    "error_message": str(e)
-                }
-                session_metadata = convert_objectids(session_metadata)
-                mdb_connector.insert_one(collection_name=MDB_AGENT_SESSIONS_COLLECTION, document=session_metadata)
-                logger.info("[MongoDB] Error state recorded in session metadata")
+            # Use the shared mongo_client instance directly
+            mdb_connector = MongoDBConnector(uri=MDB_URI, database_name=MDB_DATABASE_NAME)
+            mdb_sessions_collection = mdb_connector.get_collection(MDB_AGENT_SESSIONS_COLLECTION)
+            session_metadata = {
+                "thread_id": thread_id,
+                "query_reported": query_reported,
+                "created_at": datetime.datetime.now(datetime.timezone.utc),
+                "status": "error",
+                "error_message": str(e)
+            }
+            session_metadata = convert_objectids(session_metadata)
+            mdb_sessions_collection.insert_one(session_metadata)
+            logger.info("[MongoDB] Error state recorded in session metadata")
         except Exception as db_error:
-                logger.info(f"[MongoDB] Error storing session error state: {db_error}")
+            logger.info(f"[MongoDB] Error storing session error state: {db_error}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.websocket("/ws")

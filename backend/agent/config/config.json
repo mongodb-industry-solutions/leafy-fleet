@@ -1,25 +1,7 @@
 {
-    "CSV_DATA": "data/csv/macro_indicators_data.csv",
     "MDB_DATABASE_NAME": "leafy_fleet",
     "MDB_TIMESERIES_COLLECTION": "vehicleTelemetry",
     "MDB_STATIC_INFORMATION_COLLECTION": "vehicles",
-    "DEFAULT_TIMESERIES_DATA": [
-        {
-            "timestamp": "2025-03-21T13:15:00Z",
-            "gdp": 2.4,
-            "interest_rate": 1.85,
-            "unemployment_rate": 4.0,
-            "vix": 22
-        }
-    ],
-    "CRITICAL_CONDITIONS": {
-        "fuel_level": {"threshold": 500, "condition": "<", "message": "Low fuel level: {value}L - Vehicle needs refueling"},
-        "oil_temperature": {"threshold": 100, "condition": ">", "message": "High oil temperature: {value}°C - Engine overheating risk"},
-        "quality_score": {"threshold": 70, "condition": "<", "message": "Low quality score: {value} - Vehicle needs maintenance"},
-        "performance_score": {"threshold": 75, "condition": "<", "message": "Poor performance: {value} - Vehicle underperforming"},
-        "availability_score": {"threshold": 80, "condition": "<", "message": "Low availability: {value}% - Vehicle reliability issues"},
-        "engine_oil_level": {"threshold": 1000, "condition": "<", "message": "Low oil level: {value}ml - Oil change needed"}
-    },
     "MDB_TIMESERIES_TIMEFIELD": "timestamp",
     "MDB_TIMESERIES_GRANULARITY": "seconds",
     "DEFAULT_TIME_WINDOWS": {
@@ -33,10 +15,8 @@
     "MDB_EMBEDDINGS_COLLECTION_VS_FIELD": "embedding",
     "MDB_VS_INDEX": "agentic_framework_queries_vs_idx",
     "MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION": "historical_recommendations",
-
     "MDB_CHAT_HISTORY_COLLECTION": "chat_history",
     "MDB_CHECKPOINTER_COLLECTION": "checkpoints",
-    "MDB_LOGS_COLLECTION": "logs",
     "MDB_AGENT_PROFILES_COLLECTION": "agent_profiles",
     "MDB_AGENT_SESSIONS_COLLECTION": "agent_sessions",
     "AGENT_PROFILE_CHOSEN_ID": "DECIDING_AGENT",
@@ -74,29 +54,6 @@
     "EMBEDDINGS_MODEL_ID": "cohere.embed-english-v3",
     "CHATCOMPLETIONS_MODEL_NAME": "Anthropic Claude 3 Haiku (within AWS Bedrock)",
     "CHATCOMPLETIONS_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0",
-    "DEAFAULT_AGENT_WORKFLOW_GRAPH": {
-        "nodes": [
-            {"id": "reasoning_node", "tool": "agent_tools.generate_chain_of_thought_tool"},
-            {"id": "data_from_csv", "tool": "agent_tools.get_data_from_csv_tool"},
-            {"id": "process_data", "tool": "agent_tools.process_data_tool"},
-            {"id": "embedding_node", "tool": "agent_tools.get_query_embedding_tool"},
-            {"id": "vector_search", "tool": "agent_tools.vector_search_tool"},
-            {"id": "process_vector_search", "tool": "agent_tools.process_vector_search_tool"},
-            {"id": "persistence_node", "tool": "agent_tools.persist_data_tool"},
-            {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"}
-        ],
-        "edges": [
-            {"from": "reasoning_node", "to": "data_from_csv"},
-            {"from": "data_from_csv", "to": "process_data"},
-            {"from": "process_data", "to": "embedding_node"},
-            {"from": "embedding_node", "to": "vector_search"},
-            {"from": "vector_search", "to": "process_vector_search"},
-            {"from": "process_vector_search", "to": "persistence_node"},
-            {"from": "persistence_node", "to": "recommendation_node"},
-            {"from": "recommendation_node", "to": "END"}
-        ],
-        "entry_point": "reasoning_node"
-    },
     "AGENT_WORKFLOW_GRAPH": {
         "nodes": [
             {"id": "reasoning_node", "tool": "agent_tools.generate_chain_of_thought_tool"},

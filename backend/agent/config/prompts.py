@@ -57,7 +57,7 @@ def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_ins
           "fields": ["relevant_database_fields"]
         }}
 
-        If a user query dosent make sense
+        Generate it.
 
         """
 

@@ -103,6 +103,7 @@ const ChatComponent = () => {
       pushMessageHistory({ message: newUserMessage, id: newUserMessage.id })
     );
 
+    dispatch(setIsChatbotThinking(true));
     let data = {
       chain_of_thought:
         "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
@@ -114,7 +115,6 @@ const ChatComponent = () => {
       sender: "bot",
       completed: false,
     };
-    dispatch(setIsChatbotThinking(true));
     dispatch(setThinkingMessageId(lastMessageId + 2));
     dispatch(
       pushMessageHistory({
