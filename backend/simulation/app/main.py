@@ -5,7 +5,7 @@ import asyncio
 import aiohttp  
 import logging  
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware  
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -17,7 +17,9 @@ from routes.simulation import stop_simulation_internal
 from routes.sessions import router as sessions_api  
 from routes.simulation import router as simulation_api
 from route_manager import load_routes, ROUTES  
-from global_context import  set_session,get_session, constant_fuel_consumption_per_m, constant_oil_consumption_per_m, hostname, geofences_service, timeseries_post
+from global_context import  set_session,get_session, constant_fuel_consumption_per_m, constant_oil_consumption_per_m, geofences_service, timeseries_post, HTTP_SESSION, static_service
+import time
+from typing import Optional
 
 # FastAPI app
 app = FastAPI(title="Car Simulation Microservice", version="1.0.0")
@@ -55,6 +57,7 @@ state_lock = asyncio.Lock()
 # Helpers for tracking simulation state  
 cars_correctly_running = 300  # Updated for 300 cars
 total_cars = 300  
+cdt = timezone(timedelta(hours=-5))
 
 def convert_numpy_types(obj):
         """Convert numpy types to native Python types for JSON serialization."""
@@ -291,13 +294,15 @@ class Car:
         logger.info(f"Car {self.car_id}: Starting history simulation")
         
         try:
+            
             # Calculate target steps for 1 hour of simulation
             target_duration_seconds = 3600  # 1 hour
             total_steps_processed = 0
             batch_data = []
             batch_size = 350  # Larger batch for efficiency
-            start_time = datetime.now()
-            counter=start_time.timestamp()-target_duration_seconds
+
+            start_time = datetime.now(cdt)
+            counter = start_time.timestamp() - target_duration_seconds
             # Initialize route switching variables (same as run function)
             route_step_index = 0
             route_index = 0  # Start with first route (0 or 1)
@@ -337,7 +342,10 @@ class Car:
                         counter+=time_per_step
                         # Set timestamp to simulate past data (going backwards from current time)
                         historical_timestamp = counter
-                        data_point["timestamp"] = datetime.fromtimestamp(historical_timestamp).isoformat()
+                        local_dt = datetime.fromtimestamp(historical_timestamp, tz=cdt)
+                        utc_dt = local_dt.astimezone(timezone.utc)
+                        data_point["timestamp"] = utc_dt.isoformat()
+
                         
                         batch_data.append(data_point)
                         route_step_index += 1
@@ -386,7 +394,7 @@ class Car:
                 else:
                     logger.warning(f"Car {self.car_id}: Failed to send final history batch - simulation may have been stopped")
             
-            elapsed_time = (datetime.now() - start_time).total_seconds()
+            elapsed_time = (datetime.now(cdt) - start_time).total_seconds()
             logger.info(f"Car {self.car_id}: Completed history simulation - {total_steps_processed} steps in {elapsed_time:.2f}s")
             
         except Exception as e:
@@ -414,7 +422,7 @@ class Car:
             
             # Make the API call
             response = await session.post(
-                "http://localhost:9002/historic-batch",
+                f"{timeseries_post}:9002/historic-batch",
                 json=formatted_data,
                 headers={"Content-Type": "application/json"}
             )
@@ -469,6 +477,86 @@ async def increment_cars_correctly_running():
         cars_correctly_running += 1  
 
 
+# Maintenance logs (must be done only once before running)\
+async def create_maintenance_data():
+    """
+    Create mock maintenance data for all cars in the database
+    """
+
+    maintenance_dict = [
+        "Oil change",
+        "Tire rotation",
+        "Brake inspection",
+        "Battery replacement",
+        "Transmission fluid change",
+        "Coolant flush",
+        "Air filter replacement",
+        "Fuel system cleaning",
+        "Suspension check",
+        "Exhaust system inspection",
+        "Alignment check",
+        "Windshield wiper replacement",
+        "Headlight bulb replacement",
+        "Interior cleaning",
+        "Exterior detailing",
+        "Paint touch-up",
+        "Dent repair",
+        "Glass replacement",
+        "Wheel balancing",
+        "Engine tune-up"
+    ]
+
+
+    try:
+        async with HTTP_SESSION.get(f"{static_service}:9005/static") as response:
+            if response.status == 200:
+                static_entries = await response.json()
+                for entry in static_entries:
+                    car_id = entry["car_id"]
+                    maintenance_logs = []
+                    for _ in range(random.randint(1, 5)):  # Random number of maintenance logs per car
+                        log = Maintenance_Log(
+                            date=random_date("4/8/2025 1:30", "4/8/2025 16:50", random.random()),
+                            description=random.choice(maintenance_dict),
+                            cost=random.uniform(500, 10000)  # Random cost between 500 and 10000
+                        )
+                        maintenance_logs.append(log)
+                print("Maintenance data created successfully", maintenance_logs)
+
+    except Exception as e:
+        logger.error(f"Error creating maintenance data: {e}")
+
+
+
+def str_time_prop(start, end, time_format, prop):
+    """Get a time at a proportion of a range of two formatted times.
+    start and end should be strings specifying times formatted in the
+    given format (strftime-style), giving an interval [start, end].
+    prop specifies how a proportion of the interval to be taken after
+    start.  The returned time will be in the specified format.
+    """
+
+    stime = time.mktime(time.strptime(start, time_format))
+    etime = time.mktime(time.strptime(end, time_format))
+
+    ptime = stime + prop * (etime - stime)
+
+    return time.strftime(time_format, time.localtime(ptime))
+
+
+def random_date(start, end, prop):
+    return str_time_prop(start, end, '%d/%m/%Y %H:%M:%S', prop)
+
+
+
+@dataclass
+class Maintenance_Log:
+    date: datetime
+    description: str
+    cost: Optional[float] = None
+
+
+
 # API Endpoints
 
 @app.on_event("startup")
@@ -477,7 +565,7 @@ async def startup_event():
     session = aiohttp.ClientSession()  
     set_session(session)
     global latest_telemetry 
-    latest_telemetry= datetime.now().timestamp()-3600
+    latest_telemetry= datetime.now(cdt).timestamp()-3600
     load_routes("processed_routes.json")
     try:  
         print(geofences_service)
@@ -512,3 +600,5 @@ app.include_router(simulation_api, prefix="/simulation")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    # asyncio.run(create_maintenance_data()) #only runs once ;)

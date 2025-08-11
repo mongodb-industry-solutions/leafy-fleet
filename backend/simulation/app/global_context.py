@@ -30,6 +30,7 @@ cars_to_run=300
 
 timeseries_post=os.getenv("TIMESERIES_POST_ENDPOINT")
 geofences_service=os.getenv("GEOFENCES_SERVICE_ENDPOINT")
+static_service=os.getenv("STATIC_SERVICE_ENDPOINT")
 # Print to verify  
-print(f"Timeseries Endpoint: {timeseries_post}")  
-print(f"Geofences Endpoint: {geofences_service}")  
+#print(f"Timeseries Endpoint: {timeseries_post}")  
+#print(f"Geofences Endpoint: {geofences_service}")  

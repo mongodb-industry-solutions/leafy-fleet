@@ -4,6 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from database import vehicles_coll
 from datetime import datetime
 from model.staticModel import VehicleModel
+from model.staticModel import MaintenanceLog
 
 router = APIRouter()
 
@@ -60,4 +61,27 @@ async def get_static_entry_by_id(car_id: int):
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=jsonable_encoder({"message": "Error retrieving static entry", "error": str(e)})
+        )
+    
+@router.update("/static/{car_id}")
+async def update_static_entry(car_id: int, entry: list[MaintenanceLog]):
+    try:
+        result = vehicles_coll.update_one(
+            {"car_id": car_id},
+            {"$push": {"maintenance_log": {"$each": [log.dict() for log in entry]}}}
+        )
+        if result.modified_count > 0:
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=jsonable_encoder({"message": "Static entry updated successfully"})
+            )
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content=jsonable_encoder({"message": "Static entry not found"})
+            )
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=jsonable_encoder({"message": "Error updating static entry", "error": str(e)})
         )
