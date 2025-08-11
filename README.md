@@ -1,14 +1,12 @@
 # Agentic Framework
 
-This repository hosts `leady-fleet`, designed as an assistant RAG Agent capable of understanding a user's query, searching trough timeseries data and generating an aswer with an insight that satisfies the original question
+This repository hosts `leafy-fleet`, designed as an assistant RAG Agent capable of understanding a user's query, searching trough timeseries data and generating an aswer with an insight that satisfies the original question
 
 ## Goal
 
-The primary goal of the Agentic Framework is to accelerate the development of AI-driven workflows by providing a flexible and extensible foundation. Rather than offering a fixed set of tools or functionalities, the framework is designed to serve as a starting point for building intelligent agents tailored to specific use cases.
+The primary goal of Leafy Fleet is to showcase the capabilities of MongoDB being used as a memory provider for LangGraph, enabling the creation of intelligent agents that can process and analyze timeseries data, generate embeddings, perform vector searches, and provide actionable recommendations.
 
-The current workflow is intentionally simple, showcasing the core capabilities of the framework. This simplicity allows users to quickly understand its structure and functionality while encouraging customization. For more complex use cases or advanced agents, users have the autonomy to extend the framework by adding new tools, nodes, conditions, or workflows as needed.
-
-By prioritizing adaptability and modularity, the Agentic Framework empowers developers to create AI agents that are not only efficient but also highly customizable to meet the unique demands of their industries or projects.
+The current workflow is intentionally simple, showcasing the core capabilities of the demo. This simplicity allows users to quickly understand its structure and functionality while encouraging customization. This demo is to be taken as a starting point for building intelligent agents tailored to specific use cases.
 
 ## High Level Logical Architecture
 
