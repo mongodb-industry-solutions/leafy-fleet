@@ -1,0 +1,22 @@
+version: '3.8'  
+  
+services:  
+  geofence-service:  
+    container_name: geofence-service  
+    build:  
+      context: .  
+      dockerfile: Dockerfile  
+    ports:  
+      - "9004:9004"  
+    volumes:   
+      - ./app:/app  
+    env_file:  
+      - ./app/.env  
+    environment:  
+      - PYTHONUNBUFFERED=1  
+    networks:  
+      - simulation-network  
+  
+networks:  
+  simulation-network:  
+    external: true  # Use the external network we created  

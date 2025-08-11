@@ -10,7 +10,7 @@ frozenlist==1.7.0
 h11==0.16.0
 idna==3.10
 multidict==6.6.3
-numpy==2.3.2
+numpy==2.2.6
 propcache==0.3.2
 pydantic==2.11.7
 pydantic-settings==2.10.1
