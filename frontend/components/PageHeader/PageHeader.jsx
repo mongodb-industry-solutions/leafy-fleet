@@ -29,7 +29,9 @@ const PageHeader = () => {
 
         <H1>Leafy Fleet</H1>
 
-        <H3> Session ID: {}</H3>
+       {['/chat', '/overview', '/charts'].some(path => pathname.endsWith(path)) &&  
+        <H3>Session ID: {}</H3>  
+      }  
       </div>
 
 
