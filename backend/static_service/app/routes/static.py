@@ -63,7 +63,7 @@ async def get_static_entry_by_id(car_id: int):
             content=jsonable_encoder({"message": "Error retrieving static entry", "error": str(e)})
         )
     
-@router.update("/static/{car_id}")
+@router.put("/static/{car_id}")
 async def update_static_entry(car_id: int, entry: list[MaintenanceLog]):
     try:
         result = vehicles_coll.update_one(
