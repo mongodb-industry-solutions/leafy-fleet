@@ -138,7 +138,7 @@ class AgentTools(MongoDBConnector):
 
                 results = list(results)
 
-                # logger.info(f"[MongoDB] Vector Search results: {type(results)}")
+                # logger.info(f"[MongoDB] Vector Search results: {results}")
 
                 filtered_results = []
                 for i in results:
@@ -152,7 +152,7 @@ class AgentTools(MongoDBConnector):
 
                 results = filtered_results
 
-                # logger.info(f"[MongoDB] Vector Search result: {i}")
+                # logger.info(f"[MongoDB] Vector Search result: {results}")
 
             if results:
                 logger.info(f"[MongoDB] Retrieved similar data from vector search.")
@@ -405,7 +405,7 @@ async def vector_search_tool(state: dict) -> dict:
             "get_vehicle_maintenance_data_tool": "get_vehicle_maintenance_data_tool",
         }
         
-        resolved_tool = tool_mapping.get(recommendation, "vehicle_state_search_tool")
+        resolved_tool = tool_mapping.get(recommendation)
         state["next_step"] = resolved_tool
         state["vector_search_found_match"] = True  # Flag for routing
         logger.info(f"Vector search found high-confidence match, routing directly to: {resolved_tool}")

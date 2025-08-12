@@ -85,7 +85,6 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
         IMPORTANT RULES:
 
         Provide only 4 sentences maximum.
-        - Only address aspects you have data for.
         - If no relevant data is available for part of a question, acknowledge it and skip that part entirely.
         - Focus on immediate, actionable insights only.
         - Do not speculate or provide generic advice without supporting data.
@@ -94,9 +93,6 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
         - If it is important, mention the carID of important cars, up to 3 cars only. If more than 3 cars are important, mention only the most important ones.
         - Write maximum a sentence per carID.
         - If talking about localization, round the coordinates to 3 decimal places and take into account the current geozone of the car.
-        
-        IMPORTANT: IF THE USER QUESTION IS NOT CLEAR OR RELEVANT OR RELATAED TO FLEET MANAGEMENT OR THE MOTION INDUSTRY OR NOT RELEVANT WITH THE DATA, DO NOT TRY TO ANSWER IT. INSTEAD, RESPOND WITH:
-        "I don't have enough information to provide a recommendation." with a short explanation of why you can't and don't try to answer the question.
 
         If the user question is related to the information you have, provide a response to the best of your hability based on the data.
 

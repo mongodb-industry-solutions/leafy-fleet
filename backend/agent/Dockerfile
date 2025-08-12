@@ -11,4 +11,4 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
   
 # The entrypoint can be overridden in docker-compose.yml  
-CMD ["python"]  # Default command, runs `python` itself.  
+CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "9000", "--workers", "2"]
