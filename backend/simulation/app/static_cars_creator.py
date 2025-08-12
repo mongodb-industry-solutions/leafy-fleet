@@ -277,6 +277,20 @@ async def create_maintenance_data():
     ]
 
 
+    random_dates = [
+
+            "Today",
+            "Tomorrow",
+            "Next week",
+            "Next month",
+            "In 3 months",
+            "In 6 months",
+            "In 2 weeks",
+            "In 3 days",
+
+    ]
+
+
     try:
         async with HTTP_SESSION.get(f"{hostname}:9005/static") as response:
             if response.status == 200:
@@ -288,6 +302,7 @@ async def create_maintenance_data():
                     for _ in range(random.randint(1, 5)):  # Random number of maintenance logs per car
                         log = Maintenance_Log(
                             date=str(random_date("4/8/2024 1:30:00", "4/8/2025 16:50:00", random.random())),
+                            # date=random.choice(random_dates), # Uncomment and run again with last line commented to have "future" maintenance dates
                             description=random.choice(maintenance_dict),
                             cost=random.uniform(500, 10000)  # Random cost between 500 and 10000
                         )
