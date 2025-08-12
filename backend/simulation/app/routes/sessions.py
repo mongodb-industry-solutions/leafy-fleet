@@ -58,7 +58,7 @@ async def add_sessions(request: SessionRequest):
     # Add sessions to cars
     cars_updated = 0
     cars_not_found = []
-    if is_running or is_paused:
+    if is_running() or is_paused():
         for car_id in car_ids:
             car = await get_car_by_id(car_id)
             hc = await get_h_car_by_id(car_id)
@@ -81,7 +81,7 @@ async def add_sessions(request: SessionRequest):
             "range3": f"201-{200 + request.range3}" if request.range3 > 0 else "none"
         }
     }
-    if is_paused:
+    if is_paused():
         global HISTORY_TASKS
         session = get_session()
         hc = await create_hist_cars(request.range1, request.range2, request.range3, request.session_id)

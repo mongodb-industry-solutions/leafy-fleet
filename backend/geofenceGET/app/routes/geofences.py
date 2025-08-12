@@ -9,11 +9,11 @@ router = APIRouter()
 @router.get("/geofences")  
 async def return_all_geofences():  
     """  
-    Return all geofences, including their name and geometry, excluding centroid.  
+    Return all geofences, including their name and geometry, with centroid.  
     """  
     try:  
         # Synchronously query geofences and convert cursor to list  
-        geofences_cursor = geofences_coll.find({}, {"_id": 1, "name": 1, "geometry": 1})  # Cursor for query  
+        geofences_cursor = geofences_coll.find({}, {"_id": 1, "name": 1, "geometry": 1, "centroid":1})   
         geofences = list(geofences_cursor)  # Convert cursor to list  
   
         if not geofences:  
@@ -27,7 +27,8 @@ async def return_all_geofences():
             {  
                 "id": str(geofence["_id"]),  # Convert ObjectId to string  
                 "name": geofence.get("name", "Unnamed geofence"),  
-                "geometry": geofence.get("geometry")  
+                "geometry": geofence.get("geometry"),
+                "centroid": geofence.get("centroid", None)  # Include centroid if available  
             }  
             for geofence in geofences  
         ]  
@@ -46,7 +47,7 @@ async def return_all_geofences():
 
 
 
-@router.get("/geofences/check")
+@router.post("/geofences/check")
 async def check_point_in_geofence(body: dict = Body(...)):
     """
     Check if a point is inside any geofence.

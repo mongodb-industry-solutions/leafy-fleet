@@ -24,7 +24,6 @@ def get_session():
 # Constants  
 constant_fuel_consumption_per_m = 0.0009  # ml/m  
 constant_oil_consumption_per_m = 0.0005  # ml/m  
-hostname = "http://localhost"  # Backend service base URL  
 
 cars_to_run=300
 

@@ -15,12 +15,11 @@ async def create_hist_cars(num_cars_1: int, num_cars_2: int, num_cars_3:int, ses
             # Cycle through available routes  
             route_id = car_id % len(ROUTES) + 1 if ROUTES else car_id    
             if route_id not in ROUTES: 
-                logger.info(f"ooof")
+                logger.info(f"error, route {route_id} not found in ROUTES")
                 continue  # Skip invalid routes  
-            logger.info("continue")
             # Extract route coordinates (first lat/lng pair for initialization)  
             lat, lng = ROUTES[route_id][0][0]    
-            logger.info(f"Initializing Car {car_id} for Route {route_id} at coordinates ({lat}, {lng}).")  
+            #logger.info(f"Initializing Car {car_id} for Route {route_id} at coordinates ({lat}, {lng}).")  
     
             # Initialize a new Car instance  
             car = Car(  
@@ -57,11 +56,10 @@ async def create_hist_cars(num_cars_1: int, num_cars_2: int, num_cars_3:int, ses
             # Cycle through available routes  
             route_id = car_id % len(ROUTES) + 1 if ROUTES else car_id    
             if route_id not in ROUTES: 
-                logger.info(f"ooof")
                 continue  # Skip invalid routes  
             # Extract route coordinates (first lat/lng pair for initialization)  
             lat, lng = ROUTES[route_id][0][0]    
-            logger.info(f"Initializing Car {car_id} for Route {route_id} at coordinates ({lat}, {lng}).")  
+            #logger.info(f"Initializing Car {car_id} for Route {route_id} at coordinates ({lat}, {lng}).")  
     
             # Initialize a new Car instance  
             car = Car(  
@@ -98,11 +96,10 @@ async def create_hist_cars(num_cars_1: int, num_cars_2: int, num_cars_3:int, ses
             # Cycle through available routes  
             route_id = car_id % len(ROUTES) + 1 if ROUTES else car_id    
             if route_id not in ROUTES: 
-                logger.info(f"ooof")
                 continue  # Skip invalid routes  
             # Extract route coordinates (first lat/lng pair for initialization)  
             lat, lng = ROUTES[route_id][0][0]    
-            logger.info(f"Initializing Car {car_id} for Route {route_id} at coordinates ({lat}, {lng}).")  
+            #logger.info(f"Initializing Car {car_id} for Route {route_id} at coordinates ({lat}, {lng}).")  
     
             # Initialize a new Car instance  
             car = Car(  
@@ -135,7 +132,7 @@ async def create_hist_cars(num_cars_1: int, num_cars_2: int, num_cars_3:int, ses
             history_cars.append(car)  
             await register_h_car(car) 
         
-    logger.info(f"Successfully created {len(history_cars)} cars")  
+    logger.info(f"Successfully created {len(history_cars)} past cars")  
     return history_cars  
 
 HISTORIC_CARS = {}
