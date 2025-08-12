@@ -299,7 +299,7 @@ class AgentTools(MongoDBConnector):
             # Save the embedded question with the answer to MongoDB
             historical_recommendation = {
                 "query": text,
-                "recommendation": state.get("selected_tool", ""),
+                "recommendation": state.get("next_step", ""),
                 "time_field": additional_fields.get("time_range", ""),
                 "fields": additional_fields.get("fields", []),
                 "embedding": embedding,
@@ -403,9 +403,6 @@ async def vector_search_tool(state: dict) -> dict:
             "vehicle_state_search_tool": "vehicle_state_search_tool",
             "fleet_position_search_tool": "fleet_position_search_tool", 
             "get_vehicle_maintenance_data_tool": "get_vehicle_maintenance_data_tool",
-            "vehicle_state_search": "vehicle_state_search_tool",
-            "fleet_position_search": "fleet_position_search_tool",
-            "maintenance_data": "get_vehicle_maintenance_data_tool"
         }
         
         resolved_tool = tool_mapping.get(recommendation, "vehicle_state_search_tool")
