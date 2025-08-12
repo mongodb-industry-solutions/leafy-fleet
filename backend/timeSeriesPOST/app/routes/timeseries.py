@@ -28,15 +28,22 @@ async def create_timeseries_entry(entry: TimeseriesModel):
         )
        # return {"message": "Timeseries entry created successfully", "id": str(result.inserted_id)}  
     except Exception as e:  
-        #print(f"Error: {e}")  # Log the error for debugging  
-        return {"message": "Error creating timeseries entry", "error": str(e)}  
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  
+            content=jsonable_encoder({"message": "Error creating timeseries entry", "error": str(e)})  
+        )
     
 
 @router.post("/historic-batch")  
 async def create_historic_batch(entries: List[TimeseriesModel]):  
     for doc in entries:  
-        doc.timestamp = doc.timestamp or datetime.utcnow()  
-    result = timeseries_coll.insert_many([entry.dict() for entry in entries])  
-    return JSONResponse(status_code=status.HTTP_201_CREATED,   
-                        content=jsonable_encoder({"message": f"{len(result.inserted_ids)} historical entries added"}))  
-
+        doc.timestamp = doc.timestamp or datetime.utcnow() 
+    try:  
+        # Insert multiple documents at once  
+        result = timeseries_coll.insert_many([entry.dict() for entry in entries])  
+        return JSONResponse(status_code=status.HTTP_201_CREATED,   
+                            content=jsonable_encoder({"message": f"{len(result.inserted_ids)} historical entries added"}))
+    except Exception as e:
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,   
+                            content=jsonable_encoder({"message": "Error creating historical entries", "error": str(e)})) 
+    

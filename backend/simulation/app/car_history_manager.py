@@ -11,11 +11,17 @@ async def _create_car_range(start_id: int, num_cars: int, session: str, history_
         logger.info(f"Skipping car creation for range {start_id}-{start_id+num_cars-1}: num_cars={num_cars} is out of allowed bounds (1-100)")
         return
     for car_id in range(start_id, start_id + num_cars):
-        route_id = car_id % len(ROUTES) + 1 if ROUTES else car_id
-        if route_id not in ROUTES:
-            logger.info(f"error, route {route_id} not found in ROUTES")
+        try:
+            route_id = car_id % len(ROUTES) + 1 if ROUTES else car_id
+            if route_id not in ROUTES:
+                logger.info(f"error, route {route_id} not found in ROUTES")
+                continue  # Skip invalid routes
+            # Extract route coordinates (first lat/lng pair for initialization)
+            lat, lng = ROUTES[route_id][0][0]
+        except Exception as e:
+            logger.error(f"Failed to initialize route for Car {car_id}: {e}")
             continue
-        lat, lng = ROUTES[route_id][0][0]
+        #logger.info(f"Initializing Car {car_id} for Route {route_id} at coordinates ({lat}, {lng}).")
         car = Car(
             car_id=car_id,
             current_route=route_id,

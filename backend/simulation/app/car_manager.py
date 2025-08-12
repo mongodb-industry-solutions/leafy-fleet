@@ -12,13 +12,16 @@ async def create_cars(num_cars: int):
     cars = []  
     for car_id in range(1, num_cars + 1):  
         # Cycle through available routes  
-        route_id = car_id % len(ROUTES) + 1 if ROUTES else car_id    
-        if route_id not in ROUTES: 
-            logger.info(f"ooof")
-            continue  # Skip invalid routes  
-        logger.info("continue")
-        # Extract route coordinates (first lat/lng pair for initialization)  
-        lat, lng = ROUTES[route_id][0][0]    
+        try:
+            route_id = car_id % len(ROUTES) + 1 if ROUTES else car_id
+            if route_id not in ROUTES:
+                logger.info(f"error, route {route_id} not found in ROUTES")
+                continue  # Skip invalid routes
+            # Extract route coordinates (first lat/lng pair for initialization)
+            lat, lng = ROUTES[route_id][0][0]
+        except Exception as e:
+            logger.error(f"Failed to initialize route for Car {car_id}: {e}")
+            continue
         logger.info(f"Initializing Car {car_id} for Route {route_id} at coordinates ({lat}, {lng}).")  
  
         # Initialize a new Car instance  
