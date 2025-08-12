@@ -6,29 +6,27 @@ import random
 import asyncio
 import aiohttp
 import logging
-import signal
-from fastapi import APIRouter, HTTPException, Body
-from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from typing import Optional
 import time
-from global_context import static_service, HTTP_SESSION
+from global_context import static_service
 
 ROUTES = {}  # Global route map: {route_id: {"steps": np.array, "distancePerStep": float, "timePerStep": float}}
 
-HTTP_SESSION: aiohttp.ClientSession = None
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 #variables 
-constant_fuel_consumption_per_m = 0.0009  # in ml/m
-constant_oil_consumption_per_m = 0.0005  # in ml/m
-hostname = "http://localhost"  # This will be used to connect to the backend service,
+hostname = static_service  # This will be used to connect to the backend service of static
 #get on env
 
 #in meantime localhost routes, will be replaced by the real 
-
+async def create_cars_handler(num_cars: int):
+    global HTTP_SESSION
+    HTTP_SESSION = aiohttp.ClientSession()
+    await create_cars_ONCE(num_cars)
+    await HTTP_SESSION.close()
   
 """  
 this class and function were used to create the cars, and insert in the database, 
@@ -244,6 +242,12 @@ this class will be used to create the cars, it will be used in the simulation ev
 """  
 
 # Maintenance logs (must be done only once before running)\
+async def run_maintenance(): # Handler for create maintenance data
+        global HTTP_SESSION
+        HTTP_SESSION = aiohttp.ClientSession()
+        await create_maintenance_data()
+        await HTTP_SESSION.close()
+
 async def create_maintenance_data():
     """
     Create mock maintenance data for all cars in the database
@@ -274,23 +278,38 @@ async def create_maintenance_data():
 
 
     try:
-        async with HTTP_SESSION.get(f"{static_service}:9005/static") as response:
+        async with HTTP_SESSION.get(f"{hostname}:9005/static") as response:
             if response.status == 200:
                 static_entries = await response.json()
+                print(f"Static entries retrieved: {len(static_entries)}")
                 for entry in static_entries:
                     car_id = entry["car_id"]
                     maintenance_logs = []
                     for _ in range(random.randint(1, 5)):  # Random number of maintenance logs per car
                         log = Maintenance_Log(
-                            date=random_date("4/8/2025 1:30", "4/8/2025 16:50", random.random()),
+                            date=str(random_date("4/8/2024 1:30:00", "4/8/2025 16:50:00", random.random())),
                             description=random.choice(maintenance_dict),
                             cost=random.uniform(500, 10000)  # Random cost between 500 and 10000
                         )
                         maintenance_logs.append(log)
-                print("Maintenance data created successfully", maintenance_logs)
+
+                    # Send maintenance logs to the backend service
+                    json=jsonable_encoder(maintenance_logs)
+                    # print(f"Creating maintenance data for car {car_id} with logs: {json}")
+                    async with HTTP_SESSION.put(
+                        f"{hostname}:9005/static/{car_id}",
+                        json=json
+                    ) as put_response:
+                        if put_response.status == 200:
+                            print(f"Maintenance data for car {car_id} created successfully")
+                        else:
+                            print(f"Failed to create maintenance data for car {car_id}: {put_response.status}")
+
+
 
     except Exception as e:
         logger.error(f"Error creating maintenance data: {e}")
+
 
 
 
@@ -325,14 +344,14 @@ class Maintenance_Log:
 
 
 async def main():
-    global HTTP_SESSION
-    HTTP_SESSION = aiohttp.ClientSession()
+    print("Starting static cars creator...")
+    # To create cars once
+    # asyncio.run(create_cars_handler(300))
 
-    #cars = await create_cars_ONCE(num_cars=300)  # Create 300 cars
-    #asyncio.run(create_maintenance_data()) #only runs once ;)
+    # To run maintenance data creation
+    # asyncio.run(run_maintenance())
 
-    #close the session when done
-    await HTTP_SESSION.close()
+    print("Static cars creator finished.")
 
 if __name__ == "__main__":
     asyncio.run(main())
