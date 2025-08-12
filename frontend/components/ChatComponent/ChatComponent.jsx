@@ -22,21 +22,13 @@ const ChatComponent = () => {
 
   const filters = useSelector((state) => state.User.queryFilters); // At top level of component
 
-  const {
-    fleet1Atributes,
-    fleet2Atributes,
-    fleet3Atributes,
-    fleet1Capacity,
-    fleet2Capacity,
-    fleet3Capacity,
-  } = useSelector((state) => ({
-    fleet1Atributes: state.User.fleet1Attributes,
-    fleet2Atributes: state.User.fleet2Attributes,
-    fleet3Atributes: state.User.fleet3Attributes,
-    fleet1Capacity: state.User.fleet1Capacity,
-    fleet2Capacity: state.User.fleet2Capacity,
-    fleet3Capacity: state.User.fleet3Capacity,
-  }));
+  const fleet1Atributes = useSelector((state) => state.User.fleet1Attributes);
+  const fleet2Atributes = useSelector((state) => state.User.fleet2Attributes);
+  const fleet3Atributes = useSelector((state) => state.User.fleet3Attributes);
+  const fleet1Capacity = useSelector((state) => state.User.fleet1Capacity);
+  const fleet2Capacity = useSelector((state) => state.User.fleet2Capacity);
+  const fleet3Capacity = useSelector((state) => state.User.fleet3Capacity);
+
 
   const userPreferences = [
     [...fleet1Atributes, fleet1Capacity],

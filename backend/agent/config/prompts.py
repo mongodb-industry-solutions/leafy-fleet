@@ -98,6 +98,7 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
         IMPORTANT: IF THE USER QUESTION IS NOT CLEAR OR RELEVANT OR RELATAED TO FLEET MANAGEMENT OR THE MOTION INDUSTRY OR NOT RELEVANT WITH THE DATA, DO NOT TRY TO ANSWER IT. INSTEAD, RESPOND WITH:
         "I don't have enough information to provide a recommendation." with a short explanation of why you can't and don't try to answer the question.
 
+        If the user question is related to the information you have, provide a response to the best of your hability based on the data.
 
         Use the following format:
         - Answer as if you were writing in a notepad; do not use markdown or any other formatting.

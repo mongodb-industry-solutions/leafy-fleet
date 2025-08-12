@@ -8,10 +8,13 @@ import { Combobox, ComboboxOption,ComboboxGroup } from '@leafygreen-ui/combobox'
 import styles from './OverviewCard.module.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedType, setSelectedFleets, setGeoFences, setMaxDistance, setMinDistance, setLocation } from  '@/redux/slices/OverviewSlice';
-import CodeComponent from '../CodeComponet/CodeComponent.jsx';
+import dynamic from 'next/dynamic';
 import Banner from '@leafygreen-ui/banner';
 import { NumberInput } from '@leafygreen-ui/number-input';
-import ResultsComponent from '../ResultsComponent/ResultsComponent';
+
+// Dynamically import components that might use browser APIs
+const CodeComponent = dynamic(() => import('../CodeComponet/CodeComponent.jsx'), { ssr: false });
+const ResultsComponent = dynamic(() => import('../ResultsComponent/ResultsComponent'), { ssr: false });
 const OverviewCard = () => {
 
     // State to manage the selected option for the geospatial search

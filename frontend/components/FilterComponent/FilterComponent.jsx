@@ -2,7 +2,7 @@
 import ExpandableCard from "@leafygreen-ui/expandable-card";
 import Checkbox from "@leafygreen-ui/checkbox";
 import styles from "./FilterComponent.module.css";
-import Code from "@leafygreen-ui/code";
+import dynamic from "next/dynamic";
 import { Body } from "@leafygreen-ui/typography";
 import { NumberInput } from "@leafygreen-ui/number-input";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,29 +12,25 @@ import {
   setFleet3Capacity,
   setQueryFilters,
 } from "@/redux/slices/UserSlice";
+
+// Dynamically import Code component to avoid SSR issues
+const Code = dynamic(() => import("@leafygreen-ui/code"), { ssr: false });
+
 const FilterComponent = () => {
   const dispatch = useDispatch();
-  const isSelected = useSelector((state) => state.Message.selectedMessage);
-  if (!isSelected) {
+  let isSelected = useSelector((state) => state.Message.selectedMessage);
   const message = useSelector((state) =>
     state.Message.messageHistory.find((msg) => msg.id === isSelected?.id)
   );
 
-  const {
-    fleet1Capacity,
-    fleet2Capacity,
-    fleet3Capacity,
-    fleet1Name,
-    fleet2Name,
-    fleet3Name,
-  } = useSelector((state) => ({
-    fleet1Capacity: state.User.fleet1Capacity,
-    fleet2Capacity: state.User.fleet2Capacity,
-    fleet3Capacity: state.User.fleet3Capacity,
-    fleet1Name: state.User.fleet1Name,
-    fleet2Name: state.User.fleet2Name,
-    fleet3Name: state.User.fleet3Name,
-  }));
+  // Fix Redux selector memoization warning by using individual selectors
+  const fleet1Capacity = useSelector((state) => state.User.fleet1Capacity);
+  const fleet2Capacity = useSelector((state) => state.User.fleet2Capacity);
+  const fleet3Capacity = useSelector((state) => state.User.fleet3Capacity);
+  const fleet1Name = useSelector((state) => state.User.fleet1Name);
+  const fleet2Name = useSelector((state) => state.User.fleet2Name);
+  const fleet3Name = useSelector((state) => state.User.fleet3Name);
+  
   // console.log("Selected Message:", isSelected);
   // console.log("Message Data:", message);
 
@@ -259,4 +255,5 @@ const FilterComponent = () => {
     </div>
   );
 };
+
 export default FilterComponent;
