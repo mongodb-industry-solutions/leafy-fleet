@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Card from '@leafygreen-ui/card';
 import { H2, H3 } from '@leafygreen-ui/typography';

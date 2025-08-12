@@ -15,6 +15,7 @@ import {
 const FilterComponent = () => {
   const dispatch = useDispatch();
   const isSelected = useSelector((state) => state.Message.selectedMessage);
+  if (!isSelected) {
   const message = useSelector((state) =>
     state.Message.messageHistory.find((msg) => msg.id === isSelected?.id)
   );
@@ -34,8 +35,8 @@ const FilterComponent = () => {
     fleet2Name: state.User.fleet2Name,
     fleet3Name: state.User.fleet3Name,
   }));
-  console.log("Selected Message:", isSelected);
-  console.log("Message Data:", message);
+  // console.log("Selected Message:", isSelected);
+  // console.log("Message Data:", message);
 
   const setFilter = (label, checked) => {
     dispatch(setQueryFilters({ label, checked }));
