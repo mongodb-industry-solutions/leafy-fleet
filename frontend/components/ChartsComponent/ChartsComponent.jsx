@@ -11,6 +11,7 @@ const ChartsComponent = () => {
   const fleet1Capacity = useSelector((state) => state.User.fleet1Capacity);
   const fleet2Capacity = useSelector((state) => state.User.fleet2Capacity);
   const fleet3Capacity = useSelector((state) => state.User.fleet3Capacity);
+  const thread_id = useSelector((state) => state.User.sessionId);
 
   const userPreferences = [
     [...fleet1Atributes, fleet1Capacity],
@@ -24,7 +25,7 @@ const ChartsComponent = () => {
         const res = await fetch(
           `http://localhost:9001/timeseries/all/latest?preferences=${encodeURIComponent(
             userPreferences
-          )}&thread_id=123`
+          )}&thread_id=${thread_id}`
         );
 
         if (!res.ok) {

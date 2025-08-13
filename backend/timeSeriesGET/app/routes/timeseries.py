@@ -102,82 +102,51 @@ async def get_latest_timeseries_entries(preferences = Query(..., description="Us
         preferences_list = preferences.split(",")  # Split by commas
         logger.info(f"Preferences parsed as list: {preferences_list}")
         
-    match_stage = build_match_stage(preferences_list)
+    # match_stage = build_match_stage(preferences_list)
 
-    logger.info(f"Constructed match stage: {match_stage}")
+    # logger.info(f"Constructed match stage: {match_stage}")
 
 
     try:
 
-        if match_stage:
-            pipeline = [
-                {
-                    "$match": match_stage
-                },
-                {
-                    "$group": {
-                        "_id": "$car_id",
-                        "car_id": {"$first": "$car_id"},
-                        "timestamp": {"$first": "$timestamp"},
-                        "availability_score": {"$first": "$availability_score"},
-                        "current_route": {"$first": "$current_route"},
-                        "run_time": {"$first": "$run_time"},
-                        "performance_score": {"$first": "$performance_score"},
-                        "oil_temperature": {"$first": "$oil_temperature"},
-                        "current_geozone": {"$first": "$current_geozone"},
-                        "engine_oil_level": {"$first": "$engine_oil_level"},
-                        "is_crashed": {"$first": "$is_crashed"},
-                        "metadata": {"$first": "$metadata"},
-                        "average_speed": {"$first": "$average_speed"},
-                        "quality_score": {"$first": "$quality_score"},
-                        "is_moving": {"$first": "$is_moving"},
-                        "coordinates": {"$first": "$coordinates"},
-                        "oee": {"$first": "$oee"},
-                        "fuel_level": {"$first": "$fuel_level"},
-                        "max_fuel_level": {"$first": "$max_fuel_level"},
-                        "speed": {"$first": "$speed"},
-                        "is_engine_running": {"$first": "$is_engine_running"},
-                        "is_oil_leak": {"$first": "$is_oil_leak"},
-                        "traveled_distance": {"$first": "$traveled_distance"}
-                    }
-                },
-                {
-                    "$sort": {"timestamp": -1}
-                },
-            ]
-        else:
-            pipeline = [
-                {
-                    "$group": {
-                        "_id": "$car_id",
-                        "car_id": {"$first": "$car_id"},
-                        "timestamp": {"$first": "$timestamp"},
-                        "availability_score": {"$first": "$availability_score"},
-                        "current_route": {"$first": "$current_route"},
-                        "run_time": {"$first": "$run_time"},
-                        "performance_score": {"$first": "$performance_score"},
-                        "oil_temperature": {"$first": "$oil_temperature"},
-                        "current_geozone": {"$first": "$current_geozone"},
-                        "engine_oil_level": {"$first": "$engine_oil_level"},
-                        "is_crashed": {"$first": "$is_crashed"},
-                        "metadata": {"$first": "$metadata"},
-                        "average_speed": {"$first": "$average_speed"},
-                        "quality_score": {"$first": "$quality_score"},
-                        "is_moving": {"$first": "$is_moving"},
-                        "coordinates": {"$first": "$coordinates"},
-                        "oee": {"$first": "$oee"},
-                        "fuel_level": {"$first": "$fuel_level"},
-                        "max_fuel_level": {"$first": "$max_fuel_level"},
-                        "speed": {"$first": "$speed"},
-                        "is_engine_running": {"$first": "$is_engine_running"},
-                        "is_oil_leak": {"$first": "$is_oil_leak"},
-                        "traveled_distance": {"$first": "$traveled_distance"}
-                    }
-                },
-                {
-                    "$sort": {"timestamp": -1}
-                },
-            ]
+        
+        pipeline = [
+            {
+                "$match": {"metadata.sessions": {"$in": [thread_id]}}
+            },
+            {
+                "$group": {
+                    "_id": "$car_id",
+                    "car_id": {"$first": "$car_id"},
+                    "timestamp": {"$first": "$timestamp"},
+                    "availability_score": {"$first": "$availability_score"},
+                    "current_route": {"$first": "$current_route"},
+                    "run_time": {"$first": "$run_time"},
+                    "performance_score": {"$first": "$performance_score"},
+                    "oil_temperature": {"$first": "$oil_temperature"},
+                    "current_geozone": {"$first": "$current_geozone"},
+                    "engine_oil_level": {"$first": "$engine_oil_level"},
+                    "is_crashed": {"$first": "$is_crashed"},
+                    "metadata": {"$first": "$metadata"},
+                    "average_speed": {"$first": "$average_speed"},
+                    "quality_score": {"$first": "$quality_score"},
+                    "is_moving": {"$first": "$is_moving"},
+                    "coordinates": {"$first": "$coordinates"},
+                    "oee": {"$first": "$oee"},
+                    "fuel_level": {"$first": "$fuel_level"},
+                    "max_fuel_level": {"$first": "$max_fuel_level"},
+                    "speed": {"$first": "$speed"},
+                    "is_engine_running": {"$first": "$is_engine_running"},
+                    "is_oil_leak": {"$first": "$is_oil_leak"},
+                    "traveled_distance": {"$first": "$traveled_distance"}
+                }
+            },
+            {
+                "$sort": {"timestamp": -1}
+            },
+        ]
+       
+            
 
 
         entries_cursor = timeseries_coll.aggregate(pipeline)

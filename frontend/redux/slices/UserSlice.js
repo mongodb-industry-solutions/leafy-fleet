@@ -42,7 +42,7 @@ const UserSlice = createSlice({
     ],
     editFleet: 1,
     isLoggedIn: false,
-    sessionId: 'gio2' ,
+    sessionId: '' ,
     queryFilters: [],
   },
   reducers: {

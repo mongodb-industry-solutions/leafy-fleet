@@ -28,6 +28,7 @@ const ChatComponent = () => {
   const fleet1Capacity = useSelector((state) => state.User.fleet1Capacity);
   const fleet2Capacity = useSelector((state) => state.User.fleet2Capacity);
   const fleet3Capacity = useSelector((state) => state.User.fleet3Capacity);
+  const thread_id = useSelector((state) => state.User.sessionId);
 
 
   const userPreferences = [
@@ -39,7 +40,7 @@ const ChatComponent = () => {
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
-    const socket = new WebSocket("ws://localhost:9000/ws?thread_id=abc123");
+    const socket = new WebSocket(`ws://localhost:9000/ws?thread_id=${thread_id}`);
     socketRef.current = socket; // Store it in the ref
 
     socket.onopen = () => {
@@ -118,7 +119,7 @@ const ChatComponent = () => {
       const res = await fetch(
         `http://localhost:9000/run-agent?query_reported=${encodeURIComponent(
           userMessageText
-        )}&thread_id=abc123&filters=${encodeURIComponent(
+        )}&thread_id=${thread_id}&filters=${encodeURIComponent(
           JSON.stringify(filters)
         )}&preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`,
         {
