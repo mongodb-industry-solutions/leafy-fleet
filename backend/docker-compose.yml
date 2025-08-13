@@ -26,7 +26,7 @@ services:
       - "9001:9000"  
     volumes:  
       - ./timeSeriesGET:/timeseries  
-    working_dir: /timeseries 
+    working_dir: /timeseries/app
     command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
     environment:  
       - MONGODB_URI=${MONGODB_URI}  
@@ -39,8 +39,8 @@ services:
     ports:  
       - "9002:9002"  
     volumes:  
-      - ./timeSeriesPOST:/timeseries  
-    working_dir: /timeseries  
+      - ./timeSeriesPOST:/timeseries 
+    working_dir: /timeseries/app
     command: uvicorn main:app --reload --host 0.0.0.0 --port 9002  
     environment:  
       - PYTHONUNBUFFERED=1  
@@ -57,7 +57,7 @@ services:
       - "9003:9000"  
     volumes:  
       - ./sessions:/sessions  
-    working_dir: /sessions
+    working_dir: /sessions/app
     command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
     environment:  
       - MONGODB_URI=${MONGODB_URI}  
@@ -66,7 +66,7 @@ services:
   geofence-service:  # Port: 9004  
     container_name: geofence-get-service  
     build:  
-      context: ./geofenceGET  
+      context: ./geofenceGET
       dockerfile: Dockerfile  
     ports:  
       - "9004:9004"  
@@ -85,7 +85,7 @@ services:
       - "9005:9000"  
     volumes:  
       - ./static_service:/static  
-    working_dir: /static
+    working_dir: /static/app
     command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
     environment:  
       - MONGODB_URI=${MONGODB_URI}  
