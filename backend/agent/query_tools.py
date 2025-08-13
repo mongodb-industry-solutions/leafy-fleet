@@ -190,75 +190,137 @@ class QueryTools(MongoDBConnector):
 
 
         match_stage = self.build_match_stage(user_filters, agent_filters, user_preferences)
-
-        pipeline = [
-            {
-                "$match": match_stage
-            },
-            {
-                "$sort": {"timestamp": -1}
-            },
-            {
-                "$limit": limit  # Limit to 500 results
-            },
-            {
-                "$project": project_stage
-            },
-            # Final sort
-            {
-                "$sort": {
-                    "car_id": 1
-                }
-            }
-        ]
-
-
-        if group:
+        if match_stage:
             pipeline = [
-            {
-                "$match": match_stage
-            },
-            {
-                "$group": {
-                    "_id": "$car_id",
-                    "car_id": {"$first": "$car_id"},
-                    "timestamp": {"$first": "$timestamp"},
-                    "availability_score": {"$first": "$availability_score"},
-                    "current_route": {"$first": "$current_route"},
-                    "run_time": {"$first": "$run_time"},
-                    "performance_score": {"$first": "$performance_score"},
-                    "oil_temperature": {"$first": "$oil_temperature"},
-                    "current_geozone": {"$first": "$current_geozone"},
-                    "engine_oil_level": {"$first": "$engine_oil_level"},
-                    "is_crashed": {"$first": "$is_crashed"},
-                    "metadata": {"$first": "$metadata"},
-                    "average_speed": {"$first": "$average_speed"},
-                    "quality_score": {"$first": "$quality_score"},
-                    "is_moving": {"$first": "$is_moving"},
-                    "coordinates": {"$first": "$coordinates"},
-                    "oee": {"$first": "$oee"},
-                    "fuel_level": {"$first": "$fuel_level"},
-                    "max_fuel_level": {"$first": "$max_fuel_level"},
-                    "speed": {"$first": "$speed"},
-                    "is_engine_running": {"$first": "$is_engine_running"},
-                    "is_oil_leak": {"$first": "$is_oil_leak"},
-                    "traveled_distance": {"$first": "$traveled_distance"}
+                {
+                    "$match": match_stage
+                },
+                {
+                    "$sort": {"timestamp": -1}
+                },
+                {
+                    "$limit": limit  # Limit to 500 results
+                },
+                {
+                    "$project": project_stage
+                },
+                # Final sort
+                {
+                    "$sort": {
+                        "car_id": 1
+                    }
                 }
-            },
-            {
-                "$sort": {"timestamp": -1}
-            },
-            {
-                "$project": project_stage
-            },
-            # Final sort
-            {
-                "$sort": {
-                    "car_id": 1
-                }
-            }
-        ]
+            ]
 
+
+            if group:
+                pipeline = [
+                {
+                    "$match": match_stage
+                },
+                {
+                    "$group": {
+                        "_id": "$car_id",
+                        "car_id": {"$first": "$car_id"},
+                        "timestamp": {"$first": "$timestamp"},
+                        "availability_score": {"$first": "$availability_score"},
+                        "current_route": {"$first": "$current_route"},
+                        "run_time": {"$first": "$run_time"},
+                        "performance_score": {"$first": "$performance_score"},
+                        "oil_temperature": {"$first": "$oil_temperature"},
+                        "current_geozone": {"$first": "$current_geozone"},
+                        "engine_oil_level": {"$first": "$engine_oil_level"},
+                        "is_crashed": {"$first": "$is_crashed"},
+                        "metadata": {"$first": "$metadata"},
+                        "average_speed": {"$first": "$average_speed"},
+                        "quality_score": {"$first": "$quality_score"},
+                        "is_moving": {"$first": "$is_moving"},
+                        "coordinates": {"$first": "$coordinates"},
+                        "oee": {"$first": "$oee"},
+                        "fuel_level": {"$first": "$fuel_level"},
+                        "max_fuel_level": {"$first": "$max_fuel_level"},
+                        "speed": {"$first": "$speed"},
+                        "is_engine_running": {"$first": "$is_engine_running"},
+                        "is_oil_leak": {"$first": "$is_oil_leak"},
+                        "traveled_distance": {"$first": "$traveled_distance"}
+                    }
+                },
+                {
+                    "$sort": {"timestamp": -1}
+                },
+                {
+                    "$project": project_stage
+                },
+                # Final sort
+                {
+                    "$sort": {
+                        "car_id": 1
+                    }
+                }
+            ]
+
+        else:
+            pipeline = [
+                {
+                    "$sort": {"timestamp": -1}
+                },
+                {
+                    "$limit": limit  # Limit to 500 results
+                },
+                {
+                    "$project": project_stage
+                },
+                # Final sort
+                {
+                    "$sort": {
+                        "car_id": 1
+                    }
+                }
+            ]
+
+
+            if group:
+                pipeline = [
+                {
+                    "$group": {
+                        "_id": "$car_id",
+                        "car_id": {"$first": "$car_id"},
+                        "timestamp": {"$first": "$timestamp"},
+                        "availability_score": {"$first": "$availability_score"},
+                        "current_route": {"$first": "$current_route"},
+                        "run_time": {"$first": "$run_time"},
+                        "performance_score": {"$first": "$performance_score"},
+                        "oil_temperature": {"$first": "$oil_temperature"},
+                        "current_geozone": {"$first": "$current_geozone"},
+                        "engine_oil_level": {"$first": "$engine_oil_level"},
+                        "is_crashed": {"$first": "$is_crashed"},
+                        "metadata": {"$first": "$metadata"},
+                        "average_speed": {"$first": "$average_speed"},
+                        "quality_score": {"$first": "$quality_score"},
+                        "is_moving": {"$first": "$is_moving"},
+                        "coordinates": {"$first": "$coordinates"},
+                        "oee": {"$first": "$oee"},
+                        "fuel_level": {"$first": "$fuel_level"},
+                        "max_fuel_level": {"$first": "$max_fuel_level"},
+                        "speed": {"$first": "$speed"},
+                        "is_engine_running": {"$first": "$is_engine_running"},
+                        "is_oil_leak": {"$first": "$is_oil_leak"},
+                        "traveled_distance": {"$first": "$traveled_distance"}
+                    }
+                },
+                {
+                    "$sort": {"timestamp": -1}
+                },
+                {
+                    "$project": project_stage
+                },
+                # Final sort
+                {
+                    "$sort": {
+                        "car_id": 1
+                    }
+                }
+            ]
        
         
 
@@ -300,33 +362,42 @@ class QueryTools(MongoDBConnector):
         match_stage = {}
         fleet_capacity = self.understand_fleet_number(user_preferences)
         logger.info(f"Fleet capacity: {fleet_capacity}")
+        logger.info(f"User filters: {user_filters}")
 
         # Handle empty user_filters
         if user_filters and len(user_filters) > 0:
             match_stage["$or"] = []
             for fleet_prefs in user_filters:
+                
+                car_ids1 = None
+                car_ids2 = None
+                car_ids3 = None
+
+                logger.info(f"Processing user filter: {fleet_prefs}")
+                
                 if fleet_prefs == "Last 30 min" or fleet_prefs == "Last hour" or fleet_prefs == "Last 2 hours":
-                    logger.info(f"Skipping preference")
+                    # logger.info(f"Skipping preference")
                     continue
                 if fleet_prefs:
                     if fleet_prefs == "Fleet 1":
                         car_ids1 = list(range(0, fleet_capacity[0]))  # Car IDs 0-99
-                    elif fleet_prefs == "Fleet 2":
+                        match_stage["$or"].append({"car_id": {"$in": car_ids1}})
+                    if fleet_prefs == "Fleet 2":
                         car_ids2 = list(range(100, fleet_capacity[1]))  # Car IDs 100-199
-                    elif fleet_prefs == "Fleet 3":
+                        match_stage["$or"].append({"car_id": {"$in": car_ids2}})
+                    if fleet_prefs == "Fleet 3":
                         car_ids3 = list(range(200, fleet_capacity[2]))  # Car IDs 200-299
-                    elif fleet_prefs in ["Downtown", "Geofence 2"]:
+                        match_stage["$or"].append({"car_id": {"$in": car_ids3}})
+                    elif fleet_prefs in ["downtown","utxa", "north_austin","capitol_area","south_austin","airport_zone","south_east_austin","south_west_austin","barton_creek","georgetown"]:
                         # For geofence filters, use current_geozone field instead
                         match_stage["$or"].append({"current_geozone": fleet_prefs})
-                        logger.info(f"Match stage: {match_stage}")
-                        continue
+                        # logger.info(f"Match stage: {match_stage}")
+                        
                     else:
                         # For other string values, treat as direct car_id match
                         match_stage["$or"].append({"car_id": fleet_prefs})
                         continue
 
-                    # Add car ID range filter
-                    match_stage["$or"].append({"car_id": {"$in": car_ids1}, "car_id": {"$in": car_ids2}, "car_id": {"$in": car_ids3}})
         else:
             logger.info("No user filters provided. Returning all data.")
             match_stage = {}  # No filtering applied

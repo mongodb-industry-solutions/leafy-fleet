@@ -78,7 +78,7 @@ const AttributesComponent = () => {
             key={attr}
             data-lgid={ATTR_KEY_MAP[attr]}
             label={attr}
-            checked={["Coordinates", "Current Geozone", "Run Time", "OEE", "Avaliability", "Quality", "Performance"].includes(attr)}
+            checked={currentAttributes.includes(attr)}
             onChange={() => handleCheckboxChange(attr)}
             // Optionally disable some checkboxes if needed:
             disabled={["Coordinates", "Current Geozone", "Run Time", "OEE", "Avaliability", "Quality", "Performance"].includes(attr)}

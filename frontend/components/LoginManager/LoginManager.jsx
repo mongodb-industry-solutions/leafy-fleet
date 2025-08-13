@@ -41,9 +41,9 @@ const LoginManager = () => {
 
   // Used to know if default value is needed
 
-  const fleet1Size = useSelector((state) => state.User.fleet1Capacity) === 0;
-  const fleet2Size = useSelector((state) => state.User.fleet2Capacity) === 0;
-  const fleet3Size = useSelector((state) => state.User.fleet3Capacity) === 0;
+  const fleet1Size = useSelector((state) => state.User.fleet1Capacity)
+  const fleet2Size = useSelector((state) => state.User.fleet2Capacity)
+  const fleet3Size = useSelector((state) => state.User.fleet3Capacity)
   const fleet1Name = useSelector((state) => state.User.fleet1Name);
   const fleet2Name = useSelector((state) => state.User.fleet2Name);
   const fleet3Name = useSelector((state) => state.User.fleet3Name);
@@ -62,6 +62,7 @@ const LoginManager = () => {
   };
 
   const handleFleetCapacityChange = (indexFleet, fleetCapacity) => {
+    console.log("Handling fleet capacity change:", indexFleet, fleetCapacity);
     dispatchFleetCapacity(indexFleet, fleetCapacity);
   };
 
