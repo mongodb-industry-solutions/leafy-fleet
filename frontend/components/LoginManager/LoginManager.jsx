@@ -101,7 +101,14 @@ const LoginManager = () => {
 const modalObserver = async () => {
   if (selectedUser.name === "Kicho") {
     setOpen(true);
+  } else if (selectedUser.name === "Restored User") {
+    // Skip session creation for restored users
+    setOpen(false);
+    dispatch(setLoggedFleet(true));
+    console.log("Restored user, skipping fleet configuration modal.");
+    return; // This return should stop execution here
   } else {
+    // Regular user flow
     setOpen(false);
     dispatch(setLoggedFleet(true));
     dispatch(setFleet1Capacity(20));
@@ -112,16 +119,16 @@ const modalObserver = async () => {
     dispatch(setFleet3Name("Fleet 3"));
     dispatch(setSelectedFleets({ selectedFleets: 3 }));
 
-    // Define fleetNames, fleetSizes, and attributeLists
-    const fleetNames = ["Fleet 1", "Fleet 2", "Fleet 3"];
-    const fleetSizes = [20, 10, 20];
-    const attributeLists = [
-      fleet1Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
-      fleet2Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
-      fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
-    ];
-
     try {
+      // Session creation code
+      const fleetNames = ["Fleet 1", "Fleet 2", "Fleet 3"];
+      const fleetSizes = [20, 10, 20];
+      const attributeLists = [
+        fleet1Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+        fleet2Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+        fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+      ];
+
       const response = await fetch("http://localhost:9003/sessions/create", {
         method: "POST",
         headers: {
@@ -143,13 +150,12 @@ const modalObserver = async () => {
       }
 
       const data = await response.json();
-      // console.log("Session created successfully:", data);
       dispatch(setSessionId({ sessionId: data.session_id }));
     } catch (error) {
       console.error("Error creating session:", error);
-      }
-    }  // Add this closing brace for the else block
-  }; 
+    }
+  }
+}; // End of modalObserver
 
   const handleClose = async () => {
     setOpen(false);

@@ -29,41 +29,48 @@ const OverviewCard = () => {
     const maxDistance = useSelector(state => state.Overview.maxDistance);
     const minDistance = useSelector(state => state.Overview.minDistance);
     const sessionId = useSelector(state => state.User.sessionId);
+    const fleet1Name = useSelector(state => state.User.fleet1Name);
+    const fleet2Name = useSelector(state => state.User.fleet2Name);
+    const fleet3Name = useSelector(state => state.User.fleet3Name);
 
     const handleSearch = async () => {
-    try {
-      let results;
-      if (selectedType === "nearest") {
-        results = await geospatialAPI.searchNearestVehicles({
-          sessionId,
-          location,
-          minDistance,
-          maxDistance
-        });
-      } else {
-        results = await geospatialAPI.searchInsideVehicles({
-          sessionId,
-          geoFences
-        });
-      }
+        try {
+            let results;
+            if (selectedType === "nearest") {
+            results = await geospatialAPI.searchNearestVehicles({
+                sessionId,
+                location,
+                minDistance,
+                maxDistance,
+                fleetsFilter
 
-      // Transform API results to match ResultsComponent format
-      const formattedResults = results.map(car => ({
-        id: car.car_id,
-        driver: `Car ${car.car_id}`,
-        fleet: `Fleet ${Math.floor(car.car_id/100) + 1}`,
-        distance: car.distance_to_geofence ? 
-          (car.distance_to_geofence/1000).toFixed(2) : null,
-        status: getCarStatus(car),
-        // Include all original data for details view
-        details: car
-      }));
+            });
+            } else {
+            results = await geospatialAPI.searchInsideVehicles({
+                sessionId,
+                geoFences,
+                fleetsFilter
+            });
+            }
 
-      dispatch(setResults({ results: formattedResults }));
-    } catch (error) {
-      console.error('Search failed:', error);
-    }
-  };
+        // Transform results, excluding metadata but keeping all other fields
+        const formattedResults = results.map(({ metadata, ...rest }) => ({
+            ...rest, // Spread all fields except metadata
+            status: getCarStatus(rest), // Add status based on car state
+            fleet: `Fleet ${Math.floor(rest.car_id/100) + 1}`,
+
+            distance: rest.distance_to_geofence ? 
+                (rest.distance_to_geofence/1000).toFixed(2) : null
+            }));
+
+            console.log('Formatted results:', formattedResults);
+            dispatch(setResults({ results: formattedResults }));
+        } catch (error) {
+            console.error('Search failed:', error);
+            dispatch(setResults({ results: [] }));
+        }
+    };
+
 
   const getCarStatus = (car) => {
     if (car.is_crashed) return "Issue";
@@ -110,12 +117,16 @@ const OverviewCard = () => {
                 placeholder="Choose if you want to filter by fleet"
                 multiselect={true}
                 initialValue={fleetsFilter}
-                onChange={fleets => dispatch(setSelectedFleets({ fleets }))}
+                onChange={fleets => {
+                    // Convert selected fleet strings to integers
+                    const fleetNumbers = fleets ? fleets.map(f => parseInt(f, 10)) : [];
+                    console.log('Selected fleet numbers:', fleetNumbers);
+                    dispatch(setSelectedFleets({ fleets: fleetNumbers }));
+                }}
             >
-                <ComboboxOption value="fleet1" displayName='Fleet 1' />
-                <ComboboxOption value="fleet2" displayName='Fleet 2'/>
-                <ComboboxOption value="fleet3" displayName='Fleet 3'/>
-                <ComboboxOption value="fleet4" displayName='Fleet 4' disabled={true}/>
+                <ComboboxOption value="1" displayName={fleet1Name} />
+                <ComboboxOption value="2" displayName={fleet2Name}/>
+                <ComboboxOption value="3" displayName={fleet3Name}/>
             </Combobox>
 
             {selectedType==="inside" && 
@@ -129,10 +140,9 @@ const OverviewCard = () => {
                     console.log('Selected geofences:', zone);
                     dispatch(setGeoFences({ geoFences: zone || [] }));
                 }}>
-                <ComboboxOption value="downtown" displayName='Downtown' />
                 {geofences.map(geofence => (  
               <ComboboxOption   
-                key={geofence._id}   
+                key={geofence.name}   
                 value={geofence.name}   
                 displayName={geofence.displayName || geofence.name}   
               />  
@@ -151,14 +161,13 @@ const OverviewCard = () => {
                 onChange={loc => {
                     dispatch(setLocation({ location: loc || null }));
                 }}>
-                <ComboboxOption value="downtown" displayName='Downtown' />
-                <ComboboxOption value="riverside" displayName='Riverside' />
-                <ComboboxOption value="barton_creek" displayName='Barton Creek' />
-                <ComboboxOption value="georgetown" displayName='Georgetown' />
-                <ComboboxOption value="north_austin" displayName='North Austin' />
-                <ComboboxOption value="east_austin" displayName='East Austin' />
-                <ComboboxOption value="west_austin" displayName='West Austin' />
-                <ComboboxOption value="south_austin" displayName='South Austin' />
+                {geofences.map(geofence => (  
+              <ComboboxOption   
+                key={`nearest-${geofence.name}`} 
+                value={geofence.name}   
+                displayName={geofence.displayName || geofence.name}   
+              />  
+            ))}  
             </Combobox>
           }
             </div>

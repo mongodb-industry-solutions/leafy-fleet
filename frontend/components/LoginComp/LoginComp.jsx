@@ -16,7 +16,10 @@ import WizardIcon from "@leafygreen-ui/icon/dist/Wizard";
 import { USER_MAP } from "@/lib/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { usePathname } from "next/navigation";
-import {setSessionId} from "@/redux/slices/UserSlice";
+import { setLoggedFleet, setSelectedFleets, setFleet1Capacity, setFleet2Capacity, setFleet3Capacity, setSessionId } from "@/redux/slices/UserSlice";
+import { setSelectedUser } from "@/redux/slices/UserSlice";
+
+
 
 const LoginComp = ({ modalObserver }) => {
   const [open, setOpen] = useState(false);
@@ -24,7 +27,7 @@ const LoginComp = ({ modalObserver }) => {
   useEffect(() => {
     setOpen(true);
   }, []);
-
+  const [threadId, setThreadId] = useState("");
   
   const dispatch = useDispatch();  
 
@@ -39,6 +42,36 @@ const LoginComp = ({ modalObserver }) => {
     setOpen(false);
   };
   
+  const handleRestore = async () => {
+    try {
+      const response = await fetch(`http://localhost:9003/sessions/${threadId}`);
+      
+      if (!response.ok) {
+        throw new Error('Session not found');
+      }
+
+      const data = await response.json();
+      console.log("Restored session:", data);
+
+      // Set session data in Redux
+      dispatch(setSessionId({ sessionId: threadId }));
+      dispatch(setSelectedUser({ name: "Restored User" }));
+      dispatch(setLoggedFleet(true)); // This is what keeps you logged in      
+      // Restore fleet configuration
+      const fleetConfig = data.vehicle_fleet;
+      dispatch(setSelectedFleets({ selectedFleets: fleetConfig.selected_fleets }));
+      dispatch(setFleet1Capacity(fleetConfig.fleet_size[0] || 20));
+      dispatch(setFleet2Capacity(fleetConfig.fleet_size[1] || 0));
+      dispatch(setFleet3Capacity(fleetConfig.fleet_size[2] || 0));
+      // Close modal after successful restore
+      setOpen(false);
+      //ModalObserver(); // Call modalObserver to complete the login process
+     
+    } catch (error) {
+      console.error("Error restoring session:", error);
+      // You might want to show an error message to the user here
+    }
+  };
 
   if (shouldShowLoginPopup) {  
     return (  
@@ -74,17 +107,19 @@ const LoginComp = ({ modalObserver }) => {
           <br />
           <div className="input-group mb-3">
             <button
-              className="btn btn-outline-primary "
+              className="btn btn-outline-primary"
               type="button"
               id="button-addon1"
-
+              onClick={handleRestore}
             >
               Restore!
             </button>
             <input
               type="text"
               className="form-control"
-              aria-label="Example text with button addon"
+              value={threadId}
+              onChange={(e) => setThreadId(e.target.value)}
+              aria-label="Session restoration input"
               aria-describedby="button-addon1"
               placeholder="If you have a valid thread_id, you can restore your session here!"
             />

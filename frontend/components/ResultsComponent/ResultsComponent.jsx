@@ -52,56 +52,64 @@ const ResultsComponent = ( ) => {
   
   return (
     <Card className="card-styles" as="article">
-    <div className={styles.resultsCard}> 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'left' ,  }}>
-            <H3 >Search Results </H3>
+      <div className={styles.resultsCard}> 
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'left' }}>
+          <H3>Search Results</H3>
         </div>
-
         <div className={styles.resultsContainer}>
-        {results.slice(0, 10).map((car, index) => (
-            <div key={car.id}>
-            <div
-                className={styles.row}
-                tabIndex={0}
-            >
-                <div className={styles.grid}>
-                <div className={styles.statusAndId}>
-                    {getStatusIcon(car.status)}
-                    <Subtitle className={styles.carId}>{car.id}</Subtitle>
-                </div>
-                <div>
-                    <Body>{car.driver}</Body>
-                    <p className={styles.fleet}>{car.fleet}</p>
-                </div>
-                
-                {car.distance !== null && (
-                    <div className={styles.distanceBlock}>
-                    <p className={styles.distance}>{car.distance} km</p>
-                    <p className={styles.distanceLabel}>Distance</p>
+          {results && results.length > 0 ? (
+            results.slice(0, 10).map((car, index) => (
+              <div key={car.car_id}>
+                <div className={styles.row} tabIndex={0}>
+                  <div className={styles.grid}>
+                    <div className={styles.statusAndId}>
+                      {getStatusIcon(car.status)}
+                      <Subtitle className={styles.carId}> Car ID: {car.car_id}</Subtitle>
                     </div>
-                )}
-                <div className={styles.buttonBlock}>
-                    <Button size={Size.Small} variant={Variant.Outline} onClick={e => { e.stopPropagation(); handleCarClick(car); }}>
-                    View Details
-                    </Button>
+                    <div>
+                      <Body>Satus: {car.status}</Body>
+                      <p className={styles.fleet}>{car.fleet}</p>
+                    </div>
+                    {car.distance !== null && (
+                      <div className={styles.distanceBlock}>
+                        <p className={styles.distance}>{car.distance} km</p>
+                        <p className={styles.distanceLabel}>Distance</p>
+                      </div>
+                    )}
+                    {car.distance === null && (
+                      <div className={styles.distanceBlock}>
+                        <p className={styles.distance}>{car.current_geozone}</p>
+                        <p className={styles.distanceLabel}>Current Geofence</p>
+                      </div>
+                      )}
+                    <div className={styles.buttonBlock}>
+                      <Button 
+                        size={Size.Small} 
+                        variant={Variant.Outline} 
+                        onClick={e => { 
+                          e.stopPropagation(); 
+                          handleCarClick(car); 
+                        }}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                </div>
+                {index < results.length - 1 && <div className={styles.separator} />}
+              </div>
+            ))
+          ) : (
+            <div className={styles.noResults}>
+              <Body>No vehicles found matching your search criteria</Body>
             </div>
-            {index < cars.length - 1 && <div className={styles.separator} />}
-            </div>
-        ))}
+          )}
         </div>
-                    
-    </div>  
 
-    {isModalOpen && (
-          
-            <DetailsComponent/>
-          
-      
-      )}
-
+        {isModalOpen && <DetailsComponent onClose={handleCloseModal} />}
+      </div>
     </Card>
   );
-}
+};
+
 export default ResultsComponent;

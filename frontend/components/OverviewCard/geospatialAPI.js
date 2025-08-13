@@ -4,9 +4,15 @@ export const geospatialAPI = {
   // Search vehicles nearest to geofence  
   searchNearestVehicles: async (searchParams) => {  
     try {  
+      const fleetFilterInts = searchParams.fleetsFilter ? 
+        searchParams.fleetsFilter.map(f => parseInt(f, 10)) : [];
+
       console.log('Sending request:', {
         session_id: searchParams.sessionId,
-        geofence_names: searchParams.geoFences,
+        geofence_names: searchParams.location,
+        min_distance: searchParams.minDistance || 0,
+        max_distance: searchParams.maxDistance || 10000,
+        fleets_filter: fleetFilterInts
       });
       const response = await fetch(`${API_BASE_URL}/timeseries/nearest-geofence`, {  
         method: 'POST',  
@@ -18,6 +24,7 @@ export const geospatialAPI = {
           geofence_names: [searchParams.location],  
           min_distance: searchParams.minDistance || 0,  
           max_distance: searchParams.maxDistance || 10000,  
+          car_id_filter: fleetFilterInts
         }),  
       });  
   
@@ -26,6 +33,7 @@ export const geospatialAPI = {
       }  
   
       const data = await response.json();  
+      console.log('Received data:', data);
       return data;  
     } catch (error) {  
       console.error('Error searching nearest vehicles:', error);  
@@ -43,7 +51,9 @@ export const geospatialAPI = {
         },  
         body: JSON.stringify({  
           session_id: searchParams.sessionId,  
-          geofence_names: searchParams.geoFences,  
+          geofence_names: searchParams.geoFences,
+          car_id_filter: searchParams.fleetsFilter ? 
+            searchParams.fleetsFilter.map(f => parseInt(f, 10)) : []  
         }),  
       });  
   
