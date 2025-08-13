@@ -1,9 +1,13 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9003';  
+const API_BASE_URL = 'http://localhost:9001';  
   
 export const geospatialAPI = {  
   // Search vehicles nearest to geofence  
   searchNearestVehicles: async (searchParams) => {  
     try {  
+      console.log('Sending request:', {
+        session_id: searchParams.sessionId,
+        geofence_names: searchParams.geoFences,
+      });
       const response = await fetch(`${API_BASE_URL}/timeseries/nearest-geofence`, {  
         method: 'POST',  
         headers: {  
