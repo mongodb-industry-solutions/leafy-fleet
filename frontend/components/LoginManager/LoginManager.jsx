@@ -66,6 +66,7 @@ const LoginManager = () => {
   };
 
   const handleFleetCapacityChange = (indexFleet, fleetCapacity) => {
+    console.log("Handling fleet capacity change:", indexFleet, fleetCapacity);
     dispatchFleetCapacity(indexFleet, fleetCapacity);
   };
 
@@ -118,6 +119,8 @@ const LoginManager = () => {
     dispatch(setLoggedFleet(true)); 
     if (!fleet1Capacity || fleet1Capacity === 0) {
       dispatch(setFleet1Capacity(20));
+      dispatch(setFleet2Capacity(0));
+      dispatch(setFleet3Capacity(0));
     }
     if(fleet1Name === ""){
       dispatch(setFleet1Name("Fleet 1"));

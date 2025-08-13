@@ -30,7 +30,10 @@ class AgentProfiles(MongoDBConnector):
         self.collection_name = collection_name or MDB_AGENT_PROFILES_COLLECTION
         self.collection = self.get_collection(self.collection_name)
         # Ensure unique index on agent_id
-        self.collection.create_index("agent_id", unique=True)
+        if not self.collection.index_information().get("agent_id_1"):
+            logger.info(f"Creating unique index on agent_id for collection: {self.collection_name}")
+            self.collection.create_index("agent_id", unique=True)
+        
         logger.info(f"AgentProfiles initialized - Retrieving agent profiles from collection: {self.collection_name}")
 
     def get_agent_profile(self, agent_id: str, update_default: bool = False) -> dict:
@@ -47,7 +50,14 @@ class AgentProfiles(MongoDBConnector):
         # Load configuration
         config = ConfigLoader()
         # Load Default Agent Profile from config
-        default_profile = config.get("DEFAULT_AGENT_PROFILE")
+        default_profile = config.get(agent_id)
+        if not default_profile:
+            default_profile = config.get("DEFAULT_AGENT_PROFILE")
+
+        logger.info(f"Retrieving agent profile for agent ID: {agent_id}")
+
+
+
 
         try:
             # Retrieve the agent profile from MongoDB
@@ -57,26 +67,14 @@ class AgentProfiles(MongoDBConnector):
                 # Return the agent profile if found
                 return profile
             else:
-                # Check if the default profile already exists
-                existing_default_profile = self.collection.find_one({"agent_id": "DEFAULT"})
-                if existing_default_profile:
-                    if update_default:
-                        # Update the existing default profile
-                        self.collection.update_one(
-                            {"agent_id": "DEFAULT"},
-                            {"$set": default_profile}
-                        )
-                        logger.info("Default profile updated.")
-                        return default_profile
-                    else:
-                        logger.info("Default profile already exists. Skipping insertion.")
-                        return existing_default_profile
-                else:
-                    # Insert the default profile into MongoDB
-                    self.collection.insert_one(default_profile)
-                    logger.info("Default profile inserted.")
-                    # Return the default profile
-                    return default_profile
+                # Add the requested profile to MongoDB if it does not exist
+            
+                logger.info(f"Agent profile not found for agent ID: {agent_id}. Creating new profile in database.")
+                # Update the default profile with the requested agent_id
+                default_profile["agent_id"] = agent_id
+                self.collection.insert_one({"agent_id": agent_id, **default_profile})
+                return default_profile
+                
         except DuplicateKeyError:
             logger.error("Duplicate agent_id found. Ensure agent_id is unique.")
             return default_profile

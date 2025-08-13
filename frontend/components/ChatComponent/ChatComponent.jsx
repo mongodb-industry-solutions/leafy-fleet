@@ -1,5 +1,4 @@
 "use client";
-"use client";
 
 import styles from "./ChatComponene.module.css";
 
@@ -12,7 +11,7 @@ import {
   setIsChatbotThinking,
   setLatestThought,
   updateMessageText,
-  setThinkingMessageId
+  setThinkingMessageId,
 } from "@/redux/slices/MessageSlice";
 import { Body } from "@leafygreen-ui/typography";
 
@@ -21,15 +20,26 @@ const ChatComponent = () => {
   const socketRef = useRef(null);
   const [connectionStatus, setConnectionStatus] = useState("Not Connected");
 
-  const chatbotIsThinking = useSelector(
-    (state) => state.Message.chatbotIsThinking
-  );
+  const filters = useSelector((state) => state.User.queryFilters); // At top level of component
 
-  const thinkingMessageId = useSelector((state) => state.Message.thinkingMessageId);
+  const fleet1Atributes = useSelector((state) => state.User.fleet1Attributes);
+  const fleet2Atributes = useSelector((state) => state.User.fleet2Attributes);
+  const fleet3Atributes = useSelector((state) => state.User.fleet3Attributes);
+  const fleet1Capacity = useSelector((state) => state.User.fleet1Capacity);
+  const fleet2Capacity = useSelector((state) => state.User.fleet2Capacity);
+  const fleet3Capacity = useSelector((state) => state.User.fleet3Capacity);
+
+
+  const userPreferences = [
+    [...fleet1Atributes, fleet1Capacity],
+    [...fleet2Atributes, fleet2Capacity],
+    [...fleet3Atributes, fleet3Capacity],
+  ];
+
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
-    const socket = new WebSocket("ws://localhost:8000/ws?thread_id=123");
+    const socket = new WebSocket("ws://localhost:9000/ws?thread_id=abc123");
     socketRef.current = socket; // Store it in the ref
 
     socket.onopen = () => {
@@ -83,20 +93,19 @@ const ChatComponent = () => {
     dispatch(
       pushMessageHistory({ message: newUserMessage, id: newUserMessage.id })
     );
-    
-    
+
+    dispatch(setIsChatbotThinking(true));
     let data = {
-        chain_of_thought:
+      chain_of_thought:
         "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
-      }; // Default fallback
-    
+    }; // Default fallback
+
     const botResponseMessage = {
       id: lastMessageId + 2,
       text: data.chain_of_thought,
       sender: "bot",
       completed: false,
     };
-    dispatch(setIsChatbotThinking(true));
     dispatch(setThinkingMessageId(lastMessageId + 2));
     dispatch(
       pushMessageHistory({
@@ -107,9 +116,17 @@ const ChatComponent = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/run-agent?query_reported=${encodeURIComponent(
+        `http://localhost:9000/run-agent?query_reported=${encodeURIComponent(
           userMessageText
-        )}&thread_id=123`
+        )}&thread_id=abc123&filters=${encodeURIComponent(
+          JSON.stringify(filters)
+        )}&preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       //   const res = {
@@ -127,21 +144,29 @@ const ChatComponent = () => {
       }
 
       const text = await res.text();
+      // console.log("Response text:", text);
       try {
-        data = JSON.parse(text); // Parse JSON if valid
+        // Parse JSON if valid
+        const parsedData = JSON.parse(text);
+        data = parsedData; // Use the parsed data
       } catch (jsonParseError) {
         console.error("Error parsing JSON:", jsonParseError);
         data = {
-          chain_of_thought: "Invalid response format. Please contact support.",
+          recommendation_text: "Invalid response format.",
         }; // Fallback
       }
-
-      // console.log("Received data:", data);
       dispatch(setIsChatbotThinking(false));
       dispatch(
         updateMessageText({
           id: botResponseMessage.id,
-          text: data.chain_of_thought,
+          text: data.recommendation_text,
+          agent_profiles: data.agent_profiles,
+          checkpoint: data.checkpoint,
+          created_at: data.created_at,
+          recommendation_data: data.recommendation_data,
+          reported_query: data.query_reported,
+          thread_id: data.thread_id,
+          used_tools: data.used_tools,
         })
       );
     } catch (error) {
@@ -153,8 +178,8 @@ const ChatComponent = () => {
   return (
     <div className={styles.chatComponent}>
       <div className={styles.messagesContainer}>
-        {messages.map((msg) => (
-          <div key={msg.id}>
+        {messages.map((msg, idx) => (
+          <div key={`${msg.id}-${idx}`}>
             <TextBubbleComponent
               user={msg.sender}
               text={msg.text}
@@ -174,4 +199,3 @@ const ChatComponent = () => {
 };
 
 module.exports = ChatComponent;
-

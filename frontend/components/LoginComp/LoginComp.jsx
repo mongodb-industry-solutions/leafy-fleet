@@ -83,7 +83,7 @@ const LoginComp = ({ modalObserver }) => {
             </button>
             <input
               type="text"
-              class="form-control"
+              className="form-control"
               aria-label="Example text with button addon"
               aria-describedby="button-addon1"
               placeholder="If you have a valid thread_id, you can restore your session here!"
