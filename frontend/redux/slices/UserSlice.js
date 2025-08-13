@@ -41,13 +41,9 @@ const UserSlice = createSlice({
       "Performance",
     ],
     editFleet: 1,
-
     isLoggedIn: false,
     sessionId: 'gio2' ,
     queryFilters: [],
-    isLoggedIn: false
-
-
   },
   reducers: {
     setSelectedUser: (state, action) => {
