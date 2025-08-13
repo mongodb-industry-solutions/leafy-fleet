@@ -80,7 +80,7 @@ Before running the simulation for the first time, you must populate the database
      python static_cars_creator.py
      ```
 
-     > **Note:** This script should only be run once to avoid duplicate car entries. After running, you can stop the Static Service if you do not need to update static car data.
+     > **Note:** This script should only be run once to avoid duplicate car entries. After running,  the Static Service is only used to get data.
 
 ---
 

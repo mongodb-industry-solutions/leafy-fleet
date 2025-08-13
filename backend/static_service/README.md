@@ -1,6 +1,6 @@
 # Static Service
 
-This microservice is responsible for creating and storing static information about cars in the database. It is intended to be run **once** to populate the database with vehicle data before starting the rest of the fleet management system. After the initial population, you should not run this service again unless you want to reset or update the static car information.
+This microservice is responsible for creating and storing static information about cars in the database. It is intended to be run **once** to populate the database with vehicle data before starting the rest of the fleet management system. After the initial population, you should only use the endpoints to get information.
 
 ## How to Use
 
@@ -31,8 +31,6 @@ Example:
 python [static_cars_creator.py]
 ```
 
-### 5. Do Not Run Again
-After the initial run, do not run the static car creation script again unless you intend to reset or overwrite the static car data in your database. For preference, delete previous cars. If for any reason want to scale up, will also need to use googleRouteService to have more routes (example add 200 more routes before adding 200 cars static so that also works correctly with 200 more time series cars).
 
 ## Endpoints
 - POST /static — Create a new static car entry.
