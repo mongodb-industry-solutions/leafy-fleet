@@ -51,6 +51,7 @@ const LoginComp = ({ modalObserver }) => {
       fullscreen={"md-down"}
       className={styles.leafyFeel}
       backdrop="static"
+      keyboard={false}
     >
       <Container className="p-3 h-100">
         {/*

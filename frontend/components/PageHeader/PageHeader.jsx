@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./PageHeader.module.css";
-import { H1 } from "@leafygreen-ui/typography";
+import { H1, H3 } from "@leafygreen-ui/typography";
 import { MongoDBLogoMark } from "@leafygreen-ui/logo";
 import InfoWizard from "../InfoWizard/InfoWizard";
 import { useState } from "react";
@@ -28,7 +28,12 @@ const PageHeader = () => {
         />
 
         <H1>Leafy Fleet</H1>
+
+       {['/chat', '/overview', '/charts'].some(path => pathname.endsWith(path)) &&  
+        <H3>Session ID: {}</H3>  
+      }  
       </div>
+
 
       <div className={styles.right}>
         <InfoWizard

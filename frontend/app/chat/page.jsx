@@ -20,10 +20,21 @@ export default function Page() {
                     height: '90vh',
                 }}
             >
-                <div style={{ flex: 3 }}>
+                <div style={{  
+                flex: 3,  
+                position: 'sticky', // Keeps the chat component fixed  
+                top: 0, // Applies sticky behavior relative to viewport scroll  
+                height: '90vh', // Makes sure it consumes full height  
+                overflow: 'hidden', // Prevents scrolling  
+            }} >
                     <ChatComponent />
                 </div>
-                <div style={{ flex: 6 }}>
+                <div style={{  
+                flex: 6,  
+                height: '90vh', // Controls the division area  
+                overflowY: 'auto', // Enables vertical scrolling  
+                padding: '0 16px', // Optional padding for internal content  
+            }}>
                     <FilterComponent />
                 </div>
             </div>
