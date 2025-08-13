@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9005';  
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9003';  
   
 export const geospatialAPI = {  
   // Search vehicles nearest to geofence  

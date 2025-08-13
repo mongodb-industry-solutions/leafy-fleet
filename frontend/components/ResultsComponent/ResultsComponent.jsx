@@ -14,98 +14,6 @@ import { setResults, setSelectedCar, setIsModalOpen } from '@/redux/slices/Resul
 import { Spinner } from '@leafygreen-ui/loading-indicator'; //cuando haga llamada a api
 
 // On time, will replace this with real api call, use redux with setResults to populate the results
-const cars = [
-  {
-    id: "FL001",
-    name: "Ford Transit",
-    year: 2002,
-    fleet: "Delivery Fleet",
-    status: "Active",
-    location: "Downtown",
-    driver: "John Doe",
-    fuel: 85,
-    mileage: 45230,
-    lastService: "2024-01-15",
-    efficiency: 18.5,
-    alerts: 0,
-    coordinates: [-74.006, 40.7128],
-    zone: "Zone A - Downtown",
-    distance: 0.5, // km from search point
-    licencePlate: "ABC1234",
-  },
-  {
-    id: "FL002",
-    name: "Mercedes Sprinter",
-    year: 2015,
-    fleet: "Delivery Fleet",
-    status: "Maintenance",
-    location: "Garage A",
-    driver: "Unassigned",
-    fuel: 20,
-    mileage: 67890,
-    lastService: "2024-01-10",
-    efficiency: 16.2,
-    alerts: 2,
-    coordinates: [-74.01, 40.72],
-    zone: "Zone B - Industrial",
-    distance: 1.2,
-    licencePlate: "XYZ5678",
-  },
-  {
-    id: "EX001",
-    name: "BMW 7 Series",
-    year: 2020,
-    fleet: "Executive Fleet",
-    status: "Active",
-    location: "Airport",
-    driver: "Mike Johnson",
-    fuel: 65,
-    mileage: 23450,
-    lastService: "2024-01-20",
-    efficiency: 22.1,
-    alerts: 0,
-    coordinates: [-73.7781, 40.6413],
-    zone: "Zone C - Airport",
-    distance: 15.3,
-    licencePlate: "LMN9012",
-  },
-  {
-    id: "EX002",
-    name: "Audi A8",
-    year: 2021,
-    fleet: "Executive Fleet",
-    status: "Active",
-    location: "City Center",
-    driver: "Sarah Wilson",
-    fuel: 90,
-    mileage: 18900,
-    lastService: "2024-01-18",
-    efficiency: 21.8,
-    alerts: 0,
-    coordinates: [-74.0059, 40.7589],
-    zone: "Zone A - Downtown",
-    distance: 2.1,
-    licencePlate: "OPQ3456",
-  },
-  {
-    id: "SV002",
-    name: "Ford F-150",
-    year: 2018,
-    fleet: "Service Fleet",
-    status: "Active",
-    location: "Warehouse B",
-    driver: "Lisa Davis",
-    fuel: 75,
-    mileage: 56780,
-    lastService: "2024-01-12",
-    efficiency: 15.8,
-    alerts: 1,
-    coordinates: [-74.209, 40.7505],
-    zone: "Zone D - Warehouse",
-    distance: 8.7,
-    licencePlate: "RST6789",
-  },
-]
 
 
 const ResultsComponent = ( ) => {
@@ -150,7 +58,7 @@ const ResultsComponent = ( ) => {
         </div>
 
         <div className={styles.resultsContainer}>
-        {cars.slice(0, 10).map((car, index) => (
+        {results.slice(0, 10).map((car, index) => (
             <div key={car.id}>
             <div
                 className={styles.row}
