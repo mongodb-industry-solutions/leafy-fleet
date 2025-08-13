@@ -21,7 +21,7 @@ const ChartsComponent = () => {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `http://localhost:9001/timeseries/all/latest?thread_id=${thread_id}`
+          `http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/timeseries/all/latest?thread_id=${thread_id}`
         );
 
         if (!res.ok) {

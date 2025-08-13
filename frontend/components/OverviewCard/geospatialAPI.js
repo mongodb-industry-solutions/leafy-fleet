@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:9001';  
+const API_BASE_URL = `http://${process.env.NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL}`;  
   
 export const geospatialAPI = {  
   // Search vehicles nearest to geofence  

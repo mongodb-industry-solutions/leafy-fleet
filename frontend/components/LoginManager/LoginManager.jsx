@@ -129,7 +129,7 @@ const modalObserver = async () => {
         fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
       ];
 
-      const response = await fetch("http://localhost:9003/sessions/create", {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/sessions/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -209,7 +209,7 @@ const modalObserver = async () => {
           },
           chat_history: []
         }));
-      const response = await fetch("http://localhost:9009/sessions/create", {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/sessions/create`, {
 
         method: "POST",
         headers: {
