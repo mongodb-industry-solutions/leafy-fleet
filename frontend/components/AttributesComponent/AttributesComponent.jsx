@@ -21,7 +21,7 @@ const ALL_ATTRIBUTES = [
   "Coordinates",
 ];
 
-const ATTR_KEY_MAP = {  
+export const ATTR_KEY_MAP = {  
   "Performance": "performance_score",  
   "Run Time": "run_time",  
   "Avaliability": "availability_score",  

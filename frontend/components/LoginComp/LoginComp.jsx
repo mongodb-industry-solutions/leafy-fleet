@@ -16,8 +16,8 @@ import WizardIcon from "@leafygreen-ui/icon/dist/Wizard";
 import { USER_MAP } from "@/lib/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { usePathname } from "next/navigation";
-import {
-  setLoggedFleet} from "@/redux/slices/UserSlice";
+import {setSessionId} from "@/redux/slices/UserSlice";
+
 const LoginComp = ({ modalObserver }) => {
   const [open, setOpen] = useState(false);
 

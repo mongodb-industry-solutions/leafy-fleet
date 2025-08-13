@@ -5,9 +5,9 @@
  * The "traditional" user select as it appears on other demos is inside LoginComp.jsx
  * This component also manages the fleet configuration modal that appears when the right user is selected
  */
-
+import { ATTR_KEY_MAP } from "../AttributesComponent/AttributesComponent";
 import { useDispatch, useSelector } from "react-redux";
-import LoginComp from "../login/LoginComp";
+import LoginComp from "../LoginComp/LoginComp";
 import styles from "./LoginManager.module.css";
 import { setSelectedUser } from "@/redux/slices/UserSlice";
 import React, { useState, useEffect } from "react";
@@ -29,6 +29,7 @@ import { Option, Select, Size } from "@leafygreen-ui/select";
 import Button from "@leafygreen-ui/button";
 import { usePathname } from "next/navigation";   
 import DocumentFleetComponent from "../DocumentFleetComponent/DocumentFleetComponent";
+import { setSessionId } from "@/redux/slices/UserSlice";
 
 const LoginManager = () => {
   const dispatch = useDispatch();
@@ -39,14 +40,17 @@ const LoginManager = () => {
 
   const selectedFleets = useSelector((state) =>state.User.selectedFleets);
 
-  // Used to know if default value is needed
 
-  const fleet1Size = useSelector((state) => state.User.fleet1Capacity)
-  const fleet2Size = useSelector((state) => state.User.fleet2Capacity)
-  const fleet3Size = useSelector((state) => state.User.fleet3Capacity)
+  // Used to know if default value is needed
+  const fleet1Capacity = useSelector((state) => state.User.fleet1Capacity);
+  const fleet2Capacity = useSelector((state) => state.User.fleet2Capacity);
+  const fleet3Capacity = useSelector((state) => state.User.fleet3Capacity);
   const fleet1Name = useSelector((state) => state.User.fleet1Name);
   const fleet2Name = useSelector((state) => state.User.fleet2Name);
   const fleet3Name = useSelector((state) => state.User.fleet3Name);
+  const fleet1Attributes = useSelector((state) => state.User.fleet1Attributes);
+  const fleet2Attributes = useSelector((state) => state.User.fleet2Attributes);
+  const fleet3Attributes = useSelector((state) => state.User.fleet3Attributes);
 
 
   // Dispatch actions based on user input or component logic
@@ -107,12 +111,13 @@ const LoginManager = () => {
       dispatch(setSelectedFleets({ selectedFleets: 3 }));
 
     }
+    // call to sessions/fleet to set the fleet configuration
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     setOpen(false);
     dispatch(setLoggedFleet(true)); 
-    if (fleet1Size == 0) {
+    if (!fleet1Capacity || fleet1Capacity === 0) {
       dispatch(setFleet1Capacity(20));
       dispatch(setFleet2Capacity(0));
       dispatch(setFleet3Capacity(0));
@@ -120,6 +125,75 @@ const LoginManager = () => {
     if(fleet1Name === ""){
       dispatch(setFleet1Name("Fleet 1"));
     }
+    const fleetNames = [];
+    const fleetSizes = [];
+    const attributeLists = []
+    const mapAttributes = (attrs) => {
+      return attrs.map(attr => {
+          const mapped = ATTR_KEY_MAP[attr];
+          if (!mapped) {
+              console.warn(`No mapping found for attribute: ${attr}`);
+              return attr.toLowerCase().replace(' ', '-');
+          }
+          return mapped;
+        });
+    };
+
+    for (let i = 1; i <= selectedFleets; i++) {
+      if (i === 1) {
+        fleetNames.push(fleet1Name);
+        fleetSizes.push(fleet1Capacity || 20); // Use actual capacity or default
+        attributeLists.push(mapAttributes(fleet1Attributes));
+      } else if (i === 2) {
+        fleetNames.push(fleet2Name);
+        fleetSizes.push(fleet2Capacity);
+        attributeLists.push(mapAttributes(fleet2Attributes));
+      } else if (i === 3) {
+        fleetNames.push(fleet3Name);
+        fleetSizes.push(fleet3Capacity);
+        attributeLists.push(mapAttributes(fleet3Attributes));
+      }
+    }
+
+    try {
+      console.log(JSON.stringify({
+          vehicle_fleet: {
+            selected_fleets: selectedFleets,
+            fleet_names: fleetNames,
+            fleet_size: fleetSizes,
+            attribute_list: attributeLists
+          },
+          chat_history: []
+        }));
+      const response = await fetch("http://localhost:9009/sessions/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          vehicle_fleet: {
+            selected_fleets: selectedFleets,
+            fleet_names: fleetNames,
+            fleet_size: fleetSizes,
+            attribute_list: attributeLists
+          },
+          chat_history: []
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create session');
+      }
+
+      const data = await response.json();
+      // Save the session ID in Redux
+      dispatch(setSessionId({ sessionId: data.session_id }));
+
+    } catch (error) {
+      console.error("Error creating session:", error);
+    }
+
+
 
   };
 

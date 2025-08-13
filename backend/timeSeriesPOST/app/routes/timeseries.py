@@ -5,7 +5,9 @@ from database import timeseries_coll
 from datetime import datetime
 from model.timeseriesModel import TimeseriesModel
 from typing import List  # Import List  
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/timeseries")
@@ -36,14 +38,32 @@ async def create_timeseries_entry(entry: TimeseriesModel):
 
 @router.post("/historic-batch")  
 async def create_historic_batch(entries: List[TimeseriesModel]):  
-    for doc in entries:  
-        doc.timestamp = doc.timestamp or datetime.utcnow() 
-    try:  
-        # Insert multiple documents at once  
-        result = timeseries_coll.insert_many([entry.dict() for entry in entries])  
-        return JSONResponse(status_code=status.HTTP_201_CREATED,   
-                            content=jsonable_encoder({"message": f"{len(result.inserted_ids)} historical entries added"}))
+    try:
+        # Convert entries directly to documents
+        documents = []
+        for doc in entries:
+            doc_dict = doc.dict()
+            # Ensure timestamp is a datetime object
+            if isinstance(doc_dict['timestamp'], str):
+                doc_dict['timestamp'] = datetime.fromisoformat(doc_dict['timestamp'].replace('Z', '+00:00'))
+            documents.append(doc_dict)
+
+        # Execute bulk insert_many instead of bulkWrite
+        result = timeseries_coll.insert_many(documents)
+        
+        return JSONResponse(
+            status_code=status.HTTP_201_CREATED,   
+            content=jsonable_encoder({
+                "message": "Historical entries processed",
+                "inserted_count": len(result.inserted_ids)
+            })
+        )
     except Exception as e:
-        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,   
-                            content=jsonable_encoder({"message": "Error creating historical entries", "error": str(e)})) 
-    
+        logger.error(f"Bulk insert error: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,   
+            content=jsonable_encoder({
+                "message": "Error creating historical entries", 
+                "error": str(e)
+            })
+        )
