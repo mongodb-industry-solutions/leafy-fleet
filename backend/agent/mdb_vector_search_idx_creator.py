@@ -68,7 +68,7 @@ class VectorSearchIDXCreator(MongoDBConnector):
             # Create the index
             self.collection.create_search_index(index_config)
             logger.info(f"Vector search index '{index_name}' created successfully.")
-            return {"status": "success", "message": f"Vector search index '{index_name}' created successfully."}
+            return {"status": "success", "message": f"Vector search index '{index_name}' created successfully.", "index_name": index_name}
         except OperationFailure as e:
             if e.code == 68:  # IndexAlreadyExists error code
                 logger.info(f"Vector search index '{index_name}' already exists.")

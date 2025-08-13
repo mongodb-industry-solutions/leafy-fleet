@@ -22,6 +22,7 @@ grandalf = "^0.8"
 langgraph-checkpoint-mongodb = "^0.1.1"
 annotated-types = "^0.7.0"
 websockets = "^15.0.0"
+voyageai = "^0.3.3"
 
 
 [build-system]

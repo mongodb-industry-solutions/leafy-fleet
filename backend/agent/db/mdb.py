@@ -32,6 +32,12 @@ class MongoDBConnector:
         self.client = MongoClient(self.uri, appname=self.appname)
         self.db = self.client[self.database_name]
 
+    def connect_to_db(self):
+        """Connect to the MongoDB database."""
+        if not self.client:
+            raise ConnectionError("Failed to connect to MongoDB. Check your URI and network connection.")
+        return self.db
+
     def __enter__(self):
         """Enter the runtime context related to this object."""
         return self
