@@ -144,12 +144,11 @@ def process_all_routes(csv_file :str, output_file: str ):
     all_routes = {}
     #un array de routes fallidas
     failed_routes = []
-    limit = 5 # limite 5, 10 carros 
     #  islice to limit the number of rows processed while testing
-    rows = itertools.islice(df.iterrows(), limit) if limit else df.iterrows()
-
+    rows = df.iterrows()
 
     for i, row in rows:
+        print(f"Processing route {i+1}/{len(df)}: {row['From_ID']} → {row['To_ID']}")
         from_id, to_id = int(row["From_ID"]), int(row["To_ID"])
         origin = coordinates.get(from_id)
         destination = coordinates.get(to_id)
