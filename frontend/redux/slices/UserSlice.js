@@ -93,12 +93,7 @@ const UserSlice = createSlice({
     },
     setSessionId: (state, action) => {  
       state.sessionId = action.payload.sessionId;  
-    }  
-
-
-}
-
-
+    },  
     setQueryFilters: (state, action) => {
       const { label, checked } = action.payload;
       if (checked) {
@@ -131,12 +126,10 @@ export const {
   setFleet2Attributes,
   setFleet3Attributes,
   setEditFleet,
-
   setLoggedFleet,
-  setSessionId    
-
+  setSessionId,   
   setQueryFilters,
-  setLoggedFleet
+
 } = UserSlice.actions;
 
 export default UserSlice.reducer;

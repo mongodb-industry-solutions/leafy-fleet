@@ -1,0 +1,96 @@
+version: "3.9"  
+  
+services:  
+  agent-service:  # Port: 9000  
+    container_name: agent-service  
+    build:  
+      context: ./agent  
+    ports:  
+      - "9000:9000"  
+    volumes:  
+      - ./agent:/agent  
+      - ~/.aws:/root/.aws  
+    working_dir: /agent  
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000 --workers 2  
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  
+      - PYTHONUNBUFFERED=1  
+      - AWS_PROFILE=${AWS_PROFILE}  
+      - AWS_REGION=${AWS_REGION}  
+        
+  timeseries-get:  # Port: 9001  
+    container_name: timeseries-get-service  
+    build:  
+      context: ./timeSeriesGET
+    ports:  
+      - "9001:9000"  
+    volumes:  
+      - ./timeSeriesGET:/timeseries  
+    working_dir: /timeseries 
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  
+      - PYTHONUNBUFFERED=1  
+  
+  timeseries-post:  # Port: 9002  
+    container_name: timeseries-post-service  
+    build:  
+      context: ./timeSeriesPOST  
+    ports:  
+      - "9002:9002"  
+    volumes:  
+      - ./timeSeriesPOST:/timeseries  
+    working_dir: /timeseries  
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9002  
+    environment:  
+      - PYTHONUNBUFFERED=1  
+    env_file:  
+      - ./.env  
+    networks:  
+      - simulation-network  
+  
+  sessions-service:  # Port: 9003  
+    container_name: sessions-service  
+    build:  
+      context: ./sessions 
+    ports:  
+      - "9003:9000"  
+    volumes:  
+      - ./sessions:/sessions  
+    working_dir: /sessions
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  
+      - PYTHONUNBUFFERED=1  
+  
+  geofence-service:  # Port: 9004  
+    container_name: geofence-get-service  
+    build:  
+      context: ./geofenceGET  
+      dockerfile: Dockerfile  
+    ports:  
+      - "9004:9004"  
+    volumes:  
+      - ./geofenceGET/app:/app  
+    environment:  
+      - PYTHONUNBUFFERED=1  
+    networks:  
+      - simulation-network  
+  
+  static-service:  # Port: 9005  
+    container_name: static-vehicle-service  
+    build:  
+      context: ./static_service 
+    ports:  
+      - "9005:9000"  
+    volumes:  
+      - ./static_service:/static  
+    working_dir: /static
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  
+      - PYTHONUNBUFFERED=1  
+  
+networks:  
+  simulation-network:  
+    external: true  
