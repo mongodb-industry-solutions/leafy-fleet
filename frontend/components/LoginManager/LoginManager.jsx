@@ -146,8 +146,8 @@ const modalObserver = async () => {
     } catch (error) {
       console.error("Error creating session:", error);
     }
-  }
-};
+
+  };
 
   const handleClose = async () => {
     setOpen(false);
@@ -191,16 +191,18 @@ const modalObserver = async () => {
     }
 
     try {
-      // console.log(JSON.stringify({
-      //     vehicle_fleet: {
-      //       selected_fleets: selectedFleets,
-      //       fleet_names: fleetNames,
-      //       fleet_size: fleetSizes,
-      //       attribute_list: attributeLists
-      //     },
-      //     chat_history: []
-      //   }));
-      const response = await fetch("http://localhost:9003/sessions/create", {
+
+      console.log(JSON.stringify({
+          vehicle_fleet: {
+            selected_fleets: selectedFleets,
+            fleet_names: fleetNames,
+            fleet_size: fleetSizes,
+            attribute_list: attributeLists
+          },
+          chat_history: []
+        }));
+      const response = await fetch("http://localhost:9009/sessions/create", {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
