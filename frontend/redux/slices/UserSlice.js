@@ -41,8 +41,13 @@ const UserSlice = createSlice({
       "Performance",
     ],
     editFleet: 1,
+
+    isLoggedIn: false,
+    sessionId: 'gio2' ,
+
     queryFilters: [],
     isLoggedIn: false
+
 
   },
   reducers: {
@@ -82,6 +87,18 @@ const UserSlice = createSlice({
     setEditFleet: (state, action) => {
       state.editFleet = action.payload.editFleet;
     },
+
+    setLoggedFleet: (state, action) => {
+      state.isLoggedIn = action.payload; // Set the login status based on the action payload
+    },
+    setSessionId: (state, action) => {  
+      state.sessionId = action.payload.sessionId;  
+    }  
+
+
+}
+
+
     setQueryFilters: (state, action) => {
       const { label, checked } = action.payload;
       if (checked) {
@@ -98,6 +115,7 @@ const UserSlice = createSlice({
       state.isLoggedIn = action.payload; // Set the login status based on the action payload
     }
   }
+
 });
 
 export const {
@@ -113,6 +131,10 @@ export const {
   setFleet2Attributes,
   setFleet3Attributes,
   setEditFleet,
+
+  setLoggedFleet,
+  setSessionId    
+
   setQueryFilters,
   setLoggedFleet
 } = UserSlice.actions;
