@@ -10,15 +10,45 @@ const UserSlice = createSlice({
     fleet1Name: "Fleet 1",
     fleet2Name: "Fleet 2",
     fleet3Name: "Fleet 3",
-    fleet1Capacity: null,
-    fleet2Capacity: null,
-    fleet3Capacity: null,
-    fleet1Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality"],
-    fleet2Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality",],
-    fleet3Attributes: ["Latitude","Performance","Run Time","Longitude","Avaliability","Quality",],
+    fleet1Capacity: 0,
+    fleet2Capacity: 0,
+    fleet3Capacity: 0,
+    fleet1Attributes: [
+      "Coordinates",
+      "Geozone",
+      "Run Time",
+      "OEE",
+      "Avaliability",
+      "Quality",
+      "Performance",
+    ],
+    fleet2Attributes: [
+      "Coordinates",
+      "Geozone",
+      "Run Time",
+      "OEE",
+      "Avaliability",
+      "Quality",
+      "Performance",
+    ],
+    fleet3Attributes: [
+      "Coordinates",
+      "Geozone",
+      "Run Time",
+      "OEE",
+      "Avaliability",
+      "Quality",
+      "Performance",
+    ],
     editFleet: 1,
+
     isLoggedIn: false,
     sessionId: 'gio2' ,
+
+    queryFilters: [],
+    isLoggedIn: false
+
+
   },
   reducers: {
     setSelectedUser: (state, action) => {
@@ -42,7 +72,7 @@ const UserSlice = createSlice({
     setFleet3Name: (state, action) => {
       state.fleet3Name = action.payload;
     },
-    setSelectedFleets: (state,action) =>{
+    setSelectedFleets: (state, action) => {
       state.selectedFleets = action.payload.selectedFleets;
     },
     setFleet1Attributes: (state, action) => {
@@ -54,9 +84,10 @@ const UserSlice = createSlice({
     setFleet3Attributes: (state, action) => {
       state.fleet3Attributes = action.payload;
     },
-    setEditFleet:(state, action) => {
+    setEditFleet: (state, action) => {
       state.editFleet = action.payload.editFleet;
     },
+
     setLoggedFleet: (state, action) => {
       state.isLoggedIn = action.payload; // Set the login status based on the action payload
     },
@@ -66,6 +97,24 @@ const UserSlice = createSlice({
 
 
 }
+
+
+    setQueryFilters: (state, action) => {
+      const { label, checked } = action.payload;
+      if (checked) {
+        if (!state.queryFilters.includes(label)) {
+          state.queryFilters.push(label);
+        }
+      } else {
+        state.queryFilters = state.queryFilters.filter(
+          (filter) => filter !== label
+        );
+      }
+    },
+    setLoggedFleet: (state, action) => {
+      state.isLoggedIn = action.payload; // Set the login status based on the action payload
+    }
+  }
 
 });
 
@@ -82,8 +131,12 @@ export const {
   setFleet2Attributes,
   setFleet3Attributes,
   setEditFleet,
+
   setLoggedFleet,
   setSessionId    
+
+  setQueryFilters,
+  setLoggedFleet
 } = UserSlice.actions;
 
 export default UserSlice.reducer;

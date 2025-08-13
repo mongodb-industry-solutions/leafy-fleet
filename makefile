@@ -16,10 +16,10 @@ install_poetry:
 	pipx install poetry==1.8.4
 
 poetry_start:
-	cd backend && poetry config virtualenvs.in-project true
+	cd backend && cd agent && poetry config virtualenvs.in-project true
 
 poetry_install:
-	cd backend && poetry install --no-interaction -v --no-cache --no-root
+	cd backend && cd agent && poetry install --no-interaction -v --no-cache --no-root
 
 poetry_update:
-	cd backend && poetry update
+	cd backend && cd agent && poetry update

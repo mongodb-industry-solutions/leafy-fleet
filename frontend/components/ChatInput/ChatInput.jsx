@@ -46,8 +46,9 @@ const ChatInput = ({ onSendMessage }) => {
 
 
     const FOLLOWUP_QUESTIONS = [
-        "Can you provide more details on the fleet's performance?",
-        "What are the key metrics for fleet efficiency?",
+        "If I wish to reduce my fleet size by 10%, what vehicles I should retire first and why?",
+        "What are the top three types of maintenance scheduled across my fleet?",
+        "Can I skip the next scheduled maintenance for carId 3?",
     ];
 
     return (
@@ -71,7 +72,7 @@ const ChatInput = ({ onSendMessage }) => {
                     onKeyDown={(e) => {
                         // console.log("Key pressed:", e.key);
                         if (e.key === 'Enter') {
-                            handleSubmit(e.target.value);
+                            handleSubmit();
                         }
                     }}
                     value={value}

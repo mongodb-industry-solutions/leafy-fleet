@@ -1,10 +1,8 @@
 import logging
 
-from langgraph.checkpoint.mongodb import MongoDBSaver
+from langgraph.checkpoint.mongodb import AsyncMongoDBSaver
 from db.mdb import MongoDBConnector
 from config.config_loader import ConfigLoader
-
-
 
 # Configure logging
 logging.basicConfig(
@@ -38,10 +36,10 @@ class AgentCheckpointer(MongoDBConnector):
     # --- Create MongoDB Saver ---
     def create_mongodb_saver(self):
         """
-        Create a MongoDBSaver instance to save agent states to MongoDB."
+        Create a AsyncMongoDBSaver instance to save agent states to MongoDB."
 
         Uses:
-            - MongoDBSaver.from_conn_string()
+            - AsyncMongoDBSaver.from_conn_string()
 
         Params:
             conn_string (str): MongoDB connection string. Takes self.uri.
@@ -50,16 +48,16 @@ class AgentCheckpointer(MongoDBConnector):
             writes_collection_name (str): Writes collection name. Default is MDB_CHECKPOINTER_COLLECTION + "_writes".
 
         Returns:
-            MongoDBSaver: MongoDBSaver instance to save agent states to MongoDB.
+            AsyncMongoDBSaver: AsyncMongoDBSaver instance to save agent states to MongoDB.
         """
         mongo_uri = self.uri
         if not mongo_uri:
             logger.warning("[MongoDB] MONGO_URI not set. State saving will be disabled.")
             return None
         try:
-            logger.info(f"[MongoDB] Initializing MongoDBSaver!")
+            logger.info(f"[MongoDB] Initializing AsyncMongoDBSaver!")
             logger.info(f"URI: *****, Database: {self.database_name}, Checkpoint Collection: {self.checkpoint_collection_name}, Checkpoint Writes Collection: {self.writes_collection_name}")
-            return MongoDBSaver.from_conn_string(
+            return AsyncMongoDBSaver.from_conn_string(
                 conn_string=mongo_uri,
                 db_name=self.database_name,
                 checkpoint_collection_name=self.checkpoint_collection_name,
@@ -75,4 +73,3 @@ if __name__ == "__main__":
 
     # Example usage
     mongodb_saver = AgentCheckpointer().create_mongodb_saver()
-    print(mongodb_saver)
