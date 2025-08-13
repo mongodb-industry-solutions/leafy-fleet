@@ -16,7 +16,9 @@ services:
       - MONGODB_URI=${MONGODB_URI}  
       - PYTHONUNBUFFERED=1  
       - AWS_PROFILE=${AWS_PROFILE}  
-      - AWS_REGION=${AWS_REGION}  
+      - AWS_REGION=${AWS_REGION} 
+    networks:  
+      - simulation-network  
         
   timeseries-get:  # Port: 9001  
     container_name: timeseries-get-service  
@@ -30,7 +32,9 @@ services:
     command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
     environment:  
       - MONGODB_URI=${MONGODB_URI}  
-      - PYTHONUNBUFFERED=1  
+      - PYTHONUNBUFFERED=1 
+    networks:  
+      - simulation-network 
   
   timeseries-post:  # Port: 9002  
     container_name: timeseries-post-service  
@@ -61,7 +65,9 @@ services:
     command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
     environment:  
       - MONGODB_URI=${MONGODB_URI}  
-      - PYTHONUNBUFFERED=1  
+      - PYTHONUNBUFFERED=1 
+    networks:  
+      - simulation-network 
   
   geofence-service:  # Port: 9004  
     container_name: geofence-get-service  
@@ -90,6 +96,8 @@ services:
     environment:  
       - MONGODB_URI=${MONGODB_URI}  
       - PYTHONUNBUFFERED=1  
+    networks:  
+      - simulation-network
 
   simulation-service:              
     container_name: simulation-service              
