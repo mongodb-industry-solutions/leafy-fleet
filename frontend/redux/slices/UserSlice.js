@@ -88,7 +88,8 @@ const UserSlice = createSlice({
     },
     setSessionId: (state, action) => {  
       state.sessionId = action.payload.sessionId;  
-    },
+    },  
+
     setQueryFilters: (state, action) => {
       const { label, checked } = action.payload;
       if (checked) {
@@ -104,7 +105,8 @@ const UserSlice = createSlice({
     setLoggedFleet: (state, action) => {
       state.isLoggedIn = action.payload; // Set the login status based on the action payload
     }
-  }
+
+}
 
 });
 
@@ -121,9 +123,9 @@ export const {
   setFleet2Attributes,
   setFleet3Attributes,
   setEditFleet,
-  setSessionId,  
+  setLoggedFleet,
+  setSessionId,   
   setQueryFilters,
-  setLoggedFleet
 } = UserSlice.actions;
 
 export default UserSlice.reducer;
