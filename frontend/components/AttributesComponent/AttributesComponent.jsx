@@ -21,7 +21,7 @@ const ALL_ATTRIBUTES = [
   "Quality"
 ];
 
-const ATTR_KEY_MAP = {
+export const ATTR_KEY_MAP = {
   "Oil level": "oil-level",
   "Gas level": "gas-level",
   "Last maintance": "last-maintance",

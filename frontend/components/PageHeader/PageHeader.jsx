@@ -7,10 +7,12 @@ import InfoWizard from "../InfoWizard/InfoWizard";
 import { useState } from "react";
 import talktrackDemo from "@/talkTrack/talkbackBuilder.js";
 import { usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
 
 const PageHeader = () => {
   const [openHelpModal, setOpenHelpModal] = useState(false);
-
+  const sessionId = useSelector((state) => state.User.sessionId);
+  const isLoggedIn = useSelector((state) => state.User.isLoggedIn);
   const pathname = usePathname();
 
   return (
@@ -29,8 +31,8 @@ const PageHeader = () => {
 
         <H1>Leafy Fleet</H1>
 
-       {['/chat', '/overview', '/charts'].some(path => pathname.endsWith(path)) &&  
-        <H3>Session ID: {}</H3>  
+       {isLoggedIn && ['/chat', '/overview', '/charts'].some(path => pathname.endsWith(path)) &&  
+        <H3>Session ID: {sessionId}</H3>  
       }  
       </div>
 
