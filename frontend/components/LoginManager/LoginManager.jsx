@@ -66,7 +66,7 @@ const LoginManager = () => {
   };
 
   const handleFleetCapacityChange = (indexFleet, fleetCapacity) => {
-    console.log("Handling fleet capacity change:", indexFleet, fleetCapacity);
+    // console.log("Handling fleet capacity change:", indexFleet, fleetCapacity);
     dispatchFleetCapacity(indexFleet, fleetCapacity);
   };
 
@@ -96,22 +96,57 @@ const LoginManager = () => {
   };
 
   // Used to manage opening and closing the fleet configuration modal
-  const modalObserver = () => {
-    if (selectedUser.name === "Kicho") {   
-      setOpen(true);
-    } else {
-      setOpen(false);
-      dispatch(setLoggedFleet(true)); 
-      dispatch(setFleet1Capacity(20));
-      dispatch(setFleet2Capacity(10));
-      dispatch(setFleet3Capacity(20));
-      dispatch(setFleet1Name("Fleet 1"));
-      dispatch(setFleet2Name("Fleet 2"));
-      dispatch(setFleet3Name("Fleet 3"));
-      dispatch(setSelectedFleets({ selectedFleets: 3 }));
+const modalObserver = async () => {
+  if (selectedUser.name === "Kicho") {
+    setOpen(true);
+  } else {
+    setOpen(false);
+    dispatch(setLoggedFleet(true));
+    dispatch(setFleet1Capacity(20));
+    dispatch(setFleet2Capacity(10));
+    dispatch(setFleet3Capacity(20));
+    dispatch(setFleet1Name("Fleet 1"));
+    dispatch(setFleet2Name("Fleet 2"));
+    dispatch(setFleet3Name("Fleet 3"));
+    dispatch(setSelectedFleets({ selectedFleets: 3 }));
 
+    // Define fleetNames, fleetSizes, and attributeLists
+    const fleetNames = ["Fleet 1", "Fleet 2", "Fleet 3"];
+    const fleetSizes = [20, 10, 20];
+    const attributeLists = [
+      fleet1Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+      fleet2Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+      fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+    ];
+
+    try {
+      const response = await fetch("http://localhost:9003/sessions/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          vehicle_fleet: {
+            selected_fleets: 3,
+            fleet_names: fleetNames,
+            fleet_size: fleetSizes,
+            attribute_list: attributeLists,
+          },
+          chat_history: [],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create session");
+      }
+
+      const data = await response.json();
+      // console.log("Session created successfully:", data);
+      dispatch(setSessionId({ sessionId: data.session_id }));
+    } catch (error) {
+      console.error("Error creating session:", error);
     }
-    // call to sessions/fleet to set the fleet configuration
+
   };
 
   const handleClose = async () => {
@@ -156,6 +191,7 @@ const LoginManager = () => {
     }
 
     try {
+
       console.log(JSON.stringify({
           vehicle_fleet: {
             selected_fleets: selectedFleets,
@@ -166,6 +202,7 @@ const LoginManager = () => {
           chat_history: []
         }));
       const response = await fetch("http://localhost:9009/sessions/create", {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",

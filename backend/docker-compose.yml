@@ -90,6 +90,21 @@ services:
     environment:  
       - MONGODB_URI=${MONGODB_URI}  
       - PYTHONUNBUFFERED=1  
+
+  simulation-service:              
+    container_name: simulation-service              
+    build:              
+      context: ./simulation           
+    ports:              
+      - "9006:9006"  # Map local port 9006 to container port 9006          
+    volumes:              
+      - ./simulation:/simulation  # Mount the current directory into the container              
+    working_dir: /simulation/app  # Set the working directory inside the container              
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9006  # Run your app directly using the mounted code              
+    env_file:          
+      - ./.env  # Path to your .env file relative to simulation      
+    networks:  
+      - simulation-network  # Connect to the shared network  
   
 networks:  
   simulation-network:  
