@@ -488,9 +488,9 @@ async def startup_event():
     set_session(session)
     global latest_telemetry 
     latest_telemetry= datetime.now(cdt).timestamp()-3600
-    load_routes("processed_routes.json")
+    load_routes("processed_routes.json") # if want to try with 10 cars, use smaller_sim_routes/processed_routes_10.json
     try:  
-        print(geofences_service)
+        
         await geofence_manager.load_geofences(f"{geofences_service}:9004/geofences",session) 
 
   # Load geofences from an API  
