@@ -90,14 +90,23 @@ async def get_latest_timeseries_by_carID(carID: str):
         return JSONResponse(status_code=500, content={"message": f"Error fetching latest timeseries entry for carID {carID}", "error": str(e)})
     
 @router.get("/timeseries/all/latest")
-async def get_latest_timeseries_entries(preferences = Query(..., description="User preferences for the query")):
+async def get_latest_timeseries_entries(preferences = Query(..., description="User preferences for the query"),
+                                        thread_id: Optional[str] = Query(None, description="Thread ID for WebSocket messaging")):
     
     logger.info(f"Fetching latest timeseries entries with preferences: {preferences}")
+    try:
+        preferences = json.loads(preferences)
+    except json.JSONDecodeError:
+        # If not JSON, preprocess it into a valid Python list
+        preferences_list = preferences.split(",")  # Split by commas
+        logger.info(f"Preferences parsed as list: {preferences_list}")
+        
+    match_stage = build_match_stage(preferences_list)
+
+    logger.info(f"Constructed match stage: {match_stage}")
+
 
     try:
-        preferences = ast.literal_eval(preferences)
-        if preferences:
-            match_stage = build_match_stage(preferences)
 
         if match_stage:
             pipeline = [
@@ -503,7 +512,13 @@ def understand_fleet_number(user_preferences: str):
     """
     fleet_numbers = []
     for preference in user_preferences:
-        if isinstance(preference[-1], int):
+        if isinstance(preference[-1], str):
+            logger.info(f"Converting preference {preference[-1]} to int")
+            try:
+                fleet_numbers.append(int(preference[-1]))
+            except ValueError:
+                logger.error(f"Invalid fleet number in preferences: {preference[-1]}")
+        else:
             fleet_numbers.append(preference[-1])
     return fleet_numbers
 
@@ -513,6 +528,8 @@ def build_match_stage(user_preferences: str = None):
     """
     match_stage = {}
     fleet_capacity = understand_fleet_number(user_preferences)
+
+    logger.info(f"Building match stage with fleet capacity: {fleet_capacity}")
 
     # Handle empty fleet_capacity
     if fleet_capacity and len(fleet_capacity) > 0:
