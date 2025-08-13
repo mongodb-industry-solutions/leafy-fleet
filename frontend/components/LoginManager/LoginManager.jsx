@@ -31,6 +31,8 @@ import { usePathname } from "next/navigation";
 import DocumentFleetComponent from "../DocumentFleetComponent/DocumentFleetComponent";
 import { setSessionId } from "@/redux/slices/UserSlice";
 
+
+
 const LoginManager = () => {
   const dispatch = useDispatch();
   const selectedUser = useSelector(
@@ -145,9 +147,9 @@ const modalObserver = async () => {
       dispatch(setSessionId({ sessionId: data.session_id }));
     } catch (error) {
       console.error("Error creating session:", error);
-    }
-
-  };
+      }
+    }  // Add this closing brace for the else block
+  }; 
 
   const handleClose = async () => {
     setOpen(false);
