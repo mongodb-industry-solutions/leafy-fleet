@@ -5,9 +5,6 @@
 #dockers ecs
 create-ecs.txt
 
-#simulation state json
-backend/simulation/app/simulation_state.json
-
 # Environments
 .env
 .venv
