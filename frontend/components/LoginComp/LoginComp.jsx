@@ -66,8 +66,9 @@ const LoginComp = ({ modalObserver }) => {
       // Close modal after successful restore
       setOpen(false);
 
-      // Call simulation service to start the session  
-      try {  
+      // Call simulation service to start the session
+      /* 
+    try {  
           const simResponse = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/sessions`, {  
             method: 'POST',  
             headers: {  
@@ -89,12 +90,12 @@ const LoginComp = ({ modalObserver }) => {
           const simData = await simResponse.json();  
           console.log("Simulation session started:", simData);  
             
-      } catch (simError) {  
+        } catch (simError) {  
           console.error("Error starting simulation session:", simError);  
           // You might want to show a warning but not fail the entire restore process  
         }  
-      //ModalObserver(); // Call modalObserver to complete the login process
-     
+     */
+      
     } catch (error) {
       console.error("Error restoring session:", error);
       // You might want to show an error message to the user here

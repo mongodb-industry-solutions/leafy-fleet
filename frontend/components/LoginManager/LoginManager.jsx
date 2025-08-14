@@ -40,8 +40,6 @@ const LoginManager = () => {
   const editFleet = useSelector((state) => state.User.editFleet);
 
   const selectedFleets = useSelector((state) =>state.User.selectedFleets);
-
-
   // Used to know if default value is needed
   const fleet1Capacity = useSelector((state) => state.User.fleet1Capacity);
   const fleet2Capacity = useSelector((state) => state.User.fleet2Capacity);
@@ -53,6 +51,7 @@ const LoginManager = () => {
   const fleet2Attributes = useSelector((state) => state.User.fleet2Attributes);
   const fleet3Attributes = useSelector((state) => state.User.fleet3Attributes);
 
+  const sessionId = useSelector((state) => state.User.sessionId);
 
   // Dispatch actions based on user input or component logic
   const dispatchFleetCapacity = (indexFleet, fleetCapacity) => {
@@ -118,6 +117,55 @@ const LoginManager = () => {
     startSimulation();      
   }, []);  
 
+   useEffect(() => {  
+    const startSimulationSession = async () => {  
+      // Check if sessionId is not empty  
+      if (!sessionId || sessionId.trim() === '') {  
+        console.log('No session ID available, skipping simulation start');  
+        return;  
+      }  
+  
+      console.log('Session ID detected, starting simulation:', sessionId);  
+  
+      try {  
+        // Get fleet configuration from Redux to use as fleetConfig  
+        const fleetConfig = {  
+          fleet_size: [  
+            fleet1Capacity || 20,  
+            fleet2Capacity || 0,  
+            fleet3Capacity || 0  
+          ]  
+        };  
+  
+        const simResponse = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/sessions`, {  
+          method: 'POST',  
+          headers: {  
+            'Content-Type': 'application/json',  
+          },  
+          body: JSON.stringify({  
+            session_id: sessionId, // Use sessionId from Redux  
+            range1: fleetConfig.fleet_size[0] || 20,  
+            range2: fleetConfig.fleet_size[1] || 0,  
+            range3: fleetConfig.fleet_size[2] || 0  
+          })  
+        });  
+  
+        if (!simResponse.ok) {  
+          const errorData = await simResponse.json();  
+          throw new Error(`Simulation service error: ${errorData.detail || simResponse.status}`);  
+        }  
+  
+        const simData = await simResponse.json();  
+        console.log("Simulation session started:", simData);  
+  
+      } catch (simError) {  
+        console.error("Error starting simulation session:", simError);  
+        // You might want to show a warning but not fail the entire restore process  
+      }  
+    };  
+  
+    startSimulationSession();  
+  }, [sessionId]); // Runs when sessionId or fleet capacities change 
 
   const isLoggedIn = useSelector((state) => state.User.isLoggedIn); 
 
@@ -241,16 +289,7 @@ const LoginManager = () => {
 
     try {
 
-      console.log(JSON.stringify({
-          vehicle_fleet: {
-            selected_fleets: selectedFleets,
-            fleet_names: fleetNames,
-            fleet_size: fleetSizes,
-            attribute_list: attributeLists
-          },
-          chat_history: []
-        }));
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/sessions/create`, {
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/create`, {
 
         method: "POST",
         headers: {
@@ -267,10 +306,10 @@ const LoginManager = () => {
         }),
       });
 
+
       if (!response.ok) {
         throw new Error('Failed to create session');
       }
-
       const data = await response.json();
       // Save the session ID in Redux
       dispatch(setSessionId({ sessionId: data.session_id }));
