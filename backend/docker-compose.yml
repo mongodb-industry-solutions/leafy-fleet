@@ -114,6 +114,7 @@ services:
     networks:  
       - simulation-network  # Connect to the shared network  
   
+# DOCKER_BUILDKIT=0 docker compose build
 
 # docker create network -d bridge simulation-network
 networks:  
