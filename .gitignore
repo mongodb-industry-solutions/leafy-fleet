@@ -6,7 +6,7 @@
 create-ecs.txt
 
 #simulation state json
-simulation_state.json
+backend/simulation/app/simulation_state.json
 
 # Environments
 .env
