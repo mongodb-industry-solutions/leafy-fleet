@@ -21,7 +21,7 @@ const ChartsComponent = () => {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/timeseries/all/latest?thread_id=${thread_id}`
+          `http://${process.env.NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL}/timeseries/all/latest?thread_id=${thread_id}`
         );
 
         if (!res.ok) {
@@ -61,7 +61,7 @@ const ChartsComponent = () => {
       </div>
       <div className={styles.bottomPart} style={{ flex: 5 }}>
         <iframe
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=3bb18da5-6d6a-43d8-aa0d-8924eefc58cd&maxDataAge=3600&theme=light&autoRefresh=true"
+          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=d988fa09-c283-4247-a119-e07bd65d186b&maxDataAge=3600&theme=light&autoRefresh=true"
           width="500"
           height="400"
           style={{
@@ -74,7 +74,7 @@ const ChartsComponent = () => {
         />
 
         <iframe
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=eae4af4e-6804-4c48-8bde-d06ef567183e&maxDataAge=3600&theme=light&autoRefresh=true"
+          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=0abaf73f-0aaa-4459-b451-e8d5ef143316&maxDataAge=3600&theme=light&autoRefresh=true"
           width="500"
           height="400"
           style={{
@@ -94,7 +94,7 @@ const ChartsComponent = () => {
           }}
           width="500"
           height="400"
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=bf0b025d-c891-442c-bdf7-9f6ba2be20e1&maxDataAge=3600&theme=light&autoRefresh=true"
+          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=330b642d-8ee9-49c5-a077-23ad41077600&maxDataAge=3600&theme=light&autoRefresh=true"
           title="MongoDB Chart"
         ></iframe>
         <iframe
@@ -106,7 +106,7 @@ const ChartsComponent = () => {
           }}
           width="700"
           height="350"
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=cea82e30-26c5-4ffb-9a21-4770da7e6ee5&maxDataAge=3600&theme=light&autoRefresh=true"
+          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=dd65364f-a16c-4e84-be3e-7d430a5929b9&maxDataAge=3600&theme=light&autoRefresh=true"
           title="MongoDB Chart"
         ></iframe>
         <iframe
@@ -118,7 +118,7 @@ const ChartsComponent = () => {
           }}
           width="700"
           height="350"
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=8819c448-c3d5-4795-8967-cd0d87b3ab3d&maxDataAge=3600&theme=light&autoRefresh=true"
+          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=cb9db670-b9f0-4812-9969-0335f591b6b1&maxDataAge=3600&theme=light&autoRefresh=true"
           title="MongoDB Chart"
         ></iframe>
       </div>
