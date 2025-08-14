@@ -28,7 +28,8 @@ async def return_all_geofences():
                 "id": str(geofence["_id"]),  # Convert ObjectId to string  
                 "name": geofence.get("name", "Unnamed geofence"),  
                 "geometry": geofence.get("geometry"),
-                "centroid": geofence.get("centroid", None)  # Include centroid if available  
+                "centroid": geofence.get("centroid", None),  # Include centroid if available  
+                "displayName": geofence.get("displayName", "Unnamed Geofence")  # Optional display name
             }  
             for geofence in geofences  
         ]  

@@ -1,4 +1,3 @@
-import { displayName } from "@leafygreen-ui/icon/dist/Wizard";
 
 export const geofences = [{
   "_id": {
