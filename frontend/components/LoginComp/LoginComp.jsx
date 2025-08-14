@@ -44,7 +44,7 @@ const LoginComp = ({ modalObserver }) => {
   
   const handleRestore = async () => {
     try {
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/sessions/${threadId}`);
+      const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/${threadId}`);
 
       if (!response.ok) {
         throw new Error('Session not found');
