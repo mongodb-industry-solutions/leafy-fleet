@@ -11,10 +11,9 @@ const DetailsComponent = () => {
   const car = useSelector((state) => state.Result.selectedCar);
   // Example: You can extend this with more data as needed
   const quickMetrics = [
-    { label: "Fuel Level", value: `${car.fuel}%` },
-    { label: "Mileage", value: `${car.mileage} km` },
-    { label: "Efficiency", value: `${car.efficiency} km/l` },
-    { label: "Alerts", value: car.alerts },
+    { label: "Fuel Level", value: `${Math.round(car.fuel_level/car.max_fuel_level,2)}%` },
+    { label: "Current Route", value: `${car.current_route} ` },
+    { label: "OEE", value: car.oee ? (car.oee * 100).toFixed(2) : 'N/A' },
   ];
 
   const handleClose = () => {
@@ -48,7 +47,7 @@ const DetailsComponent = () => {
         </button>
         <Card>
           <H3 darkMode={false}>
-            {car.id} : {car.name}
+            Car ID: {car.car_id} 
           </H3>
           <div className={styles.UnderCar}>
             <div className={getStatusBadgeClass(car.status)}>
@@ -65,7 +64,7 @@ const DetailsComponent = () => {
                   <Icon glyph="Router"></Icon>
                   <Subtitle>Current Status</Subtitle>
                 </div>
-                <Body>Location: {car.location}</Body>
+                <Body>Location: {car.current_geozone}</Body>
                 <Body>Driver: {car.driver}</Body>
               </div>
               <div className={styles.metricsBlock}>

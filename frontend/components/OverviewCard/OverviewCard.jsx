@@ -7,7 +7,7 @@ import Icon from '@leafygreen-ui/icon';
 import { Combobox, ComboboxOption,ComboboxGroup } from '@leafygreen-ui/combobox';
 import styles from './OverviewCard.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSelectedType, setSelectedFleets, setGeoFences, setMaxDistance, setMinDistance, setLocation } from  '@/redux/slices/OverviewSlice';
+import { setSelectedType, setSelectedFleets, setGeoFences, setMaxDistance, setMinDistance, setLocation, setLoading } from  '@/redux/slices/OverviewSlice';
 import dynamic from 'next/dynamic';
 import Banner from '@leafygreen-ui/banner';
 import { NumberInput } from '@leafygreen-ui/number-input';
@@ -32,8 +32,10 @@ const OverviewCard = () => {
     const fleet1Name = useSelector(state => state.User.fleet1Name);
     const fleet2Name = useSelector(state => state.User.fleet2Name);
     const fleet3Name = useSelector(state => state.User.fleet3Name);
+    const isLoading = useSelector(state => state.Overview.isLoading);  
 
     const handleSearch = async () => {
+        dispatch(setLoading({ isLoading: true })); // Set loading state to true
         try {
             let results;
             if (selectedType === "nearest") {
@@ -68,6 +70,8 @@ const OverviewCard = () => {
         } catch (error) {
             console.error('Search failed:', error);
             dispatch(setResults({ results: [] }));
+        } finally {
+            dispatch(setLoading({ isLoading: false })); // Set loading state to false
         }
     };
 

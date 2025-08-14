@@ -132,7 +132,7 @@ class Car:
         self.run_time += time_per_step
         self.speed = max(((move_distance_m / 1000) / (time_per_step / 3600)), 0) + random.uniform(-4.35, 4.25) #  speed variation km/h,  non-negative
         self.speed = max(self.speed, 0)  # Ensure non-negative
-
+        self.speed_total += self.speed
         self.average_speed = self.speed_total / self.real_step
         
         
@@ -283,7 +283,7 @@ class Car:
         self.run_time += time_per_step
         self.speed = max(((move_distance_m / 1000) / (time_per_step / 3600)), 0) + random.uniform(-4.35, 4.25) #  speed variation km/h,  non-negative
         self.speed = max(self.speed, 0)  # Ensure non-negative
-
+        self.speed_total += self.speed
         self.average_speed = self.speed_total / self.real_step
         self.is_moving = self.speed > 0
         self.performance_score = (self.real_step /self.steps_route) if self.steps_route > 0 else 0
