@@ -3,9 +3,10 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from car_manager import create_cars, get_all_cars, clear_all_cars  
 from car_history_manager import clear_h_all_cars
 from state_manager import is_running, is_stopped, is_paused, set_state  
-from global_context import get_session  # Import HTTP_SESSION management functions  
+from global_context import get_session, timeseries_get , latest_telemetry # Import HTTP_SESSION management functions  
 import logging  
-  
+
+
 logger = logging.getLogger(__name__)  
 router = APIRouter()  
   
@@ -105,7 +106,7 @@ async def start_simulation_endpoint(num_cars: int):
     SIMULATION_TASKS = [asyncio.create_task(car.run(session)) for car in cars]  
     logger.info(f"Spawned {len(SIMULATION_TASKS)} simulation tasks.")  
   
-    set_state("paused")  
+    set_state("paused")      
     return {"message": f"Started simulation with {len(cars)} cars."}  
   
   

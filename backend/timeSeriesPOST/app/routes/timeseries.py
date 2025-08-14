@@ -45,7 +45,7 @@ async def create_historic_batch(entries: List[TimeseriesModel]):
             doc_dict = doc.dict()
             # Ensure timestamp is a datetime object
             if isinstance(doc_dict['timestamp'], str):
-                doc_dict['timestamp'] = datetime.fromisoformat(doc_dict['timestamp'].replace('Z', '+00:00'))
+                doc_dict['timestamp'] = datetime.fromisoformat(doc_dict['timestamp'].replace('Z', '-00:00'))
             documents.append(doc_dict)
 
         # Execute bulk insert_many instead of bulkWrite

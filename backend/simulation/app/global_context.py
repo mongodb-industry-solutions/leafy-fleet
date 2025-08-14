@@ -2,7 +2,7 @@ import aiohttp
 from pydantic_settings import BaseSettings  
 from dotenv import load_dotenv
 import os  
-
+from datetime import datetime, timezone, timedelta
 load_dotenv()
 
 #context needed for global multithreading
@@ -26,8 +26,10 @@ constant_fuel_consumption_per_m = 0.0009  # ml/m
 constant_oil_consumption_per_m = 0.0005  # ml/m  
 
 cars_to_run=300
+latest_telemetry = datetime.now(timezone.utc) - timedelta(hours=1)  
 
 timeseries_post=os.getenv("TIMESERIES_POST_ENDPOINT")
+timeseries_get=os.getenv("TIMESERIES_GET_ENDPOINT")
 geofences_service=os.getenv("GEOFENCES_SERVICE_ENDPOINT")
 static_service=os.getenv("STATIC_SERVICE_ENDPOINT")
 # Print to verify  

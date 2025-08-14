@@ -25,33 +25,40 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-
-
 router = APIRouter()
 
-@router.get("/timeseries")
-async def get_timeseries_entries(body: dict = Body(...)):
+@router.get("/timeseries")  
+async def get_timeseries_entries():  
+    pipeline = [  
+        {"$sort": {"timestamp": -1}},      
+        {"$limit": 1},                   
+    ]  
+    try:  
+        # Use synchronous operations without await  
+        cursor = timeseries_coll.aggregate(pipeline)  
+        latest_entries = list(cursor)  # Convert cursor to list synchronously  
+          
+        if latest_entries and len(latest_entries) > 0:  
+            return JSONResponse(  
+                status_code=200,     
+                content={"timestamp": jsonable_encoder(latest_entries[0]["timestamp"])}  
+            )  
+        else:  
+            return JSONResponse(  
+                status_code=404,     
+                content={"message": "No timeseries entries found"}  
+            )  
+    except Exception as e:  
+        logger.error(f"Error fetching latest timeseries entry: {e}")  
+        return JSONResponse(  
+            status_code=500,     
+            content={  
+                "message": "Error fetching latest timeseries entry",     
+                "error": str(e)  
+            }  
+        )  
 
-    if body:
-        pipeline = [  
-        {"$match": body}, 
-        {"$sort": {"timestamp": -1}},  
-        {"$limit": 400},               
-        ]
-    else:
-        pipeline = [
-            {"$sort": {"timestamp": -1}},  
-            {"$limit": 400},               
-        ]
-    try:
 
-        entries = timeseries_coll.aggregate(pipeline)
-        entries = list(entries)  # Convert the cursor to a list
-        return JSONResponse(content=entries)
-    except Exception as e:
-        
-        return JSONResponse(status_code=500, content={"message": "Error fetching timeseries entries", "error": str(e)})
-    
 @router.get("/timeseries/{carID}")
 async def get_timeseries_by_carID(carID: str):
     """

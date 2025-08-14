@@ -5,7 +5,9 @@ from car_manager import get_car_by_id, get_all_cars
 from car_history_manager import get_h_car_by_id, get_h_all_cars, create_hist_cars
 from pydantic import BaseModel
 from .simulation import HISTORY_TASKS
-from global_context import get_session  # Import HTTP_SESSION management functions  
+from global_context import get_session,timeseries_get  # Import HTTP_SESSION management functions 
+from datetime import datetime , timedelta, timezone
+
 
 import asyncio
 # Pydantic models for API
@@ -89,11 +91,63 @@ async def add_sessions(request: SessionRequest):
         if not hc:
             logger.error("No historic cars were created")
             raise HTTPException(status_code=500, detail="Failed to create historic cars")
-        
+            # Check latest timestamp, if any      
+        timestamp_data = None                   
+        try:          
+            url = f"{timeseries_get}:9001/timeseries"          
+            fetch = await session.get(url)          
+            if fetch.status == 200:          
+                response_data = await fetch.json()          
+                logger.info(f"Retrieved latest timestamp data: {response_data}")          
+                timestamp_str = response_data["timestamp"]          
+                
+                # MongoDB timestamp is already in ISO format with timezone  
+                try:  
+                    timestamp_data = datetime.fromisoformat(timestamp_str)  
+                    # If it's naive, make it UTC-aware  
+                    if timestamp_data.tzinfo is None:  
+                        timestamp_data = timestamp_data.replace(tzinfo=timezone.utc)  
+                except ValueError:  
+                    # Fallback parsing if fromisoformat fails  
+                    timestamp_data = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%f")  
+                    timestamp_data = timestamp_data.replace(tzinfo=timezone.utc)  
+                
+            else:          
+                logger.error(f"Failed to fetch timestamp data: {fetch.status}")      
+                    
+            # Log the exact timestamp received from API          
+            logger.info(f"Parsed API timestamp (UTC): {timestamp_data}")          
+                    
+            # Use UTC consistently for one_hour_ago          
+            one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)          
+            logger.info(f"One hour ago (UTC): {one_hour_ago}")         
+                    
+            if timestamp_data:          
+                # Check if API timestamp is newer than 1 hour ago          
+                if timestamp_data > one_hour_ago:          
+                    # API timestamp is less than 1 hour old, use it          
+                    latest_timestamp = timestamp_data          
+                    logger.info(f"API timestamp is less than 1 hour old: {latest_timestamp}")          
+                    logger.info(f"Updated latest telemetry timestamp: {latest_timestamp}")          
+                else:          
+                    # API timestamp is more than 1 hour old, use 1 hour ago instead          
+                    latest_timestamp = one_hour_ago          
+                    logger.info(f"API timestamp is more than 1 hour old: {timestamp_data}")          
+                    logger.info(f"Using default latest telemetry timestamp (1 hour ago): {latest_timestamp}")          
+            else:          
+                # No API timestamp available, use 1 hour ago          
+                latest_timestamp = one_hour_ago          
+                logger.info(f"No timestamp data found, using default (1 hour ago): {latest_timestamp}")          
+                    
+        except Exception as e:          
+            logger.error(f"Error fetching timestamp data: {e}")          
+            # Ensure timezone awareness in the fallback case      
+            latest_timestamp = datetime.now(timezone.utc) - timedelta(hours=1)      
+            logger.error(f"Using default timestamp (1 hour ago) due to error: {latest_timestamp}")   
         HISTORY_TASKS = []
         for car in hc:
             try:
-                task = asyncio.create_task(car.run_history(session))
+                task = asyncio.create_task(car.run_history(session, latest_timestamp))
                 HISTORY_TASKS.append(task)
                 logger.info(f"Created task for car {car.car_id}")
             except Exception as e:

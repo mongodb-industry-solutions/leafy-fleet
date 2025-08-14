@@ -36,7 +36,8 @@ app.add_middleware(
 # Global Geofences
 geofence_manager = GeofenceManager()  
 # telemetry global time for history  
-latest_telemetry= datetime.now().timestamp()-3600
+
+
 
 # Logging setup  
 logging.basicConfig(  
@@ -223,7 +224,7 @@ class Car:
                     self.latitude, self.longitude = steps[self.step_index]
                     await self.update(dist_per_step, time_per_step)
                     # Access sessions with proper locking (reduced logging frequency)
-                    if self.step_index % 50 == 0:  # Log less frequently
+                    if self.step_index % 30 == 0:  # Log less frequently, maso 30 segundos
                         current_sessions = await self.get_sessions()
                         if current_sessions:  # Only log if there are sessions
                             logger.info(f"Car {self.car_id} has {current_sessions}")
@@ -290,20 +291,47 @@ class Car:
         self.availability_score = min(1, max(0, self.availability_score + (random.uniform(-0.02, 0.02))))
         self.oee = self.quality_score * self.availability_score * self.performance_score    
     
-    async def run_history(self, session):
+    async def run_history(self, session, latest_timestamp: datetime):
         """Run historic simulation for this car - emulates run() logic but for past data."""
         logger.info(f"Car {self.car_id}: Starting history simulation")
         
         try:
-            
             # Calculate target steps for 1 hour of simulation
             target_duration_seconds = 3600  # 1 hour
             total_steps_processed = 0
             batch_data = []
-            batch_size = 350  # Larger batch for efficiency
+            batch_size = 500  # Larger batch for efficiency
 
-            start_time = datetime.now(cdt)
-            counter = start_time.timestamp() - target_duration_seconds
+            start_time = datetime.now(timezone.utc)
+            logger.info(f"Car {self.car_id}: Current time: {start_time}")  
+
+              
+            if latest_timestamp is None:  
+                latest_timestamp = start_time - timedelta(seconds=target_duration_seconds)  
+                logger.info(f"Car {self.car_id}: Using default latest telemetry timestamp: {latest_timestamp}")  
+            else:  
+                logger.info(f"Car {self.car_id}: Using latest telemetry timestamp? {latest_timestamp}")  
+                
+                # Calculate one hour ago as a datetime  
+                one_hour_ago = start_time - timedelta(seconds=target_duration_seconds)  
+                
+                logger.info(f"api time: {latest_timestamp}")    
+                logger.info(f"1 hour ago: {one_hour_ago}")    
+                
+                # Compare datetimes, not timestamps  
+                if latest_timestamp < one_hour_ago:  
+                    logger.info(f"Latest telemetry is older than 1 hour ago, using 1 hour ago")  
+                    latest_timestamp = one_hour_ago  
+                else:  
+                    logger.info(f"Latest telemetry is newer than 1 hour ago, using it")  
+                
+                # Calculate time difference in seconds for logging  
+                time_diff = (start_time - latest_timestamp).total_seconds()  
+                logger.info(f"Time difference from now: {time_diff} seconds")  
+            
+            # Convert to timestamp for the counter  
+            counter = latest_timestamp.timestamp()  
+
             # Initialize route switching variables (same as run function)
             route_step_index = 0
             route_index = 0  # Start with first route (0 or 1)
@@ -318,6 +346,7 @@ class Car:
                     
                 steps, dist_per_step, time_per_step = ROUTES[self.current_route]
                 self.steps_route = len(steps)  # Update for performance calculation
+                logger.info(f"Car {self.car_id}: Processing route {self.current_route} with {len(steps)} steps every {time_per_step} seconds")
                 
                 #logger.info(f"Car {self.car_id}: History processing route {self.current_route} with {len(steps)} steps")
                 
