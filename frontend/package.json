@@ -20,7 +20,7 @@
     "@leafygreen-ui/icon": "^13.4.0",
     "@leafygreen-ui/icon-button": "^16.0.12",
     "@leafygreen-ui/leafygreen-provider": "^4.0.7",
-    "@leafygreen-ui/loading-indicator": "^3.0.12",
+    "@leafygreen-ui/loading-indicator": "^4.0.3",
     "@leafygreen-ui/logo": "^10.0.6",
     "@leafygreen-ui/modal": "^17.1.7",
     "@leafygreen-ui/number-input": "^4.1.7",
