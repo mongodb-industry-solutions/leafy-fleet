@@ -7,13 +7,14 @@ import Icon from '@leafygreen-ui/icon';
 import { Combobox, ComboboxOption,ComboboxGroup } from '@leafygreen-ui/combobox';
 import styles from './OverviewCard.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSelectedType, setSelectedFleets, setGeoFences, setMaxDistance, setMinDistance, setLocation, setLoading } from  '@/redux/slices/OverviewSlice';
+import { setSelectedType, setSelectedFleets, setGeoFences, setMaxDistance, setMinDistance, setLocation, setIsLoading } from  '@/redux/slices/OverviewSlice';
 import dynamic from 'next/dynamic';
 import Banner from '@leafygreen-ui/banner';
 import { NumberInput } from '@leafygreen-ui/number-input';
 import { setResults } from '@/redux/slices/ResultSlice';
 import { geospatialAPI } from './geospatialAPI';
 import { geofences } from '@/components/Geofences/geofences'; // Import the geofences data  
+
 
 // Dynamically import components that might use browser APIs
 const CodeComponent = dynamic(() => import('../CodeComponet/CodeComponent.jsx'), { ssr: false });
@@ -32,10 +33,14 @@ const OverviewCard = () => {
     const fleet1Name = useSelector(state => state.User.fleet1Name);
     const fleet2Name = useSelector(state => state.User.fleet2Name);
     const fleet3Name = useSelector(state => state.User.fleet3Name);
-    const isLoading = useSelector(state => state.Overview.isLoading);  
 
     const handleSearch = async () => {
-        dispatch(setLoading({ isLoading: true })); // Set loading state to true
+
+        if (!location && selectedType === "nearest" || geofences.length === 0 && selectedType === "inside") {
+            alert("Please select a geofence or location to search.");
+            return;
+        }
+        dispatch(setIsLoading({ isLoading: true })); // Set loading state to true
         try {
             let results;
             if (selectedType === "nearest") {
@@ -71,7 +76,7 @@ const OverviewCard = () => {
             console.error('Search failed:', error);
             dispatch(setResults({ results: [] }));
         } finally {
-            dispatch(setLoading({ isLoading: false })); // Set loading state to false
+            dispatch(setIsLoading({ isLoading: false })); // Set loading state to false
         }
     };
 
@@ -94,6 +99,7 @@ const OverviewCard = () => {
             size={Size.Default}
             rightGlyph={<Icon glyph="MagnifyingGlass" />}
             onClick={handleSearch}
+            disabled={!selectedType || (selectedType === "nearest" && !location) || (selectedType === "inside" && geoFences.length === 0)}
           >
             Search Vehicles
           </Button>

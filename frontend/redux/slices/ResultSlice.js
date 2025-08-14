@@ -3,14 +3,16 @@ import { createSlice } from "@reduxjs/toolkit";
 const ResultSlice = createSlice({
     name: "Result",
     initialState: {
-        results: [],
+        results: null,
         staticSelectedCar: null,
         selectedCar: null,
         isModalOpen: false,
     },
     reducers: {
         setResults: (state, action) => {
-            state.results = action.payload.results;
+            state.results = action.payload?.results !== undefined   
+                ? action.payload.results   
+                : action.payload;  
         },
         setSelectedCar: (state, action) => {
             state.selectedCar = action.payload.car;

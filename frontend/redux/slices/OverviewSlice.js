@@ -32,7 +32,7 @@ const OverviewSlice = createSlice({
         setMinDistance: (state, action) => {
             state.minDistance = action.payload.minDistance;
         },
-        setLoading: (state, action) => {  
+        setIsLoading: (state, action) => {  
             state.isLoading = action.payload.isLoading;  
         },  
         setError: (state, action) => {  
@@ -53,5 +53,5 @@ const OverviewSlice = createSlice({
     }
 });
 
-export const { setSelectedType, setSelectedFleets, setLocation, setGeoFences, setMaxDistance, setMinDistance ,setLoading,  setError,  clearError,  resetSearchParams} = OverviewSlice.actions;
+export const { setSelectedType, setSelectedFleets, setLocation, setGeoFences, setMaxDistance, setMinDistance ,setIsLoading,  setError,  clearError,  resetSearchParams} = OverviewSlice.actions;
 export default OverviewSlice.reducer;
