@@ -20,38 +20,38 @@ const PageHeader = () => {
   const inactivityTimer = useRef(null);  
   const hasBeenStopped = useRef(false);  
   
-  const INACTIVITY_TIMEOUT = 1 * 60 * 1000; // 10 minutes in milliseconds  
+  const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds  
   
   // Function to call the stop API  
   const callStopAPI = useCallback(async (useBeacon = false) => {  
-    if (hasBeenStopped.current) return;  
-      
-    hasBeenStopped.current = true;  
-      
-    try {  
-      if (useBeacon && navigator.sendBeacon) {  
-        // Use sendBeacon for page unload - more reliable  
-        const success = navigator.sendBeacon(  
-          "http://localhost:9006/simulation/stop",  
-          JSON.stringify({})  
-        );  
-        console.log("Stop beacon sent:", success);  
-      } else {  
-        // Regular fetch for other cases  
-        await fetch("http://localhost:9006/simulation/stop", {  
-          method: "POST",  
-          headers: {  
-            "Content-Type": "application/json",  
-          },  
-          // Add keepalive flag for better reliability during unload  
-          keepalive: true,  
-        });  
-        console.log("Stop API called successfully");  
-      }  
-    } catch (error) {  
-      console.error("Error calling stop API:", error);  
+  if (hasBeenStopped.current) return;  
+    
+  hasBeenStopped.current = true;  
+    
+  try {  
+    if (useBeacon && navigator.sendBeacon) {  
+      // Use sendBeacon for page unload - more reliable  
+      const success = navigator.sendBeacon(  
+        `${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/stop`,  
+        JSON.stringify({})  
+      );  
+      console.log("Stop beacon sent:", success);  
+    } else {  
+      // Regular fetch for other cases  
+      await fetch(`${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/stop`, {  
+        method: "POST",  
+        headers: {  
+          "Content-Type": "application/json",  
+        },  
+        // Add keepalive flag for better reliability during unload  
+        keepalive: true,  
+      });  
+      console.log("Stop API called successfully");  
     }  
-  }, []);  
+  } catch (error) {  
+    console.error("Error calling stop API:", error);  
+  }  
+}, []);   
   
   // Reset inactivity timer  
   const resetInactivityTimer = useCallback(() => {  
