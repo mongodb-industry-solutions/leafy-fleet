@@ -32,7 +32,6 @@ import DocumentFleetComponent from "../DocumentFleetComponent/DocumentFleetCompo
 import { setSessionId } from "@/redux/slices/UserSlice";
 
 
-
 const LoginManager = () => {
   const dispatch = useDispatch();
   const selectedUser = useSelector(
@@ -86,7 +85,39 @@ const LoginManager = () => {
     dispatchFleetName(indexFleet, fleetName.target.value);
 
   };
-  
+  //  simulation start request  
+  useEffect(() => {      
+    const startSimulation = async () => {      
+      try {      
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/start/300`, {      
+          method: 'POST',      
+          headers: {      
+            'Content-Type': 'application/json',      
+          },      
+        });      
+    
+        if (!response.ok) {  
+          // Check if it's the specific "already running" error  
+          if (response.status === 400) {  
+            const errorData = await response.json();  
+            if (errorData.detail === "Simulation is already running") {  
+              // Silently ignore this error - no console log  
+              return;  
+            }  
+          }  
+          throw new Error(`HTTP error! status: ${response.status}`);      
+        }      
+    
+        const data = await response.json();      
+        console.log('Simulation started successfully:', data);      
+      } catch (error) {      
+        console.error('Error starting simulation:', error);      
+      }      
+    };  
+      
+    startSimulation();      
+  }, []);  
+
 
   const isLoggedIn = useSelector((state) => state.User.isLoggedIn); 
 
@@ -98,75 +129,85 @@ const LoginManager = () => {
   };
 
   // Used to manage opening and closing the fleet configuration modal
-const modalObserver = async () => {
-  if (selectedUser.name === "Kicho") {
-    setOpen(true);
-  } else if (selectedUser.name === "Restored User") {
-    // Skip session creation for restored users
-    setOpen(false);
-    dispatch(setLoggedFleet(true));
-    console.log("Restored user, skipping fleet configuration modal.");
-    return; // This return should stop execution here
-  } else {
-    // Regular user flow
-    setOpen(false);
-    dispatch(setLoggedFleet(true));
-    dispatch(setFleet1Capacity(20));
-    dispatch(setFleet2Capacity(10));
-    dispatch(setFleet3Capacity(20));
-    dispatch(setFleet1Name("Fleet 1"));
-    dispatch(setFleet2Name("Fleet 2"));
-    dispatch(setFleet3Name("Fleet 3"));
-    dispatch(setSelectedFleets({ selectedFleets: 3 }));
+  const modalObserver = async () => {
+    if (selectedUser.name === "Kicho") {
+      setOpen(true);
+    } else if (selectedUser.name === "Restored User") {
+      // Skip session creation for restored users
+      setOpen(false);
+      dispatch(setLoggedFleet(true));
+      console.log("Restored user, skipping fleet configuration modal.");
+      return; // This return should stop execution here
+    } else {
+      // Regular user flow
+      setOpen(false);
+      dispatch(setLoggedFleet(true));
+      dispatch(setFleet1Capacity(20));
+      dispatch(setFleet2Capacity(10));
+      dispatch(setFleet3Capacity(20));
+      dispatch(setFleet1Name("Fleet 1"));
+      dispatch(setFleet2Name("Fleet 2"));
+      dispatch(setFleet3Name("Fleet 3"));
+      dispatch(setSelectedFleets({ selectedFleets: 3 }));
 
-    try {
-      // Session creation code
-      const fleetNames = ["Fleet 1", "Fleet 2", "Fleet 3"];
-      const fleetSizes = [20, 10, 20];
-      const attributeLists = [
-        fleet1Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
-        fleet2Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
-        fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
-      ];
+      try {
+        // Session creation code
+        const fleetNames = ["Fleet 1", "Fleet 2", "Fleet 3"];
+        const fleetSizes = [20, 10, 20];
+        const attributeLists = [
+          fleet1Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+          fleet2Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+          fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
+        ];
 
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/sessions/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          vehicle_fleet: {
-            selected_fleets: 3,
-            fleet_names: fleetNames,
-            fleet_size: fleetSizes,
-            attribute_list: attributeLists,
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-          chat_history: [],
-        }),
-      });
+          body: JSON.stringify({
+            vehicle_fleet: {
+              selected_fleets: 3,
+              fleet_names: fleetNames,
+              fleet_size: fleetSizes,
+              attribute_list: attributeLists,
+            },
+            chat_history: [],
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to create session");
+        if (!response.ok) {
+          throw new Error("Failed to create session");
+        }
+
+        const data = await response.json();
+        dispatch(setSessionId({ sessionId: data.session_id }));
+      } catch (error) {
+        console.error("Error creating session:", error);
       }
-
-      const data = await response.json();
-      dispatch(setSessionId({ sessionId: data.session_id }));
-    } catch (error) {
-      console.error("Error creating session:", error);
     }
-  }
-}; // End of modalObserver
+  }; // End of modalObserver
 
   const handleClose = async () => {
     setOpen(false);
     dispatch(setLoggedFleet(true)); 
     if (!fleet1Capacity || fleet1Capacity === 0) {
       dispatch(setFleet1Capacity(20));
-      dispatch(setFleet2Capacity(0));
-      dispatch(setFleet3Capacity(0));
+    }
+    if (!fleet2Capacity || fleet2Capacity === 0 && selectedFleets > 1) {
+      dispatch(setFleet2Capacity(10));
+    }
+    if (!fleet3Capacity || fleet3Capacity === 0 && selectedFleets > 2) {
+      dispatch(setFleet3Capacity(10));
     }
     if(fleet1Name === ""){
       dispatch(setFleet1Name("Fleet 1"));
+    }
+    if(fleet2Name === "" && selectedFleets > 1){
+      dispatch(setFleet2Name("Fleet 2"));
+    }
+    if(fleet3Name === "" && selectedFleets > 2){
+      dispatch(setFleet3Name("Fleet 3"));
     }
     const fleetNames = [];
     const fleetSizes = [];
@@ -238,14 +279,12 @@ const modalObserver = async () => {
       console.error("Error creating session:", error);
     }
 
-
-
   };
 
   const pathname = usePathname(); // Get the current route  
   const pathsRequiringLogin = ["/chat", "/charts", "/overview"]; // Paths requiring login  
-  
   const shouldShowLoginPopup = pathsRequiringLogin.includes(pathname);  
+
   
   if (isLoggedIn) {  
     return null;  
