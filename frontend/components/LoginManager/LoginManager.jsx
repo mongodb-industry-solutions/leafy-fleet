@@ -242,10 +242,10 @@ const LoginManager = () => {
     if (!fleet1Capacity || fleet1Capacity === 0) {
       dispatch(setFleet1Capacity(20));
     }
-    if (!fleet2Capacity || fleet2Capacity === 0 && selectedFleets > 1) {
+    if (!fleet2Capacity && selectedFleets > 1 || fleet2Capacity === 0 && selectedFleets >1) {
       dispatch(setFleet2Capacity(10));
     }
-    if (!fleet3Capacity || fleet3Capacity === 0 && selectedFleets > 2) {
+    if (!fleet3Capacity && selectedFleets === 3 || fleet2Capacity === 0 && selectedFleets === 3) {
       dispatch(setFleet3Capacity(10));
     }
     if(fleet1Name === ""){
