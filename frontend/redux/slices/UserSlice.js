@@ -15,7 +15,7 @@ const UserSlice = createSlice({
     fleet3Capacity: 0,
     fleet1Attributes: [
       "Coordinates",
-      "Geozone",
+      "Current Geozone",
       "Run Time",
       "OEE",
       "Avaliability",
@@ -24,7 +24,7 @@ const UserSlice = createSlice({
     ],
     fleet2Attributes: [
       "Coordinates",
-      "Geozone",
+      "Current Geozone",
       "Run Time",
       "OEE",
       "Avaliability",
@@ -33,7 +33,7 @@ const UserSlice = createSlice({
     ],
     fleet3Attributes: [
       "Coordinates",
-      "Geozone",
+      "Current Geozone",
       "Run Time",
       "OEE",
       "Avaliability",
