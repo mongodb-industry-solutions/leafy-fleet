@@ -171,7 +171,7 @@ class Car:
             "car_id": self.car_id,
             "fuel_level": float(round(self.fuel_level, 1)),  
             "engine_oil_level": float(round(self.engine_oil_level, 1)),  
-            "traveled_distance": float(round(self.traveled_distance, 4)),  
+            "traveled_distance": float(round(self.traveled_distance, 2)),  
             "run_time": float(round(self.run_time, 2)),              # Fixed: moved 2 inside round()  
             "performance_score": float(round(self.performance_score, 2)),  # Fixed: moved 2 inside round()  
             "quality_score": float(round(self.quality_score, 2)),    # Fixed: moved 2 inside round()  
