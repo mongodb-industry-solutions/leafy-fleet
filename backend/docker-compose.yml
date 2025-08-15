@@ -116,7 +116,7 @@ services:
   
 # DOCKER_BUILDKIT=0 docker compose build
 
-# docker create network -d bridge simulation-network
+#docker network create -d bridge simulation-network
 networks:  
   simulation-network:  
     external: true  

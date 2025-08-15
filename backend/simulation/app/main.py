@@ -56,6 +56,8 @@ state_lock = asyncio.Lock()
 # Helpers for tracking simulation state  
 cars_correctly_running = 300  # Updated for 300 cars
 total_cars = 300  
+oee_not_zero_on_start = 1200 # will start with 1000 steps completed of 1000+ route steps, so should start with around 1000/1300, 
+#around 0.77 ish and go up consistently and continue previous logic. 
 cdt = timezone(timedelta(hours=-5))
 
 def convert_numpy_types(obj):
@@ -101,7 +103,7 @@ class Car:
     #body_type: str
     #license_plate: str
 
-    steps_route:int =0 
+    steps_route:int = 0  # Total steps in the current route 
     # Internal state
     performance_score: float =0 # From 0 to 1
     sessions: list = None  # List of session IDs, can be used for tracking or logging
@@ -153,9 +155,10 @@ class Car:
             logger.warning(f" Car {self.car_id} has an oil leak!")
             await decrement_cars_correctly_running()
         self.is_moving = self.speed > 0
-        self.performance_score = (self.real_step /self.steps_route) if self.steps_route > 0 else 0
+        #performance attributes
+        self.performance_score = min(1,((self.real_step + oee_not_zero_on_start) /(self.steps_route + oee_not_zero_on_start))) if self.steps_route > 0 else 0
         self.quality_score = cars_correctly_running/total_cars
-        self.availability_score = min(1, max(0, self.availability_score + (random.uniform(-0.02, 0.02))))
+        self.availability_score = min(1, max(0.6, self.availability_score + (random.uniform(-0.02, 0.02))))
         self.oee = self.quality_score * self.availability_score * self.performance_score
 
     async def get_sessions(self):
