@@ -169,16 +169,20 @@ const PageHeader = () => {
             </div>
            
             <div className={styles.sessionIdContainer}>
-                {sessionId && (  
+                {sessionId && ( 
+                  <div className={styles.sessionIdText}> 
+                    SessionID:
                   <div   
                       className={`${styles.sessionIdButton} ${copied ? styles.copied : ''}`}  
                       onClick={handleCopySessionId}  
                     >  
+            
                   <code className={styles.sessionIdValue}>{sessionId}</code>  
                     <span className={styles.copyIcon}>  
                       {copied ? '✓' : '📋 '}  
                     </span>  
-                </div>  )}
+                </div> 
+                </div> )}
             </div>
           </div>
           }  

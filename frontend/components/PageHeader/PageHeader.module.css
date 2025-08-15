@@ -4,7 +4,6 @@
   justify-content: space-between;
   height: 90px;
   background-color: white;
-  color: white;
   position: fixed;    /* Add this */
   top: 0;             /* Add this */
   left: 0;            /* Add this */
@@ -98,9 +97,7 @@
   background-color: #005a3f;  
 }  
 
-.sessionIdContainer {  
-  margin: 1rem 0;  
-}  
+
   
 .sessionIdLabel {  
   display: block;  
@@ -137,12 +134,7 @@
   border-color: #4caf50;  
 }  
   
-.sessionIdValue {  
-  font-family: 'Monaco', 'Consolas', monospace;  
-  font-size: 0.875rem;  
-  flex: 1;  
-  margin-right: 1rem;  
-}  
+
   
 .copyIcon {  
   font-size: 0.875rem;  
@@ -168,6 +160,7 @@
   flex: 1;
   margin-right: 1rem;
   color: #333;
+  align-items: center; 
 }
 
 .buttonContainer{
@@ -175,10 +168,22 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  
 }
 .horizontalContainer {
   display: flex;
   justify-content: space-between;
   width: 60%;
   margin-left: 80px;
+  align-items: center; /* This centers vertically */  
+  height: 100%; /* Ensure it takes full height of the parent */
+
+}
+.sessionIdText {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #333;
+
 }
