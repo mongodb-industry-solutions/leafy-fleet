@@ -257,6 +257,7 @@ const LoginManager = () => {
     if(fleet3Name === "" && selectedFleets > 2){
       dispatch(setFleet3Name("Fleet 3"));
     }
+    
     const fleetNames = [];
     const fleetSizes = [];
     const attributeLists = []
@@ -447,6 +448,13 @@ const LoginManager = () => {
                     aria-label="Fleet Name"
                     className="form-control"
                     placeholder="Fleet Name"
+                    value={
+                      index === 0
+                        ? fleet1Name
+                        : index === 1
+                        ? fleet2Name
+                        : fleet3Name
+                    }
                     onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
 
                     onChange={(value) =>{
@@ -461,6 +469,13 @@ const LoginManager = () => {
                     placeholder="Fleet quantity"
                     min="0"
                     max="100"
+                    value={
+                      index === 0
+                        ? fleet1Capacity
+                        : index === 1
+                        ? fleet2Capacity
+                        : fleet3Capacity
+                    }
                     onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
                     onChange={(e) => {
                       let value = parseInt(e.target.value, 10);
