@@ -15,6 +15,16 @@ const SideNavigation = () => {
       aria-label="Main navigation"
     >
       <Link
+        href="/"
+        className={
+          pathname === "/"
+            ? `${styles.sideBarButton} ${styles.activeNavItem}`
+            : styles.sideBarButton
+        }
+      >
+        <SideNavItem>Read the Docs</SideNavItem>
+      </Link>
+      <Link
         href="/chat"
         className={
           pathname === "/chat"
@@ -23,6 +33,19 @@ const SideNavigation = () => {
         }
       >
         <SideNavItem>Chat</SideNavItem>
+      </Link>
+
+      
+
+      <Link
+        href="/geospatial"
+        className={
+          pathname === "/geospatial"
+            ? `${styles.sideBarButton} ${styles.activeNavItem}`
+            : styles.sideBarButton
+        }
+      >
+        <SideNavItem>Geospatial Queries</SideNavItem>
       </Link>
 
       <Link
@@ -36,27 +59,7 @@ const SideNavigation = () => {
         <SideNavItem>Charts</SideNavItem>
       </Link>
 
-      <Link
-        href="/overview"
-        className={
-          pathname === "/overview"
-            ? `${styles.sideBarButton} ${styles.activeNavItem}`
-            : styles.sideBarButton
-        }
-      >
-        <SideNavItem>Overview</SideNavItem>
-      </Link>
-
-      <Link
-        href="/"
-        className={
-          pathname === "/"
-            ? `${styles.sideBarButton} ${styles.activeNavItem}`
-            : styles.sideBarButton
-        }
-      >
-        <SideNavItem>Read the Docs</SideNavItem>
-      </Link>
+      
     </SideNav>
   );
 };

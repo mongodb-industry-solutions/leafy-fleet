@@ -127,7 +127,7 @@ const LoginComp = ({ modalObserver }) => {
           <Subtitle
             className={`${styles.weightNormal} ${styles.centerText} mt-2`}
           >
-            This is a MongoDB demo
+            This is a demo showcasing MongoDB’s geospatial and time series capabilities for fleet management
           </Subtitle>
           <br />
           <Description className={styles.descriptionModal}>
@@ -166,9 +166,9 @@ const LoginComp = ({ modalObserver }) => {
             Look out for <WizardIcon></WizardIcon> to find out more about what
             is going on behind the scenes!
           </Banner>
-          <Description className={`${styles.descriptionModal} mb-3`}>
+          {/* <Description className={`${styles.descriptionModal} mb-3`}>
             Note: Demo to display MongoDb's use cases of time series with fleet managment.
-          </Description>
+          </Description> */}
         </div>
       </Container>
     </Modal>
