@@ -29,6 +29,8 @@ def decrement_active_users():
     logger.info(f"Active users decremented to: {ACTIVE_USERS}") 
     if get_active_users() == 0:
         # If no active users, stop the simulation
+        set_state("stopped")
+        logger.info("No active users left, stopping simulation")
         asyncio.create_task(stop_simulation_internal()) 
     return ACTIVE_USERS  
   
