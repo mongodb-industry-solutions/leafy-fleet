@@ -97,3 +97,88 @@
 .refreshButton:hover {  
   background-color: #005a3f;  
 }  
+
+.sessionIdContainer {  
+  margin: 1rem 0;  
+}  
+  
+.sessionIdLabel {  
+  display: block;  
+  font-weight: 600;  
+  margin-bottom: 0.25rem;  
+  color: #333;  
+}  
+  
+.sessionIdDescription {  
+  margin: 0 0 0.5rem 0;  
+  color: #666;  
+  font-size: 0.875rem;  
+}  
+  
+.sessionIdButton {  
+  display: flex;  
+  align-items: center;  
+  justify-content: space-between;  
+  background-color: #f9f9f9;  
+  border: 1px solid #e8e8e8;  
+  border-radius: 6px;  
+  padding: 0.75rem;  
+  cursor: pointer;  
+  transition: all 0.2s ease;  
+}  
+  
+.sessionIdButton:hover {  
+  background-color: #f0f0f0;  
+  border-color: #d0d0d0;  
+}  
+  
+.sessionIdButton.copied {  
+  background-color: #e8f5e8;  
+  border-color: #4caf50;  
+}  
+  
+.sessionIdValue {  
+  font-family: 'Monaco', 'Consolas', monospace;  
+  font-size: 0.875rem;  
+  flex: 1;  
+  margin-right: 1rem;  
+}  
+  
+.copyIcon {  
+  font-size: 0.875rem;  
+  color: #666;  
+  white-space: nowrap;  
+}  
+  
+.copied .copyIcon {  
+  color: #4caf50;  
+}  
+.sessionIdContainer{
+  /* Move it to be to the right of container */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.sessionIdValue{
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.875rem;
+  flex: 1;
+  margin-right: 1rem;
+  color: #333;
+}
+
+.buttonContainer{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.horizontalContainer {
+  display: flex;
+  justify-content: space-between;
+  width: 60%;
+  margin-left: 80px;
+}

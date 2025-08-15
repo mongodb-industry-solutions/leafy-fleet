@@ -7,9 +7,9 @@ from pydantic import BaseModel
 from .simulation import HISTORY_TASKS
 from global_context import get_session,timeseries_get  # Import HTTP_SESSION management functions 
 from datetime import datetime , timedelta, timezone
-
-
 import asyncio
+from .simulation import increment_active_users
+
 # Pydantic models for API
 class SessionRequest(BaseModel):
     session_id: str
@@ -83,8 +83,9 @@ async def add_sessions(request: SessionRequest):
             "range3": f"201-{200 + request.range3}" if request.range3 > 0 else "none"
         }
     }
+    increment_active_users()
     if is_paused():
-        global HISTORY_TASKS
+        global HISTORY_TASKS        
         session = get_session()
         hc = await create_hist_cars(request.range1, request.range2, request.range3, request.session_id)
         
