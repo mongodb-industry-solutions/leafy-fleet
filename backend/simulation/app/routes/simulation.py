@@ -13,6 +13,28 @@ router = APIRouter()
 # Global simulation tasks list  
 SIMULATION_TASKS = []  
 HISTORY_TASKS = []
+ACTIVE_USERS = 0  
+
+def increment_active_users():  
+    """Increment the active user counter."""  
+    global ACTIVE_USERS  
+    ACTIVE_USERS += 1  
+    logger.info(f"Active users incremented to: {ACTIVE_USERS}")  
+    return ACTIVE_USERS  
+  
+def decrement_active_users():  
+    """Decrement the active user counter."""  
+    global ACTIVE_USERS  
+    ACTIVE_USERS = max(0, ACTIVE_USERS - 1)  # Prevent negative counts  
+    logger.info(f"Active users decremented to: {ACTIVE_USERS}") 
+    if get_active_users() == 0:
+        # If no active users, stop the simulation
+        asyncio.create_task(stop_simulation_internal()) 
+    return ACTIVE_USERS  
+  
+def get_active_users():  
+    """Get the current active user count."""  
+    return ACTIVE_USERS  
   
 async def stop_simulation():  
     """Stop the simulation and clean up all resources."""  
@@ -77,7 +99,12 @@ async def resume_simulation():
   
     set_state("running")  
     logger.info("Simulation resumed")  
-  
+
+@router.post("/reduce-users")
+async def reduce_users():
+    """Endpoint to decrement active users."""
+    decrement_active_users()
+    return {"active_users": get_active_users()}
   
 @router.post("/start/{num_cars}")  
 async def start_simulation_endpoint(num_cars: int):  

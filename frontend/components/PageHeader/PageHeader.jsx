@@ -8,7 +8,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import talktrackDemo from "@/talkTrack/talkbackBuilder.js";  
 import { usePathname } from "next/navigation";  
 import { useSelector } from "react-redux";  
-  
+import Button, { Variant, Size } from '@leafygreen-ui/button';
+import Icon from '@leafygreen-ui/icon';
+
 const PageHeader = () => {  
   const [openHelpModal, setOpenHelpModal] = useState(false);  
   const [showInactivityModal, setShowInactivityModal] = useState(false);  
@@ -19,39 +21,40 @@ const PageHeader = () => {
   const lastActivityTime = useRef(Date.now());  
   const inactivityTimer = useRef(null);  
   const hasBeenStopped = useRef(false);  
+  const visibilityTimer = useRef(null);  
   
-  const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds  
+  const INACTIVITY_TIMEOUT =  60 * 5 * 1000; // 5 minutes in milliseconds  
   
   // Function to call the stop API  
-  const callStopAPI = useCallback(async (useBeacon = false) => {  
-  if (hasBeenStopped.current) return;  
-    
-  hasBeenStopped.current = true;  
-    
-  try {  
-    if (useBeacon && navigator.sendBeacon) {  
-      // Use sendBeacon for page unload - more reliable  
-      const success = navigator.sendBeacon(  
-        `${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/stop`,  
-        JSON.stringify({})  
-      );  
-      console.log("Stop beacon sent:", success);  
-    } else {  
-      // Regular fetch for other cases  
-      await fetch(`${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/stop`, {  
+  const callStopAPI = useCallback(async () => {  
+    if (hasBeenStopped.current) return;  
+    try {  
+      await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/pause`, {  
         method: "POST",  
         headers: {  
           "Content-Type": "application/json",  
         },  
-        // Add keepalive flag for better reliability during unload  
         keepalive: true,  
       });  
       console.log("Stop API called successfully");  
+      hasBeenStopped.current = true; 
+    } catch (error) {  
+      console.error("Error calling stop API:", error);  
     }  
-  } catch (error) {  
-    console.error("Error calling stop API:", error);  
+  }, []);  
+
+  const [copied, setCopied] = useState(false);  
+
+
+  const handleCopySessionId = async () => {  
+  try {  
+    await navigator.clipboard.writeText(sessionId);  
+    setCopied(true);  
+    setTimeout(() => setCopied(false), 2000);  
+  } catch (err) {  
+    console.error('Failed to copy:', err);  
   }  
-}, []);   
+};  
   
   // Reset inactivity timer  
   const resetInactivityTimer = useCallback(() => {  
@@ -63,7 +66,7 @@ const PageHeader = () => {
       
     if (!hasBeenStopped.current) {  
       inactivityTimer.current = setTimeout(() => {  
-        callStopAPI(false); // Don't use beacon for inactivity  
+        callStopAPI();  
         setShowInactivityModal(true);  
       }, INACTIVITY_TIMEOUT);  
     }  
@@ -71,42 +74,33 @@ const PageHeader = () => {
   
   // Handle user activity events  
   const handleUserActivity = useCallback(() => {  
-    resetInactivityTimer();  
+    if (!document.hidden) { // Only reset if page is visible  
+      resetInactivityTimer();  
+    }  
   }, [resetInactivityTimer]);  
   
   // Handle page visibility change  
   const handleVisibilityChange = useCallback(() => {  
     if (document.hidden) {  
-      const timeSinceLastActivity = Date.now() - lastActivityTime.current;  
-        
-      if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {  
-        callStopAPI(false);  
-        setShowInactivityModal(true);  
+      // Page became hidden - start the 5-minute countdown  
+      if (visibilityTimer.current) {  
+        clearTimeout(visibilityTimer.current);  
       }  
+        
+      visibilityTimer.current = setTimeout(() => {  
+        callStopAPI();  
+        setShowInactivityModal(true);  
+      }, INACTIVITY_TIMEOUT);  
+        
     } else {  
+      // Page became visible again - cancel the countdown and reset activity  
+      if (visibilityTimer.current) {  
+        clearTimeout(visibilityTimer.current);  
+        visibilityTimer.current = null;  
+      }  
       handleUserActivity();  
     }  
   }, [callStopAPI, handleUserActivity]);  
-  
-  // Handle page unload - use beacon for better reliability  
-  const handleBeforeUnload = useCallback(() => {  
-    callStopAPI(true); // Use beacon for page unload  
-  }, [callStopAPI]);  
-  
-  // Additional unload handler for better coverage  
-  const handleUnload = useCallback(() => {  
-    callStopAPI(true);  
-  }, [callStopAPI]);  
-  
-  // Page focus/blur handlers for additional coverage  
-  const handlePageBlur = useCallback(() => {  
-    // Set a short timer - if page doesn't regain focus, assume user left  
-    setTimeout(() => {  
-      if (document.hidden || !document.hasFocus()) {  
-        callStopAPI(true);  
-      }  
-    }, 1000);  
-  }, [callStopAPI]);  
   
   useEffect(() => {  
     if (isLoggedIn && ['/chat', '/overview', '/charts'].some(path => pathname.endsWith(path))) {  
@@ -117,9 +111,6 @@ const PageHeader = () => {
       });  
   
       document.addEventListener('visibilitychange', handleVisibilityChange);  
-      window.addEventListener('beforeunload', handleBeforeUnload);  
-      window.addEventListener('unload', handleUnload);  
-      window.addEventListener('blur', handlePageBlur);  
         
       resetInactivityTimer();  
   
@@ -129,16 +120,17 @@ const PageHeader = () => {
         });  
           
         document.removeEventListener('visibilitychange', handleVisibilityChange);  
-        window.removeEventListener('beforeunload', handleBeforeUnload);  
-        window.removeEventListener('unload', handleUnload);  
-        window.removeEventListener('blur', handlePageBlur);  
           
         if (inactivityTimer.current) {  
           clearTimeout(inactivityTimer.current);  
         }  
+          
+        if (visibilityTimer.current) {  
+          clearTimeout(visibilityTimer.current);  
+        }  
       };  
     }  
-  }, [isLoggedIn, pathname, handleUserActivity, handleVisibilityChange, handleBeforeUnload, handleUnload, handlePageBlur, resetInactivityTimer]);  
+  }, [isLoggedIn, pathname, handleUserActivity, handleVisibilityChange, resetInactivityTimer]);  
   
   const handleRefresh = () => {  
     window.location.reload();  
@@ -162,7 +154,37 @@ const PageHeader = () => {
           <H1>Leafy Fleet</H1>  
   
           {isLoggedIn && ['/chat', '/overview', '/charts'].some(path => pathname.endsWith(path)) &&  
-            <H3>Session ID: {sessionId}</H3>  
+
+            <div className= {styles.horizontalContainer}>
+              <div className={styles.buttonContainer}>
+                <Button
+                            variant={Variant.Primary}
+                            darkMode={false}
+                            size={Size.Default}
+                            rightGlyph={<Icon glyph="Stop" />}
+                            onClick={callStopAPI}
+                          >
+                            Stop Simulation
+                  </Button>
+            </div>
+           
+            <div className={styles.sessionIdContainer}>
+                {sessionId && ( 
+                  <div className={styles.sessionIdText}> 
+                    SessionID:
+                  <div   
+                      className={`${styles.sessionIdButton} ${copied ? styles.copied : ''}`}  
+                      onClick={handleCopySessionId}  
+                    >  
+            
+                  <code className={styles.sessionIdValue}>{sessionId}</code>  
+                    <span className={styles.copyIcon}>  
+                      {copied ? '✓' : '📋 '}  
+                    </span>  
+                </div> 
+                </div> )}
+            </div>
+          </div>
           }  
         </div>  
   
@@ -177,11 +199,21 @@ const PageHeader = () => {
         </div>  
       </header>  
   
-      {showInactivityModal && (  
+      {showInactivityModal && !hasBeenStopped && (  
         <div className={styles.modalOverlay}>  
           <div className={styles.modal}>  
             <h2>Demo Stopped Due to Inactivity</h2>  
-            <p>Your session has been stopped due to 10 minutes of inactivity.</p>  
+            <p>Your session has been stopped due to 5 minutes of inactivity.</p>  
+            {sessionId && (  
+              <div   
+                  className={`${styles.sessionIdButton} ${copied ? styles.copied : ''}`}  
+                  onClick={handleCopySessionId}  
+                >  
+               <code className={styles.sessionIdValue}>{sessionId}</code>  
+                <span className={styles.copyIcon}>  
+                  {copied ? '✓ ' : '📋 '}  
+                </span>  
+              </div>  )}
             <p>Please refresh to continue.</p>  
             <button onClick={handleRefresh} className={styles.refreshButton}>  
               Refresh to Continue  
