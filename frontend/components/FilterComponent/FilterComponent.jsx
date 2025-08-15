@@ -118,12 +118,12 @@ const FilterComponent = () => {
                 Fleets{" "}
                 <Tooltip
                   trigger={
-                    <IconButton aria-label="Information about Geofences">
+                    <IconButton aria-label="Information about Fleets">
                       <Icon glyph={"InfoWithCircle"} />
                     </IconButton>
                   }
                 >
-                  
+                  Select which fleets to include in your query.
                 </Tooltip>
               </h3>
               {fleet1Name && (
@@ -146,7 +146,18 @@ const FilterComponent = () => {
               )}
             </div>
             <div className={styles.checkboxGroup}>
-              <h3 className={styles.groupTitle}>Time</h3>
+              <h3 className={styles.groupTitle}>
+                Time{" "}
+                <Tooltip
+                  trigger={
+                    <IconButton aria-label="Information about Time">
+                      <Icon glyph={"InfoWithCircle"} />
+                    </IconButton>
+                  }
+                >
+                  Select which time ranges to include in your query.
+                </Tooltip>
+              </h3>
               <Checkbox
                 onChange={(e) => setFilter("Last 30 min", e.target.checked)}
                 label="Last 30 min"
