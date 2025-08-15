@@ -169,22 +169,22 @@ class Car:
         
         doc = {
             "car_id": self.car_id,
-            "fuel_level": float(round(self.fuel_level, 1)),
-            "engine_oil_level": float(round(self.engine_oil_level, 1)),
-            "traveled_distance": float(round(self.traveled_distance, 4)),
-            "run_time": float(round(self.run_time),2),
-            "performance_score": float(round(self.performance_score),2),
-            "quality_score": float(round(self.quality_score),2),
-            "availability_score": float(round(self.availability_score),2),
-            "max_fuel_level": float(round(self.max_fuel_level),2),
-            "oee": float(round(self.oee),2),
-            "oil_temperature": float(round(self.oil_temperature),2),
-            "is_oil_leak": self.is_oil_leak,
-            "is_engine_running": self.is_engine_running,
-            "is_crashed": self.is_crashed,
-            "current_route": self.current_route,
-            "speed": float(round(self.speed, 2)),
-            "average_speed": float(round(self.average_speed, 2)),
+            "fuel_level": float(round(self.fuel_level, 1)),  
+            "engine_oil_level": float(round(self.engine_oil_level, 1)),  
+            "traveled_distance": float(round(self.traveled_distance, 4)),  
+            "run_time": float(round(self.run_time, 2)),              # Fixed: moved 2 inside round()  
+            "performance_score": float(round(self.performance_score, 2)),  # Fixed: moved 2 inside round()  
+            "quality_score": float(round(self.quality_score, 2)),    # Fixed: moved 2 inside round()  
+            "availability_score": float(round(self.availability_score, 2)),  # Fixed: moved 2 inside round()  
+            "max_fuel_level": float(round(self.max_fuel_level, 2)),  # Fixed: moved 2 inside round()  
+            "oee": float(round(self.oee, 2)),                        # Fixed: moved 2 inside round()  
+            "oil_temperature": float(round(self.oil_temperature, 2)), # Fixed: moved 2 inside round()  
+            "is_oil_leak": self.is_oil_leak,  
+            "is_engine_running": self.is_engine_running,  
+            "is_crashed": self.is_crashed,  
+            "current_route": self.current_route,  
+            "speed": float(round(self.speed, 2)),  
+            "average_speed": float(round(self.average_speed, 2)),  
             "is_moving": self.is_moving,
             "current_geozone": self.current_geozone,
             "coordinates": {
