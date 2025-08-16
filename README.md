@@ -89,172 +89,99 @@ Before you begin, ensure you have met the following requirements:
 
 - **MongoDB Atlas** account - [Register Here](https://account.mongodb.com/account/register)
 - **Python >=3.10,<3.11** - If you are Mac user, you can install Python 3.10.11 using this [link](https://www.python.org/ftp/python/3.10.11/python-3.10.11-macos11.pkg).
+- **Docker** installed
+- **Node.js** installed
+- **VoyageAI** account
+- **AWS Account** with access to Bedrock service
 
 ## Getting Started
 
-### Create a New Repository
+### Cloning the Repository
 
-1. Navigate to the repository on GitHub and click on **Fork**.
-2. Create a new repository.
-3. Include the main branch only.
-4. Define a repository name following the naming convention: `<project_name>-<highlighted_feature>`. For example, `leafy-fleet-taxi-implementation` (use hyphens to separate words).
+1. Navigate to the repository on GitHub and obtain the repository URL.
+2. Open your terminal and run the following command to clone the repository:
+
+```bash
+git clone <REPOSITORY_URL>
+```
 
 ### GitHub Desktop Setup
 
 1. Install GitHub Desktop if you haven't already. You can download it from [GitHub Desktop's official website](https://desktop.github.com/).
 2. Open GitHub Desktop and sign in to your GitHub account.
-3. Clone the newly created repository:
-   - Click on **File** > **Clone Repository**.
-   - Select your repository from the list and click **Clone**.
-4. Create your first branch:
-   - In the GitHub Desktop interface, click on the **Current Branch** dropdown.
-   - Select **New Branch** and name it `feature/branch01`.
-   - Click **Create Branch**.
+3. Click on "File" in the menu bar and select "Clone repository."
+4. In the "Clone a repository" window, select the "URL" tab.
+5. Paste the repository URL you copied earlier into the "Repository URL" field.
+6. Choose the local path where you want to clone the repository by clicking on "Choose..."
+7. Click the "Clone" button to start cloning the repository to your local machine.
 
 ## Setup Instructions
 
-### Step 1: Include meaningful CSV data for your use case
+This demo consists of a backend with multiple microservices. Each microservice has its own `Dockerfile` and can be run independently. The backend services are defined in the `docker-compose.yml` file located in the root directory.
 
-# Fer Ayudame a crear el coso de como crear los coches 
+### Step 1: Set Up MongoDB Database and Collections
 
-1. Go to [CSV folder](/backend/data/csv/) and include your CSV file. The data should be relevant to your use case and respect the following guidelines:
-   - The CSV file should contain a header row with column names.
-   - The first column must be named `timestamp` and contain timestamps in the format `YYYY-MM-DDTHH:MM:SSZ`, e.g. `2025-02-19T13:00:00Z`.
-   - The remaining columns should contain relevant data for your use case.
-   - There is no column nor row limit, but the suggestion is to keep the data size as small as possible.
+1. Log in to **MongoDB Atlas** and obtain your **MongoDB connection string URI**. Follow [this guide](https://www.mongodb.com/resources/products/fundamentals/mongodb-connection-string) if you need help obtaining a connection string.
 
-E.g. for **macro indicators** use case:
+### Step 2: Obtain access to LLMs
 
-> **_File name:_**: `macro_indicators_data.csv`
+1. Set up an account with **AWS** and ensure you have a role which you can access on the computer where you will run the backend service. The role must have access to **AWS Bedrock** service.
+2. Ensure that you have access to the **Anthropic Claude 3 Haiku** for chat completions.
 
-Sample data:
+### Step 3: Obtain the VoyageAI API Key
+1. Sign up for a **VoyageAI** account if you don't have one already.
+2. Navigate to the API section of your VoyageAI account to generate an API key.
+3. Copy the generated API key and keep it secure, as you will need it to configure the backend service.
 
-```csv
-timestamp,gdp,interest_rate,unemployment_rate,vix
-2025-02-19T13:00:00Z,2.5,1.75,3.8,15
-2025-02-19T13:05:00Z,2.7,1.80,3.7,18
-2025-02-19T13:10:00Z,2.6,1.85,3.9,22
-2025-02-19T13:15:00Z,2.4,1.70,4.0,10
-2025-02-19T13:20:00Z,2.3,1.65,4.1,20
+This API key will be used to access the Voyage-3.5 model for generating embeddings.
+
+### Step 4: Configure the `.env` files
+
+You will need to have 2 sets of environment variables, one for the backend and one for the frontend.
+
+#### Backend Configuration - `.env`
+
+Thi is the .env that goes into the `/backend` directory.
+
+```bash
+MONGODB_URI="mongodb+srv://<USERNAME>:<PASSWORD>@<CLUSTER>"
+APP_NAME="leafy_fleet"
+AWS_REGION=<THE_AWS_REGION_YOU_SET_UP_YOUR_ACCOUNT_IN>
+AWS_PROFILE=<YOUR_AWS_PROFILE_NAME>
+ORIGINS=http://localhost:3000 # your local dev server
+VOYAGE_API_KEY=<YOUR_VOYAGE_API_KEY>
+STATIC_SERVICE_ENDPOINT=http://static-vehicle-service
+TIMESERIES_POST_ENDPOINT=http://timeseries-post-service
+GEOFENCES_SERVICE_ENDPOINT=http://geofence-get-service
 ```
 
-2. Within the same [CSV folder](/backend/data/csv/) you need to add a `queries.csv` file. This file will contain the queries which will be used to showcase vector search capabilities as part of the agentic workflow. The file should respect the following guidelines:
-   - The CSV file should contain a header row with column names.
-   - The first column must be named `query` and contain the queries.
-   - The second column must be named `recommendation` and contain the expected recommendations.
-   - There is no column nor row limit, but the suggestion is to keep the data size as small as possible.
+Only replace the values in `<>` with your actual values.
 
-> **_File name:_**: `queries.csv`
+You'll need to copy this file into multiple directories for different services in the backend:
+- `/backend`
+- `/backend/agent`
+- `/backend/geofenceGET/app`
+- `/backend/sessions/app`
+- `/backend/simulation/app`
+- `/backend/static_service/app`
+- `/backend/timeSeriesGET/app`
+- `/backend/timeSeriesPOST/app`
 
-Sample data:
-
-```csv
-query,recommendation
-GDP growth slowing,Consider increasing bond assets to mitigate risks from potential economic slowdown.
-GDP showing strong growth,Increase equity assets to capitalize on favorable investment conditions.
-Interest rates rising,Shift focus to bond assets as higher rates may impact borrowing-sensitive sectors.
-Interest rates falling,Increase real estate assets to take advantage of lower borrowing costs.
-Unemployment rate increasing,Reduce equity assets to account for potential economic weakness and reduced consumer spending.
-Unemployment rate decreasing,Increase equity assets to benefit from improved economic conditions and corporate profits.
-VIX above 20,Reduce equity assets to manage risks associated with high market volatility.
-VIX below 12,Increase equity assets to capitalize on low market volatility and investor confidence.
-VIX within normal range (12-20),Maintain current asset allocation as market conditions are stable.
-Combination of rising interest rates and high VIX,Focus on bond assets to hedge against market volatility and borrowing cost impacts.
+> **IMPORTANT NOTES**: Make sure you create a docker network the first time you run the services by executing:
+```bash
+docker network create -d bridge simulation-network
 ```
 
-### Step 2: Set Up MongoDB Database and Collections
-
-1. Log in to **MongoDB Atlas** and create a database named `agentic_<YOUR_USE_CASE>`, e.g. `agentic_macro_indicators`. Ensure the name is reflected in the environment variables.
-2. Create the following collections:
-  - `agent_profiles` (for storing agent profiles) - You can import some sample data to this collection using [this](/backend/data/collections/agentic_macro_indicators.agent_profiles.json) file.
-  - `queries` (for storing queries) - You must import the queries from the `queries.csv` file created in Step 1.
-
-### Step 3: Add MongoDB User
-
-1. Follow [MongoDB's guide](https://www.mongodb.com/docs/atlas/security-add-mongodb-users/) to create a user with **dbAdmin** and **readWrite** access to your database.
-
-### Step 4: Configure your Agentic Workflow through a JSON config file
-
-1. Go to [Config folder](/backend/config/) and create /or/ update the JSON `config.json` file. The file should contain the following structure:
-
-```json
-{
-    "CSV_DATA": "data/csv/<YOUR_FILE_NAME>.csv",
-    "MDB_DATABASE_NAME": "<YOUR_MONGODB_DATABASE_NAME>",
-    "MDB_TIMESERIES_COLLECTION": "<YOUR_MONGODB_TIMESERIES_COLLECTION_NAME>",
-    "DEFAULT_TIMESERIES_DATA": [
-        {
-            "timestamp": "<DEFAULT_TIMESTAMP_IN_YYYY-MM-DDTHH:MM:SSZ>",
-            // Your default data here, check config_example.json for better understanding
-        }
-    ],
-    "CRITICAL_CONDITIONS": {
-        // Below is an example of a critical condition for GDP growth
-        "gdp": {"threshold": 2.5, "condition": "<", "message": "GDP growth slowing: {value}%"},
-        // Other critical conditions for your use case here, check config_example.json for better understanding
-    },
-    "MDB_TIMESERIES_TIMEFIELD": "<YOUR_TIMESTAMP_FIELD_NAME>",
-    "MDB_TIMESERIES_GRANULARITY": "<YOUR_TIMESERIES_GRANULARITY>",
-    "MDB_EMBEDDINGS_COLLECTION": "queries", // Using "queries" collection name for storing queries
-    "MDB_EMBEDDINGS_COLLECTION_VS_FIELD": "query_embedding", // Using "query_embedding" field for storing embeddings
-    "MDB_VS_INDEX": "<YOUR_MONGODB_DATABASE_NAME>_queries_vs_idx", // Replace <YOUR_MONGODB_DATABASE_NAME> with your MongoDB database name
-    "MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION": "historical_recommendations", // Using "historical_recommendations" collection name for storing recommendations
-    "SIMILAR_QUERIES": [
-        // Below is an example of default similar queries for GDP growth
-        {"query": "GDP growth slowing", "recommendation": "Consider increasing bond assets to mitigate risks from potential economic slowdown."},
-        // Other similar queries for your use case here, check config_example.json for better understanding
-        // This ones are going to be used for the vector search tool in case something is not found in the queries collection
-    ],
-    "MDB_CHAT_HISTORY_COLLECTION": "chat_history", // Using "chat_history" collection name for storing chat history
-    "MDB_CHECKPOINTER_COLLECTION": "checkpoints", // Using "checkpoints" collection name for storing checkpoints
-    "MDB_LOGS_COLLECTION": "logs", // Using "logs" collection name for storing logs
-    "MDB_AGENT_PROFILES_COLLECTION": "agent_profiles", // Using "agent_profiles" collection name for storing agent profiles
-    "MDB_AGENT_SESSIONS_COLLECTION": "agent_sessions", // Using "agent_sessions" collection name for storing agent sessions
-    "AGENT_PROFILE_CHOSEN_ID": "<YOUR_AGENT_PROFILE_ID>", // Replace <YOUR_AGENT_PROFILE_ID> with the agent profile ID you want to use, check config_example.json for better understanding
-     // Below is an example default agent profile for Portfolio Advisor
-    "DEFAULT_AGENT_PROFILE": {
-          "agent_id": "DEFAULT",
-          "profile": "Default Agent Profile",
-          "role": "Expert Advisor",
-          "kind_of_data": "Specific Data",
-          "motive": "diagnose the query and provide recommendations",
-          "instructions": "Follow procedures meticulously.",
-          "rules": "Document all steps.",
-          "goals": "Provide actionable recommendations."
-    },
-    "EMBEDDINGS_MODEL_NAME": "Cohere Embed English V3 Model (within AWS Bedrock)", // Describing the embeddings model used for creating the chain of thought
-    "EMBEDDINGS_MODEL_ID": "cohere.embed-english-v3", // Model ID for the embeddings model
-    "CHATCOMPLETIONS_MODEL_NAME": "Anthropic Claude 3 Haiku (within AWS Bedrock)", // Describing the chat completions model used for generating responses
-    "CHATCOMPLETIONS_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0", // Model ID for the chat completions model
-    // Below is a sample agent workflow graph that uses the tools defined in the agent_tools.py file
-    // PLEASE BE CAREFUL WHEN MODIFYING THIS GRAPH, CONSIDER THAT THE TOOLS DEFINED IN THE AGENT TOOLS FILE ARE USED HERE AS WELL AS THE IMPORTS
-    "AGENT_WORKFLOW_GRAPH": {
-        "nodes": [
-            {"id": "reasoning_node", "tool": "agent_tools.generate_chain_of_thought_tool"},
-            {"id": "data_from_csv", "tool": "agent_tools.get_data_from_csv_tool"},
-            {"id": "process_data", "tool": "agent_tools.process_data_tool"},
-            {"id": "embedding_node", "tool": "agent_tools.get_query_embedding_tool"},
-            {"id": "vector_search", "tool": "agent_tools.vector_search_tool"},
-            {"id": "process_vector_search", "tool": "agent_tools.process_vector_search_tool"},
-            {"id": "persistence_node", "tool": "agent_tools.persist_data_tool"},
-            {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"}
-        ],
-        "edges": [
-            {"from": "reasoning_node", "to": "data_from_csv"},
-            {"from": "data_from_csv", "to": "process_data"},
-            {"from": "process_data", "to": "embedding_node"},
-            {"from": "embedding_node", "to": "vector_search"},
-            {"from": "vector_search", "to": "process_vector_search"},
-            {"from": "process_vector_search", "to": "persistence_node"},
-            {"from": "persistence_node", "to": "recommendation_node"},
-            {"from": "recommendation_node", "to": "END"}
-        ],
-        "entry_point": "reasoning_node"
-    }
-}
+Once you made sure the network is created, the `.env` files are in place, and your computer has access to the AWS profile you can run the backend services with the following command from the `/backend` directory:
+```bash
+docker compose up -d
 ```
+docker should build the containers and start the services.
 
-> **_IMPORTANT NOTES_**: For better understanding of the JSON `config.json` file.
+
+
+
+> **_IMPORTANT NOTES_**: For better understanding of the JSON `config.json` file inside agent, this is the main configuration file for the Agent.
 
 Attributes in config.json
 1. `CSV_DATA`:
