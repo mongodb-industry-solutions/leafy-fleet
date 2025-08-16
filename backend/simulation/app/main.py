@@ -303,10 +303,11 @@ class Car:
         self.speed_total += self.speed
         self.average_speed = self.speed_total / self.real_step
         self.is_moving = self.speed > 0
-        self.performance_score = (self.real_step /self.steps_route) if self.steps_route > 0 else 0
+        self.performance_score = min(1,((self.real_step + oee_not_zero_on_start) /(self.steps_route + oee_not_zero_on_start))) if self.steps_route > 0 else 0
         self.quality_score = cars_correctly_running/total_cars
-        self.availability_score = min(1, max(0, self.availability_score + (random.uniform(-0.02, 0.02))))
-        self.oee = self.quality_score * self.availability_score * self.performance_score    
+        self.availability_score = min(1, max(0.6, self.availability_score + (random.uniform(-0.02, 0.02))))
+        self.oee = self.quality_score * self.availability_score * self.performance_score
+
     
     async def run_history(self, session, latest_timestamp: datetime):
         """Run historic simulation for this car - emulates run() logic but for past data."""
