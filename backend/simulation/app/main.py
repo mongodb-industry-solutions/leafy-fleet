@@ -56,8 +56,20 @@ state_lock = asyncio.Lock()
 # Helpers for tracking simulation state  
 cars_correctly_running = 300  # Updated for 300 cars
 total_cars = 300  
-oee_not_zero_on_start = 1200 # will start with 1000 steps completed of 1000+ route steps, so should start with around 1000/1300, 
+
+#variables for simulation, change performance and oee.
+
+# will start with 1000 steps completed of 1000+ route steps, so should start with around 1000/1300, 
 #around 0.77 ish and go up consistently and continue previous logic. 
+oee_not_zero_on_start = 1200 
+
+#to modify I into db, will also send every n steps
+timeseries_send_every_n_steps = 5  # Send every 5 steps for performance, so every 5-10 seconds per car.
+timeseries_historic_send_every_n_steps = 10  # Send every 10 steps for history, so every 10-20 simulated seconds, is sent in batches of 1000 for performance with bulk
+
+batch_size = 1000  #  batch for efficiency using write bulk API, can be adjusted based on performance needs
+
+
 cdt = timezone(timedelta(hours=-5))
 
 def convert_numpy_types(obj):
@@ -225,13 +237,14 @@ class Car:
                 
                 while self.step_index < len(steps) and  state_manager.is_running():
                     self.latitude, self.longitude = steps[self.step_index]
-                    await self.update(dist_per_step, time_per_step)
+                    await self.update(dist_per_step, time_per_step) # will always update, so its realistic.
                     # Access sessions with proper locking (reduced logging frequency)
-                    if self.step_index % 30 == 0:  # Log less frequently, maso 30 segundos
+                    if self.step_index % 30 == 0:  # check every 30-60 seconds if new user joined.
                         current_sessions = await self.get_sessions()
-                        if current_sessions:  # Only log if there are sessions
-                            logger.info(f"Car {self.car_id} has {current_sessions}")
-                    if self.step_index % 10 == 0:
+                        if self.step_index % 60 == 0:  # Log every 2 checks, less IO (will delete this before production)
+                            if current_sessions:  # Only log if there are sessions
+                                logger.info(f"Car {self.car_id} has {current_sessions}")
+                    if self.step_index % 10 == 0: #check geofence every 10 steps
                         try:
                             self.current_geozone = geofence_manager.check_point_in_geofences(self.longitude, self.latitude)  
                             logger.info(f"Car {self.car_id}: Current geozone: {self.current_geozone}")
@@ -240,14 +253,15 @@ class Car:
                             self.current_geozone = "Error checking geofence"
 
                     # Send timeseries data every step
-                    try:
-                        document = await self.to_document() 
-                        await session.post(
-                            f"{timeseries_post}:9002/timeseries",
-                            json=document
-                        )
-                    except Exception as e:
-                        logger.warning(f" Error sending timeseries for Car {self.car_id}: {e}")
+                    if self.step_index % timeseries_send_every_n_steps == 0 and self.is_engine_running:  # Send every 5 steps, so once per 5-10 seconds for performance, but not if crashed or not running (log those)
+                        try:
+                            document = await self.to_document() 
+                            await session.post(
+                                f"{timeseries_post}:9002/timeseries",
+                                json=document
+                            )
+                        except Exception as e:
+                            logger.warning(f" Error sending timeseries for Car {self.car_id}: {e}")
                     
                     self.step_index += 1
 
@@ -303,7 +317,6 @@ class Car:
             target_duration_seconds = 3600  # 1 hour
             total_steps_processed = 0
             batch_data = []
-            batch_size = 500  # Larger batch for efficiency
 
             start_time = datetime.now(timezone.utc)
             logger.info(f"Car {self.car_id}: Current time: {start_time}")  
@@ -371,16 +384,18 @@ class Car:
                                 self.current_geozone = "Error checking geofence"
                         
                         # Create document with historical timestamp
-                        data_point = await self.to_document()
+                        
                         counter+=time_per_step
                         # Set timestamp to simulate past data (going backwards from current time)
                         historical_timestamp = counter
-                        local_dt = datetime.fromtimestamp(historical_timestamp, tz=cdt)
-                        utc_dt = local_dt.astimezone(timezone.utc)
-                        data_point["timestamp"] = utc_dt.isoformat()
-
                         
-                        batch_data.append(data_point)
+
+                        if self.step_index % timeseries_historic_send_every_n_steps == 0 and self.is_engine_running: 
+                            data_point = await self.to_document()
+                            local_dt = datetime.fromtimestamp(historical_timestamp, tz=cdt)
+                            utc_dt = local_dt.astimezone(timezone.utc)
+                            data_point["timestamp"] = utc_dt.isoformat()
+                            batch_data.append(data_point)
                         route_step_index += 1
                         total_steps_processed += 1
                         
