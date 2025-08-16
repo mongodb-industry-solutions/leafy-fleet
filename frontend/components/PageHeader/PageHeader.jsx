@@ -20,28 +20,33 @@ const PageHeader = () => {
     
   const lastActivityTime = useRef(Date.now());  
   const inactivityTimer = useRef(null);  
-  const hasBeenStopped = useRef(false);  
-  const visibilityTimer = useRef(null);  
+  const [hasBeenStopped, setHasBeenStopped] = useState(false);  
+  const [pausedByButton, setPausedByButton] = useState(false); // Add this new state  
+
+  const visibilityTimer = useRef(null); 
+
   
   const INACTIVITY_TIMEOUT =  60 * 5 * 1000; // 5 minutes in milliseconds  
   
-  // Function to call the stop API  
-  const callStopAPI = useCallback(async () => {  
-    if (hasBeenStopped.current) return;  
-    try {  
-      await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/pause`, {  
-        method: "POST",  
-        headers: {  
-          "Content-Type": "application/json",  
-        },  
-        keepalive: true,  
-      });  
-      console.log("Stop API called successfully");  
-      hasBeenStopped.current = true; 
-    } catch (error) {  
-      console.error("Error calling stop API:", error);  
+  // Function to call the stop API , to not pause if multiple users just calls to reduce user by 1, if user count is 0 then stop the simulation
+  const callStopAPI = useCallback(async ( isManualStop = false) => {  
+  if (hasBeenStopped) return;  
+  try {  
+    await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/reduce-users`, {  
+      method: "POST",  
+
+      keepalive: true,  
+    });  
+    console.log("Stop API called successfully");  
+    setHasBeenStopped(true); 
+    if (isManualStop) {  
+      setPausedByButton(true);  
     }  
-  }, []);  
+  } catch (error) {  
+    console.error("Error calling stop API:", error);  
+  }  
+}, [hasBeenStopped]);   
+
 
   const [copied, setCopied] = useState(false);  
 
@@ -64,7 +69,7 @@ const PageHeader = () => {
       clearTimeout(inactivityTimer.current);  
     }  
       
-    if (!hasBeenStopped.current) {  
+    if (!hasBeenStopped) {  
       inactivityTimer.current = setTimeout(() => {  
         callStopAPI();  
         setShowInactivityModal(true);  
@@ -157,15 +162,16 @@ const PageHeader = () => {
 
             <div className= {styles.horizontalContainer}>
               <div className={styles.buttonContainer}>
-                <Button
-                            variant={Variant.Primary}
-                            darkMode={false}
-                            size={Size.Default}
-                            rightGlyph={<Icon glyph="Stop" />}
-                            onClick={callStopAPI}
-                          >
-                            Stop Simulation
-                  </Button>
+                <Button    
+                  variant={Variant.Primary}    
+                  darkMode={false}    
+                  size={Size.Default}    
+                  rightGlyph={<Icon glyph="Stop" />}    
+                  onClick={() => callStopAPI(true)}  // Add arrow function  
+                >    
+                  {hasBeenStopped ? "Simulation Stopped" : "Stop Simulation"}    
+                </Button>  
+
             </div>
            
             <div className={styles.sessionIdContainer}>
@@ -199,7 +205,7 @@ const PageHeader = () => {
         </div>  
       </header>  
   
-      {showInactivityModal && !hasBeenStopped && (  
+      {showInactivityModal && !pausedByButton &&(  
         <div className={styles.modalOverlay}>  
           <div className={styles.modal}>  
             <h2>Demo Stopped Due to Inactivity</h2>  
