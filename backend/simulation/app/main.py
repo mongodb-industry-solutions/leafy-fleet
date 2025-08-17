@@ -65,7 +65,7 @@ oee_not_zero_on_start = 1200
 
 #to modify I into db, will also send every n steps
 timeseries_send_every_n_steps = 5  # Send every 5 steps for performance, so every 5-10 seconds per car.
-timeseries_historic_send_every_n_steps = 10  # Send every 10 steps for history, so every 10-20 simulated seconds, is sent in batches of 1000 for performance with bulk
+timeseries_historic_send_every_n_steps = 10  # Send every 10 steps for history, so every 20-40 simulated seconds, is sent in batches of 1000 for performance with bulk
 
 batch_size = 1000  #  batch for efficiency using write bulk API, can be adjusted based on performance needs
 
@@ -350,7 +350,7 @@ class Car:
             counter = latest_timestamp.timestamp()  
 
             # Initialize route switching variables (same as run function)
-            route_step_index = 0
+            self.step_index = 0
             route_index = 0  # Start with first route (0 or 1)
             
             while counter < start_time.timestamp():
@@ -368,16 +368,16 @@ class Car:
                 #logger.info(f"Car {self.car_id}: History processing route {self.current_route} with {len(steps)} steps")
                 
                 # Process steps in current route (same logic as run function)
-                while route_step_index < len(steps) and counter < start_time.timestamp():
+                while self.step_index < len(steps) and counter < start_time.timestamp():
                     try:
                         # Update position (same as run function)
-                        self.latitude, self.longitude = steps[route_step_index]
+                        self.latitude, self.longitude = steps[self.step_index]
                         
                         # Update car state using history method
                         await self.update_history(dist_per_step, time_per_step)
                         
                         # Check geofence every 10 steps (same as run function)
-                        if route_step_index % 10 == 0:
+                        if self.step_index % 10 == 0:
                             try:
                                 self.current_geozone = geofence_manager.check_point_in_geofences(self.longitude, self.latitude)  
                             except Exception as e:
@@ -397,7 +397,7 @@ class Car:
                             utc_dt = local_dt.astimezone(timezone.utc)
                             data_point["timestamp"] = utc_dt.isoformat()
                             batch_data.append(data_point)
-                        route_step_index += 1
+                        self.step_index += 1
                         total_steps_processed += 1
                         
                         # Send batch when full (optimized for history)
@@ -412,7 +412,7 @@ class Car:
                         
                         # Handle car failures in history (same logic as run function, but no sleep)
                         if not self.is_engine_running:
-                            logger.info(f"Car {self.car_id}: Engine stopped in history at step {route_step_index}")
+                            logger.info(f"Car {self.car_id}: Engine stopped in history at step {self.step_index}")
                             # Reset conditions immediately in history (no waiting)
                             if self.is_crashed:
                                 self.is_crashed = False
@@ -426,12 +426,12 @@ class Car:
                                 self.is_engine_running = True
                             
                     except Exception as e:
-                        logger.error(f"Car {self.car_id}: Error processing history step {route_step_index}: {e}")
+                        logger.error(f"Car {self.car_id}: Error processing history step {self.step_index}: {e}")
                         continue
                 
                 # Finished current route - switch to next route (same as run function)
                 route_index = 1 - route_index  # Switch between 0 and 1
-                route_step_index = 0  # Reset step index for new route
+                self.step_index = 0  # Reset step index for new route
                 
                 logger.info(f"Car {self.car_id}: Switched to route {self.route_ids[route_index]} for history")
             
