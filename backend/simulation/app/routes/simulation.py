@@ -129,7 +129,7 @@ async def start_simulation_endpoint(num_cars: int):
     session = get_session()  # Safely retrieve HTTP_SESSION  
     cars = await create_cars(num_cars)  # Pass session explicitly to car creation  
   
-    logger.info(f"HTTP_SESSION: {session}")  # Confirm HTTP_SESSION existence  
+    logger.info(f"HTTP_SESSION started")  # Confirm HTTP_SESSION existence  
   
     # Spawn asynchronous tasks for each car  
     SIMULATION_TASKS = [asyncio.create_task(car.run(session)) for car in cars]  
