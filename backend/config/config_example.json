@@ -32,7 +32,7 @@
     "MDB_LOGS_COLLECTION": "logs",
     "MDB_AGENT_PROFILES_COLLECTION": "agent_profiles",
     "MDB_AGENT_SESSIONS_COLLECTION": "agent_sessions",
-    "AGENT_PROFILE_CHOSEN_ID": "FINANCE_AG01",
+    "AGENT_PROFILE_CHOSEN_ID": "FLEET_AG01",
     "DEFAULT_AGENT_PROFILE": {
         "agent_id": "DEFAULT",
         "profile": "Default Agent Profile",
