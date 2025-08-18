@@ -375,9 +375,7 @@ class QueryTools(MongoDBConnector):
 
                 logger.info(f"Processing user filter: {fleet_prefs}")
                 
-                if fleet_prefs == "Last 30 min" or fleet_prefs == "Last hour" or fleet_prefs == "Last 2 hours":
-                    # logger.info(f"Skipping preference")
-                    continue
+                
                 if fleet_prefs:
                     if fleet_prefs == "Fleet 1":
                         car_ids1 = list(range(0, fleet_capacity[0]))  # Car IDs 0-99
