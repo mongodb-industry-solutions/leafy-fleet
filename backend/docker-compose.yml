@@ -9,13 +9,13 @@ services:
       - "9000:9000"  
     volumes:  
       - ./agent:/agent  
-      - ~/.aws:/root/.aws  
+      - ~/.aws:/root/.aws  # Mount AWS credentials directory, this should be commented if you use AWS roles instead of profiles
     working_dir: /agent  
     command: uvicorn main:app --reload --host 0.0.0.0 --port 9000 --workers 2  
     environment:  
       - MONGODB_URI=${MONGODB_URI}  
       - PYTHONUNBUFFERED=1  
-      - AWS_PROFILE=${AWS_PROFILE}  
+      - AWS_PROFILE=${AWS_PROFILE}  # Mount AWS credentials directory, this should be commented if you use AWS roles instead of profiles
       - AWS_REGION=${AWS_REGION} 
     networks:  
       - simulation-network  
