@@ -31,7 +31,7 @@ export const ATTR_KEY_MAP = {
   "Oil level": "engine_oil_level",  
   "Last maintance": "last_maintenance_date",  
   "Temperature": "oil_temperature",  
-  "Ambient temperature": "ambient_temperature",  
+  "Speed": "speed",  
   "Gas level": "fuel_level",  
   "Distance driven": "traveled_distance",  
   "Current Geozone": "current_geozone",  
@@ -40,6 +40,7 @@ export const ATTR_KEY_MAP = {
 
 const AttributesComponent = () => {
   const dispatch = useDispatch();
+  const selectedFleets = useSelector((state) => state.User.selectedFleets);
   const editFleet = useSelector((state) => state.User.editFleet);
   const fleet1Attributes = useSelector((state) => state.User.fleet1Attributes);
   const fleet2Attributes = useSelector((state) => state.User.fleet2Attributes);
@@ -69,8 +70,8 @@ const AttributesComponent = () => {
 
   return (
     <div className={styles.selectFleetContainer}>
-      
-      <Subtitle>Choose the telemetry to report</Subtitle>
+
+      <Subtitle>Telemetry that Fleet {editFleet} will report</Subtitle>
       <br />
       <div className={styles.selectGrid}>
         {ALL_ATTRIBUTES.map((attr) => (

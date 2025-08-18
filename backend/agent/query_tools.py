@@ -1,4 +1,3 @@
-
 from db.mdb import MongoDBConnector
 
 import datetime
@@ -143,7 +142,6 @@ class QueryTools(MongoDBConnector):
         "Oil level": "engine_oil_level",  
         "Last maintance": "last_maintenance_date",  
         "Temperature": "oil_temperature",  
-        "Ambient temperature": "ambient_temperature",  
         "Gas level": "fuel_level",  
         "Distance driven": "traveled_distance",  
         "Geozone": "current_geozone",  
@@ -188,9 +186,10 @@ class QueryTools(MongoDBConnector):
             if field is not None:  # Double check for None
                 project_stage[field] = 1
 
-
+        logger.info(f"User preferences: {user_preferences}")
         match_stage = self.build_match_stage(user_filters, agent_filters, user_preferences)
-        if match_stage:
+        logger.info(f"Match stage for vehicle state search: {match_stage}")
+        if match_stage["$or"]:
             pipeline = [
                 {
                     "$match": match_stage
@@ -322,6 +321,14 @@ class QueryTools(MongoDBConnector):
                 }
             ]
        
+        logger.info(f"Aggregation pipeline: {pipeline}")
+
+        #If user asked for timestamp based averages, we process them here
+        for fleet_prefs in user_filters: 
+            if fleet_prefs == "Last 30 min" or fleet_prefs == "Last hour" or fleet_prefs == "Last 2 hours":
+                average = await self.calculate_field_averages_by_timeframe(timeframe=fleet_prefs, user_preferences=user_preferences, user_filters=user_filters, match_stage=match_stage)
+
+        
         
 
         cursor = collection.aggregate(pipeline)
@@ -351,22 +358,222 @@ class QueryTools(MongoDBConnector):
                     for field in list(car.keys()):
                         if field not in allowed_fields:
                             car[field] = None
-        
+        result.append(average)
+
         return result
 
+    async def calculate_field_averages_by_timeframe(self, timeframe: str, user_preferences: str = None, user_filters: str = None, match_stage: dict = None):
+        """
+        Calculate the average of all numeric fields in the timeseries collection within a given timeframe.
+        
+        Args:
+            timeframe (str): Time range - "last 30 min", "last hour", "last 2 hours"
+            user_preferences (str, optional): User preferences for filtering data
+            user_filters (str, optional): User filters for additional filtering
+            
+        Returns:
+            dict: Dictionary containing averages for all numeric fields
+        """
+        collection = self.get_collection(self.mdb_timeseries_collection)
+        logger.info(f"[MongoDB] Calculating field averages for timeframe: {timeframe}")
+        
+        # Calculate the start time based on timeframe
+        now = datetime.datetime.utcnow()
+        
+
+
+        if timeframe == "Last 30 min":
+            start_time = now - datetime.timedelta(minutes=30)
+        elif timeframe == "Last hour":
+            start_time = now - datetime.timedelta(hours=1)
+        elif timeframe == "Last 2 hours":
+            start_time = now - datetime.timedelta(hours=2)
+        else:
+            # Default to last hour if timeframe is not recognized
+            start_time = now - datetime.timedelta(hours=1)
+            logger.warning(f"Unrecognized timeframe '{timeframe}', defaulting to last hour")
+        
+        logger.info(f"Calculating averages from {start_time} to {now}")
+        
+        # Build base match stage with time filter
+        match_stage2 = {
+            "timestamp": {
+                "$gte": start_time,
+                "$lte": now
+            }
+        }
+        
+        # Define all numeric fields that we want to calculate averages for
+        numeric_fields = [
+            "performance_score",
+            "run_time", 
+            "availability_score",
+            "quality_score",
+            "oee",
+            "fuel_efficiency",
+            "engine_oil_level",
+            "oil_temperature",
+            "fuel_level",
+            "max_fuel_level",
+            "traveled_distance",
+            "average_speed",
+            "speed"
+        ]
+        
+        # Build the group stage to calculate averages
+        group_stage = {
+            "_id": None,
+            "total_records": {"$sum": 1}
+        }
+        
+        # Add average calculation for each numeric field
+        for field in numeric_fields:
+            group_stage[f"avg_{field}"] = {"$avg": f"${field}"}
+        
+        logger.info(f"Match stage before user filters: {match_stage}")
+        logger.info(f"Match stage2 after user filters: {match_stage2}")
+
+        # Build the aggregation pipeline
+        if match_stage["$or"]:
+            pipeline = [
+                {"$match": match_stage2},
+                {"$match": match_stage},
+                {"$group": group_stage},
+                {
+                    "$project": {
+                        "_id": 0,
+                        "timeframe": {"$literal": timeframe},
+                        "total_records": 1,
+                        "start_time": {"$literal": start_time.isoformat()},
+                        "end_time": {"$literal": now.isoformat()},
+                        # Project all average fields
+                        **{f"avg_{field}": {"$round": [f"$avg_{field}", 2]} for field in numeric_fields}
+                    }
+                }
+            ]
+        else:
+            pipeline = [
+                {"$match": match_stage2},
+                
+                # {"$group": group_stage},
+                # {
+                #     "$project": {
+                #         "_id": 0,
+                #         "timeframe": {"$literal": timeframe},
+                #         "total_records": 1,
+                #         "start_time": {"$literal": start_time.isoformat()},
+                #         "end_time": {"$literal": now.isoformat()},
+                #         # Project all average fields
+                #         **{f"avg_{field}": {"$round": [f"$avg_{field}", 2]} for field in numeric_fields}
+                #     }
+                # }
+            ]
+        
+        # logger.info(f"Aggregation pipeline: {pipeline}")
+        
+        try:
+            cursor = collection.aggregate(pipeline)
+            result = list(cursor)
+
+            logger.info(f"Avarage Aggregation result sample: {result[0:3]}")
+            
+            if result:
+                averages = result[0]
+                logger.info(f"Successfully calculated averages for a bunch of records")
+                return averages
+            else:
+                logger.warning("No data found for the specified timeframe and filters")
+                return {
+                    "timeframe": timeframe,
+                    "total_records": 0,
+                    "start_time": start_time.isoformat(),
+                    "end_time": now.isoformat(),
+                    "message": "No data found for the specified criteria"
+                }
+                
+        except Exception as e:
+            logger.error(f"Error calculating field averages: {e}")
+            raise e
+
+    async def average_time_series_value(self, field: str, start_date: str, end_date: str):
+        """
+        Calculate the average value of a specific field in the time series data within a given date range.
+        
+        Args:
+            field (str): The field to calculate the average for
+            start_date (str): The start date of the range (ISO format)
+            end_date (str): The end date of the range (ISO format)
+            
+        Returns:
+            dict: Dictionary containing the average value and other metadata
+        """
+        collection = self.get_collection(self.mdb_timeseries_collection)
+        
+        # Build match stage
+        match_stage = {
+            "timestamp": {
+                "$gte": start_date,
+                "$lte": end_date
+            }
+        }
+        
+        # Build group stage
+        group_stage = {
+            "_id": None,
+            "count": {"$sum": 1},
+            "sum": {"$sum": f"${field}"}
+        }
+        
+        # Build project stage
+        project_stage = {
+            "_id": 0,
+            "field": f"${field}",
+            "average": {"$divide": ["$sum", "$count"]},
+            "count": 1
+        }
+        
+        pipeline = [
+            {"$match": match_stage},
+            {"$group": group_stage},
+            {"$project": project_stage}
+        ]
+        
+        logger.info(f"Executing pipeline: {pipeline}")
+        
+        cursor = collection.aggregate(pipeline)
+        result = list(cursor)
+        
+        if result:
+            average_result = result[0]
+            logger.info(f"Calculated average for field '{field}': {average_result.get('average')}")
+            return {
+                "field": field,
+                "average": round(average_result.get("average", 0), 2),
+                "count": average_result.get("count"),
+                "timeframe": f"{start_date} to {end_date}"
+            }
+        else:
+            logger.warning(f"No data found for field '{field}' between {start_date} and {end_date}")
+            return {
+                "field": field,
+                "average": 0,
+                "count": 0,
+                "timeframe": f"{start_date} to {end_date}"
+            }
 
     def build_match_stage(self, user_filters: str = None, agent_filters: str = None, user_preferences: str = None):
         """
         Build the match stage for the MongoDB query based on user preferences and agent filters.
+        This returns a dictionary representing the $match stage.
         """
         match_stage = {}
         fleet_capacity = self.understand_fleet_number(user_preferences)
         logger.info(f"Fleet capacity: {fleet_capacity}")
         logger.info(f"User filters: {user_filters}")
 
+        match_stage["$or"] = []
         # Handle empty user_filters
         if user_filters and len(user_filters) > 0:
-            match_stage["$or"] = []
             for fleet_prefs in user_filters:
                 
                 car_ids1 = None
@@ -397,11 +604,16 @@ class QueryTools(MongoDBConnector):
                         # For other string values, treat as direct car_id match
                         match_stage["$or"].append({"car_id": fleet_prefs})
                         continue
-
+        
         else:
             logger.info("No user filters provided. Returning all data.")
             match_stage = {}  # No filtering applied
 
+        if match_stage["$or"] == []:
+            match_stage["$or"].append({"car_id": {"$in": list(range(0, fleet_capacity[0]))}})
+            match_stage["$or"].append({"car_id": {"$in": list(range(0, fleet_capacity[1]))}})
+            match_stage["$or"].append({"car_id": {"$in": list(range(0, fleet_capacity[2]))}})
+            
         # Handle agent_filters
         if agent_filters:
             if isinstance(agent_filters, str):
