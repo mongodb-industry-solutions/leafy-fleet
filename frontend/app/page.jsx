@@ -36,7 +36,7 @@ export default function HomePage() {
               href="https://www.mongodb.com/resources/solutions/use-cases/generative-ai-predictive-maintenance-applications"
             >
               <img src="/read.png" className={styles.image} alt="Retail"></img>
-              <H3 className={styles.title}>White Paper</H3>
+              <H3 className={styles.title}>Blog</H3>
             </a>
             <Description className={styles.description}>
               {" "}

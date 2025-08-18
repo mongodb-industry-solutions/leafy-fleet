@@ -53,7 +53,7 @@ const DetailsComponent = () => {
             <div className={getStatusBadgeClass(car.status)}>
               <Subtitle weight="medium">{car.status}</Subtitle>
             </div>
-            <Body> {car.fleet}</Body>
+            
           </div>
 
           <div className={styles.detailsGrid}>

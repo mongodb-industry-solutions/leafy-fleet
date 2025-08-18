@@ -108,7 +108,7 @@ const PageHeader = () => {
   }, [callStopAPI, handleUserActivity]);  
   
   useEffect(() => {  
-    if (isLoggedIn && ['/chat', '/overview', '/charts'].some(path => pathname.endsWith(path))) {  
+    if (isLoggedIn && ['/chat', '/geosearch', '/charts'].some(path => pathname.endsWith(path))) {  
       const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];  
         
       activityEvents.forEach(event => {  
@@ -158,7 +158,7 @@ const PageHeader = () => {
   
           <H1>Leafy Fleet</H1>  
   
-          {isLoggedIn && ['/chat', '/overview', '/charts'].some(path => pathname.endsWith(path)) &&  
+          {isLoggedIn && ['/chat', '/geosearch', '/charts'].some(path => pathname.endsWith(path)) &&  
 
             <div className= {styles.horizontalContainer}>
               <div className={styles.buttonContainer}>
