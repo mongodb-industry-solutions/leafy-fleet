@@ -12,8 +12,131 @@ services:
       - ./frontend/.env
     networks:  
       - simulation-network 
-    
 
+  agent-service:  # Port: 9000  
+    container_name: agent-service  
+    build:  
+      context: ./backend/agent  
+    ports:  
+      - "9000:9000"  
+    volumes:  
+      - ./backend/agent:/agent  
+      - ~/.aws:/root/.aws  
+    working_dir: /agent  
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000 --workers 2  
+    env_file:          
+      - ./backend/.env  # Path to your .env file relative to simulation 
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  
+      - PYTHONUNBUFFERED=1  
+      - AWS_PROFILE=${AWS_PROFILE}  
+      - AWS_REGION=${AWS_REGION} 
+    networks:  
+      - simulation-network  
+        
+  timeseries-get:  # Port: 9001  
+    container_name: timeseries-get-service  
+    build:  
+      context: ./backend/timeSeriesGET
+    ports:  
+      - "9001:9000"  
+    volumes:  
+      - ./backend/timeSeriesGET:/timeseries  # Outside the container
+    working_dir: /timeseries/app # Inside the container
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
+    env_file:          
+      - ./backend/.env  # Path to your .env file relative to simulation 
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  
+      - PYTHONUNBUFFERED=1 
+    networks:  
+      - simulation-network 
+  
+  timeseries-post:  # Port: 9002  
+    container_name: timeseries-post-service  
+    build:  
+      context: ./backend/timeSeriesPOST  
+    ports:  
+      - "9002:9002"  
+    volumes:  
+      - ./backend/timeSeriesPOST:/timeseries 
+    working_dir: /timeseries/app
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9002  
+    environment:  
+      - PYTHONUNBUFFERED=1  
+    env_file:  
+      - ./backend/.env  
+    networks:  
+      - simulation-network  
+  
+  sessions-service:  # Port: 9003  
+    container_name: sessions-service  
+    build:  
+      context: ./backend/sessions 
+    ports:  
+      - "9003:9000"  
+    volumes:  
+      - ./backend/sessions:/sessions  
+    working_dir: /sessions/app
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
+    env_file:          
+      - ./backend/.env  # Path to your .env file relative to simulation 
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  
+      - PYTHONUNBUFFERED=1 
+    networks:  
+      - simulation-network 
+  
+  geofence-service:  # Port: 9004  
+    container_name: geofence-get-service  
+    build:  
+      context: ./backend/geofenceGET
+      dockerfile: Dockerfile  
+    ports:  
+      - "9004:9004"  
+    volumes:  
+      - ./backend/geofenceGET/app:/app  
+    environment:  
+      - PYTHONUNBUFFERED=1  
+    networks:  
+      - simulation-network  
+  
+  static-service:  # Port: 9005  
+    container_name: static-vehicle-service  
+    build:  
+      context: ./backend/static_service 
+    ports:  
+      - "9005:9000"  
+    volumes:  
+      - ./backend/static_service:/static  
+    working_dir: /static/app
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  
+    env_file:          
+      - ./backend/.env  # Path to your .env file relative to simulation 
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  
+      - PYTHONUNBUFFERED=1  
+    networks:  
+      - simulation-network
+
+  simulation-service:              
+    container_name: simulation-service              
+    build:              
+      context: ./backend/simulation           
+    ports:              
+      - "9006:9006"  # Map local port 9006 to container port 9006          
+    volumes:              
+      - ./backend/simulation:/simulation  # Mount the current directory into the container              
+    working_dir: /simulation/app  # Set the working directory inside the container              
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9006  # Run your app directly using the mounted code              
+    env_file:          
+      - ./backend/.env  # Path to your .env file relative to simulation      
+    networks:  
+      - simulation-network  # Connect to the shared network  
+  
+
+# DOCKER_BUILDKIT=0 docker compose build
+#docker network create -d bridge simulation-network
 networks:  
   simulation-network:  
     external: true  
