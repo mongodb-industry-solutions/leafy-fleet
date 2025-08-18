@@ -40,18 +40,18 @@ async def get_timeseries_entries():
           
         if latest_entries and len(latest_entries) > 0:  
             return JSONResponse(  
-                status_code=200,     
+                status_code=status.HTTP_200_OK,         
                 content={"timestamp": jsonable_encoder(latest_entries[0]["timestamp"])}  
             )  
         else:  
             return JSONResponse(  
-                status_code=404,     
+                status_code=status.HTTP_404_NOT_FOUND,         
                 content={"message": "No timeseries entries found"}  
             )  
     except Exception as e:  
         logger.error(f"Error fetching latest timeseries entry: {e}")  
         return JSONResponse(  
-            status_code=500,     
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,         
             content={  
                 "message": "Error fetching latest timeseries entry",     
                 "error": str(e)  
@@ -59,43 +59,18 @@ async def get_timeseries_entries():
         )  
 
 
-@router.get("/timeseries/{carID}")
-async def get_timeseries_by_carID(carID: str):
-    """
-    Fetch timeseries entries for a specific carID.
-    Its expected that the user preferences will be sent in the body to filter the results accordingly.
-    """
-
-    try:
-        entries_result = []
-        entries_list = timeseries_coll.find({"carID": carID})
-        for entry in entries_list:
-            entries_result.append(
-                
-                TimeseriesModel(**entry).model_dump(
-                    mode="json"
-                )
-            )
-        if entries_list:
-            return entries_result
-        else:
-            return JSONResponse(status_code=404, content={"message": f"No timeseries entries found for carID {carID} with the given preferences"})
-    except Exception as e:
-        
-        return JSONResponse(status_code=500, content={"message": f"Error fetching timeseries entries for carID {carID}", "error": str(e)})
-
 @router.get("/timeseries/latest/{carID}")
 async def get_latest_timeseries_by_carID(carID: str):
     print(f"Fetching latest timeseries entry for carID: {carID}")
     try:
         entry = await timeseries_coll.find_one({"vehicle.carID": carID}, sort=[("timestamp", -1)])  # Fetch the latest entry for the given carID
         if entry:
-            return JSONResponse(content=entry)
+            return JSONResponse(status_code=status.HTTP_200_OK, content=entry)
         else:
-            return JSONResponse(status_code=404, content={"message": f"No timeseries entry found for carID {carID}"})
+            return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": f"No timeseries entry found for carID {carID}"})
     except Exception as e:
         print(f"Error fetching latest timeseries entry for carID {carID}: {e}")
-        return JSONResponse(status_code=500, content={"message": f"Error fetching latest timeseries entry for carID {carID}", "error": str(e)})
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"Error fetching latest timeseries entry for carID {carID}", "error": str(e)})
     
 @router.get("/timeseries/all/latest")
 async def get_latest_timeseries_entries(thread_id: Optional[str] = Query(None, description="Thread ID")):
@@ -103,11 +78,7 @@ async def get_latest_timeseries_entries(thread_id: Optional[str] = Query(None, d
     # match_stage = build_match_stage(preferences_list)
 
     # logger.info(f"Constructed match stage: {match_stage}")
-
-
     try:
-
-        
         pipeline = [
             {
                 "$match": {"metadata.sessions": {"$in": [thread_id]}}
@@ -126,15 +97,12 @@ async def get_latest_timeseries_entries(thread_id: Optional[str] = Query(None, d
             {"$sort": {"car_id": 1}}
         ]
        
-            
-
-
         entries_cursor = timeseries_coll.aggregate(pipeline)
         entries = list(entries_cursor)
-        return JSONResponse(content=entries)
+        return JSONResponse(status_code=status.HTTP_200_OK, content=entries)
     except Exception as e:
         print(f"Error fetching latest timeseries entries: {e}")
-        return JSONResponse(status_code=500, content={"message": "Error fetching latest timeseries entries", "error": str(e)})
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": "Error fetching latest timeseries entries", "error": str(e)})
 
 # @router.get("/timeseries/getByCarRange/{fleet1Limit}/{fleet2Limit}/{fleet3Limit}")
 # async def get_timeseries_by_car_range(fleet1Limit: int, fleet2Limit: int, fleet3Limit: int):
@@ -335,11 +303,11 @@ async def get_vehicles_nearest_to_geofence(
         # Sort by distance (since we can't use $near)      
         result.sort(key=lambda x: x["distance_to_geofence"])      
                   
-        return JSONResponse(content=result)          
+        return JSONResponse(status_code=status.HTTP_200_OK,content=result)          
                   
     except Exception as e:          
         return JSONResponse(          
-            status_code=500,           
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,           
             content={"message": "Error fetching vehicles near geofence", "error": str(e)}          
         )      
   
@@ -369,7 +337,7 @@ async def get_vehicles_inside_geofence(
         geofences = list(geofence_coll.find({"name": {"$in": geofence_names}}))          
                   
         if not geofences:          
-            return JSONResponse(status_code=404, content={"message": "Geofences not found"})          
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Geofences not found"})          
                   
         # Create geometry for spatial query          
         if len(geofences) == 1:          
@@ -441,11 +409,11 @@ async def get_vehicles_inside_geofence(
             #vehicle_data["car_id_filter_applied"] = valid_car_filters  # NEW: Show applied filter          
             result.append(vehicle_data)          
                   
-        return JSONResponse(content=result)          
+        return JSONResponse(status_code=status.HTTP_200_OK,content=result)          
                   
     except Exception as e:          
         return JSONResponse(          
-            status_code=500,           
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,           
             content={"message": "Error fetching vehicles inside geofence", "error": str(e)}          
         )      
 

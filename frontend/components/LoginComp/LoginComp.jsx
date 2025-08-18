@@ -66,35 +66,7 @@ const LoginComp = ({ modalObserver }) => {
       // Close modal after successful restore
       setOpen(false);
 
-      // Call simulation service to start the session
-      /* 
-    try {  
-          const simResponse = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/sessions`, {  
-            method: 'POST',  
-            headers: {  
-              'Content-Type': 'application/json',  
-            },  
-            body: JSON.stringify({  
-              session_id: threadId,  
-              range1: fleetConfig.fleet_size[0] || 20,  
-              range2: fleetConfig.fleet_size[1] || 0,  
-              range3: fleetConfig.fleet_size[2] || 0  
-            })  
-          });  
       
-          if (!simResponse.ok) {  
-            const errorData = await simResponse.json();  
-            throw new Error(`Simulation service error: ${errorData.detail || simResponse.status}`);  
-          }  
-      
-          const simData = await simResponse.json();  
-          console.log("Simulation session started:", simData);  
-            
-        } catch (simError) {  
-          console.error("Error starting simulation session:", simError);  
-          // You might want to show a warning but not fail the entire restore process  
-        }  
-     */
       
     } catch (error) {
       console.error("Error restoring session:", error);
@@ -116,11 +88,7 @@ const LoginComp = ({ modalObserver }) => {
       keyboard={false}
     >
       <Container className="p-3 h-100">
-        {/*
-                <div className='d-flex flex-row-reverse p-1 cursorPointer' onClick={handleClose}>
-                    <Icon glyph="X" />
-                </div>
-               */}
+       
 
         <div className={styles.modalMainCOntent}>
           <H2 className={styles.centerText}>Welcome to Leafy Fleet</H2>
