@@ -38,14 +38,14 @@ const SideNavigation = () => {
       
 
       <Link
-        href="/geospatial"
+        href="/geosearch"
         className={
-          pathname === "/geospatial"
+          pathname === "/geosearch"
             ? `${styles.sideBarButton} ${styles.activeNavItem}`
             : styles.sideBarButton
         }
       >
-        <SideNavItem>Geospatial Queries</SideNavItem>
+        <SideNavItem>GeoSearch</SideNavItem>
       </Link>
 
       <Link

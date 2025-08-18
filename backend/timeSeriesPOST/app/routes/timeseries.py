@@ -6,6 +6,8 @@ from datetime import datetime
 from model.timeseriesModel import TimeseriesModel
 from typing import List  # Import List  
 import logging
+from pymongo.operations import InsertOne
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -48,14 +50,16 @@ async def create_historic_batch(entries: List[TimeseriesModel]):
                 doc_dict['timestamp'] = datetime.fromisoformat(doc_dict['timestamp'].replace('Z', '-00:00'))
             documents.append(doc_dict)
 
-        # Execute bulk insert_many instead of bulkWrite
-        result = timeseries_coll.insert_many(documents)
+        # try and change later  and use bulkWrite for better performance
+        operations = [InsertOne(doc) for doc in documents]
+        result = timeseries_coll.bulk_write(operations, ordered=False)
+
         
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,   
             content=jsonable_encoder({
                 "message": "Historical entries processed",
-                "inserted_count": len(result.inserted_ids)
+                "inserted_count": result.inserted_count
             })
         )
     except Exception as e:

@@ -94,8 +94,8 @@ const OverviewCard = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <H3>Geospatial Vehicle Search</H3>
           <Button
-            variant={Variant.Default}
-            darkMode={true}
+            variant={Variant.BaseGreen}
+            darkMode={false}
             size={Size.Default}
             rightGlyph={<Icon glyph="MagnifyingGlass" />}
             onClick={handleSearch}

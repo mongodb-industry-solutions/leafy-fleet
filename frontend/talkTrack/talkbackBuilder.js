@@ -4,7 +4,7 @@ import chatTalktrackSection from "./talktracks/chatTalktrack.js";
 import {
   combineTalktrackSections,
 } from "./components/talktrackComponent.js";
-import overviewTalktrackSection from "./talktracks/overviewTalktrack.js";
+import overviewTalktrackSection from "./talktracks/overviewTalktrack.js"; // later on rename to geosearchTalktrack.js
 import whyMongoDBTalktrackSection from "./talktracks/wmTalktrack.js";
 
 export function talktrackDemo(talktrackRequirement) {
@@ -23,7 +23,7 @@ export function talktrackDemo(talktrackRequirement) {
       whyMongoDBTalktrackSection()
     );
   }
-  if (talktrackRequirement === "/overview") {
+  if (talktrackRequirement === "/geosearch") {
     return combineTalktrackSections(
       overviewTalktrackSection(),
       BTSTalktrackSection(),

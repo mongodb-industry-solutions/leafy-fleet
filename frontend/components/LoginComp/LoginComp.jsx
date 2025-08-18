@@ -33,7 +33,7 @@ const LoginComp = ({ modalObserver }) => {
 
   
   const pathname = usePathname(); // Get the current route  
-  const pathsRequiringLogin = ["/chat", "/charts", "/overview"]; // Paths requiring login  
+  const pathsRequiringLogin = ["/chat", "/charts", "/geosearch"]; // Paths requiring login  
   
   const shouldShowLoginPopup = pathsRequiringLogin.includes(pathname);  
 
