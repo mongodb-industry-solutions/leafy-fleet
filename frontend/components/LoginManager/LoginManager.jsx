@@ -398,18 +398,7 @@ const LoginManager = () => {
                 </Select>
                 <br />
                
-                {/* <NumberInput
-                  data-lgid="fleet-2"
-                  label="Number of vehicles per fleet"
-                  min={0}
-                  max={100}
-                  defaultValue={"Custom"}
-                  unit="vehicles"
-                  style={{ width: "180px" }}
-                  placeholder="Custom"
-                  onChange={(value) => console.log(`New value: ${value}`)}  
-                  onBlur={(value) => console.log(`Final value: ${value}`)}  
-                /> */}
+    
                 <br />
               </div>
               <AttributesComponent/>
@@ -483,27 +472,36 @@ const LoginManager = () => {
                         : fleet3Capacity
                     }
                     onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
-                    onChange={(e) => {
-                      let value = parseInt(e.target.value, 10);
-                      // If the parsed value is greater than 100, set it back to 100
-                      if (value > 100) {
-                        value = 100;
-                        e.target.value = 100;
-                      }
-
-                      if (value < 0) {
-                        value = 0;
-                        e.target.value = 0;
-                      }
-
-                      // Handle cases where input is empty or not a valid number (e.g., after deleting all text)
-                      if (isNaN(value)) {
-                        value = 0; // Or null, depending on your desired default for empty
-                      }
-
-                      handleFleetCapacityChange(index + 1, value);
-                      
-                    }}
+                    onChange={(e) => {  
+                      const inputValue = e.target.value;  
+                        
+                      // Allow empty input while typing  
+                      if (inputValue === '') {  
+                        handleFleetCapacityChange(index + 1, '');  
+                        return;  
+                      }  
+                        
+                      // Convert to number only when we have a complete value  
+                      const numValue = Number(inputValue);  
+                        
+                      // Validate bounds  
+                      if (numValue > 100) {  
+                        handleFleetCapacityChange(index + 1, 100);  
+                        e.target.value = '100';  
+                        return;  
+                      }  
+                        
+                      if (numValue < 0) {  
+                        handleFleetCapacityChange(index + 1, 0);  
+                        e.target.value = '0';  
+                        return;  
+                      }  
+                        
+                      // Only update if it's a valid number  
+                      if (!isNaN(numValue)) {  
+                        handleFleetCapacityChange(index + 1, numValue);  
+                      }  
+                    }}  
                   />
                   
                 </div>

@@ -82,7 +82,6 @@ const UserSlice = createSlice({
     setEditFleet: (state, action) => {
       state.editFleet = action.payload.editFleet;
     },
-
     setLoggedFleet: (state, action) => {
       state.isLoggedIn = action.payload; // Set the login status based on the action payload
     },
@@ -101,9 +100,6 @@ const UserSlice = createSlice({
           (filter) => filter !== label
         );
       }
-    },
-    setLoggedFleet: (state, action) => {
-      state.isLoggedIn = action.payload; // Set the login status based on the action payload
     }
 
 }

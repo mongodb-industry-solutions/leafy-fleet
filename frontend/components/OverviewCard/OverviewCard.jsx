@@ -33,7 +33,7 @@ const OverviewCard = () => {
     const fleet1Name = useSelector(state => state.User.fleet1Name);
     const fleet2Name = useSelector(state => state.User.fleet2Name);
     const fleet3Name = useSelector(state => state.User.fleet3Name);
-
+    const selectedFleets = useSelector(state => state.User.selectedFleets);
     const handleSearch = async () => {
 
         if (!location && selectedType === "nearest" || geofences.length === 0 && selectedType === "inside") {
@@ -135,8 +135,10 @@ const OverviewCard = () => {
                 }}
             >
                 <ComboboxOption value="1" displayName={fleet1Name} />
-                <ComboboxOption value="2" displayName={fleet2Name}/>
-                <ComboboxOption value="3" displayName={fleet3Name}/>
+                {selectedFleets>1 && 
+                <ComboboxOption value="2" displayName={fleet2Name} />}
+                {selectedFleets>2 &&
+                <ComboboxOption value="3" displayName={fleet3Name}/>}
             </Combobox>
 
             {selectedType==="inside" && 

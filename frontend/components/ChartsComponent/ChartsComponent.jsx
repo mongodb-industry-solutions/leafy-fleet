@@ -56,8 +56,10 @@ const ChartsComponent = () => {
     <div className={styles.container}>
       <div className={styles.topPart} style={{ flex: 1 }}>
         <InfoCardComponent title={fleet1Name} fleetSize={fleet1Capacity} car={fleet1Cars} />
-        <InfoCardComponent title={fleet2Name} fleetSize={fleet2Capacity} car={fleet2Cars} />
-        <InfoCardComponent title={fleet3Name} fleetSize={fleet3Capacity} car={fleet3Cars} />
+        {fleet2Capacity > 0 &&
+        <InfoCardComponent title={fleet2Name} fleetSize={fleet2Capacity} car={fleet2Cars} />}
+        {fleet3Capacity > 0 &&
+        <InfoCardComponent title={fleet3Name} fleetSize={fleet3Capacity} car={fleet3Cars} />}
       </div>
       <div className={styles.bottomPart} style={{ flex: 5 }}>
         <iframe
