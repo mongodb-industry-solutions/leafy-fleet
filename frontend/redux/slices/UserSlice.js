@@ -10,7 +10,7 @@ const UserSlice = createSlice({
     fleet1Name: "Fleet 1",
     fleet2Name: "Fleet 2",
     fleet3Name: "Fleet 3",
-    fleet1Capacity: 20,
+    fleet1Capacity: 0,
     fleet2Capacity: 0,
     fleet3Capacity: 0,
     fleet1Attributes: [

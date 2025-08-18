@@ -47,7 +47,7 @@ const FilterComponent = () => {
       <div className={styles.cardWrapper}>
         <ExpandableCard
           title="Filters"
-          description="This filters will apply to the conversation with the Leafy Fleet assistant."
+          description="This filters will apply to the conversation with the Assistant Bot."
           flagText=""
           darkMode={false}
         >
@@ -183,40 +183,46 @@ const FilterComponent = () => {
           darkMode={false}
         >
           <div className={styles.filterGrid}>
-            <NumberInput
-              data-lgid="fleet-1"
-              label={fleet1Name}
-              min={0}
-              max={100}
-              defaultValue={fleet1Capacity}
-              unit="vehicles"
-              disabled={true}
-              onChange={(value) =>
-                dispatch(setFleet1Capacity(value.target.value))
-              }
-            />
-            <NumberInput
-              data-lgid="fleet-2"
-              label={fleet2Name}
-              min={0}
-              max={100}
-              defaultValue={`None` ? fleet2Capacity : `None`}
-              unit="vehicles"
-              disabled={true}
-              onChange={(value) => dispatch(setFleet2Capacity(value))}
-            />
-            <NumberInput
-              data-lgid="fleet-3"
-              label={fleet3Name}
-              min={0}
-              max={100}
-              defaultValue={fleet3Capacity}
-              unit="vehicles"
-              disabled={true}
-              onChange={(value) =>
-                dispatch(setFleet3Capacity(value.target.value))
-              }
-            />
+            {fleet1Capacity > 0 && (
+              <NumberInput
+                data-lgid="fleet-1"
+                label={fleet1Name}
+                min={0}
+                max={100}
+                defaultValue={fleet1Capacity}
+                unit="vehicles"
+                disabled={true}
+                onChange={(value) =>
+                  dispatch(setFleet1Capacity(value.target.value))
+                }
+              />
+            )}
+            {fleet2Capacity > 0 && (
+              <NumberInput
+                data-lgid="fleet-2"
+                label={fleet2Name}
+                min={0}
+                max={100}
+                defaultValue={fleet2Capacity}
+                unit="vehicles"
+                disabled={true}
+                onChange={(value) => dispatch(setFleet2Capacity(value))}
+              />
+            )}
+            {fleet3Capacity > 0 && (
+              <NumberInput
+                data-lgid="fleet-3"
+                label={fleet3Name}
+                min={0}
+                max={100}
+                defaultValue={fleet3Capacity}
+                unit="vehicles"
+                disabled={true}
+                onChange={(value) =>
+                  dispatch(setFleet3Capacity(value.target.value))
+                }
+              />
+            )}
           </div>
         </ExpandableCard>
       </div>

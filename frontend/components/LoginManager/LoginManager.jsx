@@ -240,23 +240,32 @@ const LoginManager = () => {
     setOpen(false);
     dispatch(setLoggedFleet(true)); 
     if (!fleet1Capacity || fleet1Capacity === 0) {
-      dispatch(setFleet1Capacity(20));
-    }
-    if (!fleet2Capacity && selectedFleets > 1 || fleet2Capacity === 0 && selectedFleets >1) {
-      dispatch(setFleet2Capacity(10));
-    }
-    if (!fleet3Capacity && selectedFleets === 3 || fleet2Capacity === 0 && selectedFleets === 3) {
-      dispatch(setFleet3Capacity(10));
-    }
-    if(fleet1Name === ""){
-      dispatch(setFleet1Name("Fleet 1"));
-    }
-    if(fleet2Name === "" && selectedFleets > 1){
-      dispatch(setFleet2Name("Fleet 2"));
-    }
-    if(fleet3Name === "" && selectedFleets > 2){
-      dispatch(setFleet3Name("Fleet 3"));
-    }
+    dispatch(setFleet1Capacity(20));
+  }
+  if ((!fleet2Capacity && selectedFleets > 1) || (fleet2Capacity === 0 && selectedFleets > 1)) {
+    dispatch(setFleet2Capacity(10));
+  }
+  if ((!fleet3Capacity && selectedFleets === 3) || (fleet3Capacity === 0 && selectedFleets === 3)) {
+    dispatch(setFleet3Capacity(20));
+  }
+   if (fleet1Name === "") {
+    dispatch(setFleet1Name("Fleet 1"));
+  }
+  if (fleet2Name === "" && selectedFleets > 1) {
+    dispatch(setFleet2Name("Fleet 2"));
+  }
+  if (fleet3Name === "" && selectedFleets > 2) {
+    dispatch(setFleet3Name("Fleet 3"));
+  }
+
+    if (selectedFleets < 3) {
+    dispatch(setFleet3Capacity(0));
+    dispatch(setFleet3Name(""));
+  }
+  if (selectedFleets < 2) {
+    dispatch(setFleet2Capacity(0));
+    dispatch(setFleet2Name(""));
+  }
     
     const fleetNames = [];
     const fleetSizes = [];
@@ -471,10 +480,10 @@ const LoginManager = () => {
                     max="100"
                     value={
                       index === 0
-                        ? fleet1Capacity
+                        ? fleet1Capacity === 0 ? 20 : fleet1Capacity
                         : index === 1
-                        ? fleet2Capacity
-                        : fleet3Capacity
+                        ? fleet2Capacity === 0 ? 10 : fleet2Capacity
+                        : fleet3Capacity === 0 ? 20 : fleet3Capacity
                     }
                     onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
                     onChange={(e) => {
