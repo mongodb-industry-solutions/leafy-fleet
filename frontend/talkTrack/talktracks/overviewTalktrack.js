@@ -1,21 +1,23 @@
 import bodyComponent, { htmlBodyComponent } from "../components/bodyComponent";
 import createTalktrackSection from "../components/talktrackComponent.js.js";
 
-export default function overviewTalktrackSection() {
+export default function chatTalktrackSection() {
   return createTalktrackSection({
-    heading: "Overview Talktrack",
+    heading: "Instructions and Talk Track",
     content: [
-      bodyComponent("Purpose", "This is the demo purpose."),
       htmlBodyComponent(
-        "Flexible Data Model",
-        `<div>MongoDB's <a href="https://www.mongodb.com/resources/basics/databases/document-databases" target="_blank">document-oriented architecture</a> allows you to store varied data
-          (such as <i>timeseries logs, agent profiles, and recommendation outputs</i>)
-          in a <strong>single unified format</strong>. This flexibility means you don't have to redesign your database <mark>schema</mark> every time your data requirements evolve.</div>`,
+        "Geospatial Search",
+        `<strong>Leafy Fleet</strong> provides powerful geospatial search capabilities for fleet management and vehicle tracking. Query vehicles based on their proximity to geofences or their location within specific areas.<br/><br>
+        The <b>Geospatial Search</b> feature utilizes MongoDB's <b> Geospatial Query Operators</b> on vehicle's latest data. <br><br>     
+        Once you have located the cars via this search, it showcases fuel levels, engine status, and performance metrics, as well as the complete document model showing telemetry data and vehicle's details (brand, year, maintenance history).<br/>  
+        `
       ),
-      bodyComponent(
-        "Extra Info",
-        "MongoDB's document-oriented architecture allows you to store varied data in a single unified format."
-      ),
+      htmlBodyComponent("How to Demo",[ 
+       `<b>Choose search type:</b> Near Geofence or Inside Geofence <br/>`,  
+       `<b>Configure: </b>Fleet filters, distance range, and geofences to target.<br/>`,
+        `<b>Analyze Results:</b>  
+        Review vehicle details including car ID, location coordinates, and operational status: and examine the complete document model showing telemetry data and vehicle metrics`
+    ]),
     ],
   });
 }
