@@ -86,8 +86,6 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
         - Write maximum a sentence per carID.
         - If talking about localization, round the coordinates to 3 decimal places and take into account the current geozone of the car.
 
-        - if there is a document that has a 'timeframe' atribute, include that in your answer
-
         If the user question is related to the information you have, provide a response to the best of your hability based on the data.
 
         Use the following format:
