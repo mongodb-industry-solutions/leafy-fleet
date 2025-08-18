@@ -132,8 +132,8 @@ const LoginManager = () => {
         const fleetConfig = {  
           fleet_size: [  
             fleet1Capacity || 20,  
-            fleet2Capacity || 0,  
-            fleet3Capacity || 0  
+            fleet2Capacity || 10,  
+            fleet3Capacity || 20  
           ]  
         };  
   
@@ -145,8 +145,8 @@ const LoginManager = () => {
           body: JSON.stringify({  
             session_id: sessionId, // Use sessionId from Redux  
             range1: fleetConfig.fleet_size[0] || 20,  
-            range2: fleetConfig.fleet_size[1] || 0,  
-            range3: fleetConfig.fleet_size[2] || 0  
+            range2: fleetConfig.fleet_size[1] || 10,  
+            range3: fleetConfig.fleet_size[2] || 20  
           })  
         });  
   
@@ -245,8 +245,14 @@ const LoginManager = () => {
     if (!fleet2Capacity && selectedFleets > 1 || fleet2Capacity === 0 && selectedFleets >1) {
       dispatch(setFleet2Capacity(10));
     }
-    if (!fleet3Capacity && selectedFleets === 3 || fleet2Capacity === 0 && selectedFleets === 3) {
+    if(selectedFleets <2){
+      dispatch(setFleet2Capacity(0));
+    }
+    if (!fleet3Capacity && selectedFleets === 3 || fleet3Capacity === 0 && selectedFleets > 2) {
       dispatch(setFleet3Capacity(10));
+    }
+    if(selectedFleets <3){
+      dispatch(setFleet3Capacity(0));
     }
     if(fleet1Name === ""){
       dispatch(setFleet1Name("Fleet 1"));
