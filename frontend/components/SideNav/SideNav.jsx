@@ -38,9 +38,9 @@ const SideNavigation = () => {
       
 
       <Link
-        href="/geosearch"
+        href="/overview"
         className={
-          pathname === "/geosearch"
+          pathname === "/overview"
             ? `${styles.sideBarButton} ${styles.activeNavItem}`
             : styles.sideBarButton
         }
