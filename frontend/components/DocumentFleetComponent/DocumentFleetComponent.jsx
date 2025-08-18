@@ -18,6 +18,9 @@ const ATTR_KEY_MAP = {
   "Longitude": "longitude",
   "Avaliability": "avaliability",
   "Quality": "quality",
+  "Current Geozone": "current-geozone",
+  "Coordinates": "coordinates", 
+  "Speed": "speed",
 };
 
 const DocumentFleetComponent = () => {

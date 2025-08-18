@@ -9,7 +9,7 @@ const ALL_ATTRIBUTES = [
   "Oil level",
   "Last maintance",
   "Temperature",
-  "Ambient temperature",
+  "Speed",
   "Gas level",
   "Distance driven",
   "Performance",
@@ -19,6 +19,7 @@ const ALL_ATTRIBUTES = [
   "OEE",
   "Current Geozone",
   "Coordinates",
+  
 ];
 
 export const ATTR_KEY_MAP = {  
