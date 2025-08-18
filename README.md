@@ -172,66 +172,84 @@ You'll need to copy this file into multiple directories for different services i
 docker network create -d bridge simulation-network
 ```
 
+
+
+#### Frontend
+
+2. Create a `.env` file in the `/frontend` directory with the following content:
+
+```bash
+# NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:8000
+LOCAL_API_URL=http://localhost:3000
+NEXT_PUBLIC_AGENT_SERVICE_URL=localhost:9000
+NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL=localhost:9001
+NEXT_PUBLIC_SESSIONS_SERVICE_URL=localhost:9003
+NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL=localhost:9004
+NEXT_PUBLIC_SIMULATION_SERVICE_URL=localhost:9006
+```
+
+## Run it Locally
+
 Once you made sure the network is created, the `.env` files are in place, and your computer has access to the AWS profile you can run the backend services with the following command from the `/backend` directory:
 ```bash
 docker compose up -d
 ```
 docker should build the containers and start the services.
 
-
-
+```
 
 > **_IMPORTANT NOTES_**: For better understanding of the JSON `config.json` file inside agent, this is the main configuration file for the Agent.
 
 Attributes in config.json
-2. `MDB_DATABASE_NAME`:
+1. `MDB_DATABASE_NAME`:
    * Name of the MongoDB database where all collections and data are stored.
 
-3. `MDB_TIMESERIES_COLLECTION`:
+2. `MDB_TIMESERIES_COLLECTION`:
     * Name of the MongoDB collection used to store timeseries data.
     * Example: `timeseries_data`
 
-6. `MDB_TIMESERIES_TIMEFIELD`:
+3. `MDB_TIMESERIES_TIMEFIELD`:
     * Name of the field in the timeseries data that represents the timestamp.
     * Example: `timestamp`
 
-7. `MDB_TIMESERIES_GRANULARITY`:
+4. `MDB_TIMESERIES_GRANULARITY`:
     * Granularity of the timeseries data (e.g. `minutes`, `hours`, `days`).
     * Example: `minutes`
 
-8. `MDB_EMBEDDINGS_COLLECTION`:
+5. `MDB_EMBEDDINGS_COLLECTION`:
     * Name of the MongoDB collection used to store query embeddings.
     * Example: `historical_recommendations`
 
-9. `MDB_EMBEDDINGS_COLLECTION_VS_FIELD`:
+6. `MDB_EMBEDDINGS_COLLECTION_VS_FIELD`:
     * Name of the field in the embeddings collection that stores the embeddings.
     * Example: `query_embedding`
 
-10. `MDB_VS_INDEX`:
+7. `MDB_VS_INDEX`:
     * Name of the MongoDB index used for vector search.
     * Example: `agentic_historical_recommendations_queries_idx`
 
-11. `MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION`:
+8. `MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION`:
     * Name of the MongoDB collection used to store historical recommendations.
     * Example: `historical_recommendations`
 
 
-14. `MDB_CHECKPOINTER_COLLECTION`:
+9. `MDB_CHECKPOINTER_COLLECTION`:
     * Name of the MongoDB collection used to store checkpoints.
     * Example: `checkpoints`
 
 
-16. `MDB_AGENT_PROFILES_COLLECTION`:
+10. `MDB_AGENT_PROFILES_COLLECTION`:
     * Name of the MongoDB collection used to store agent profiles. e.g.: `agent_profiles`
     * You can add your custom agent profiles to this collection by importing a JSON file to the collection.
   
 
-17. `MDB_AGENT_SESSIONS_COLLECTION`:
+11. `MDB_AGENT_SESSIONS_COLLECTION`:
     * Name of the MongoDB collection used to store agent sessions.
     * Example: `agent_sessions`
 
 
-19. `DEFAULT_AGENT_PROFILE`:
+12. `DEFAULT_AGENT_PROFILE`:
     * Default agent profile used in the agent workflow.
     * Example:
     ```json
@@ -247,15 +265,15 @@ Attributes in config.json
     }
     ```
 
-22. `CHATCOMPLETIONS_MODEL_NAME`:
+13. `CHATCOMPLETIONS_MODEL_NAME`:
     * Name of the chat completions model used for generating responses.
     * Example: `Anthropic Claude 3 Haiku (within AWS Bedrock)`
 
-23. `CHATCOMPLETIONS_MODEL_ID`:
+14. `CHATCOMPLETIONS_MODEL_ID`:
     * Model ID of the chat completions model.
     * Example: `anthropic.claude-3-haiku-20240307-v1:0`
 
-24. `AGENT_WORKFLOW_GRAPH`:
+15. `AGENT_WORKFLOW_GRAPH`:
     * Agent workflow graph that defines the sequence of tools used in the agent workflow.
     * Example:
     ```json
@@ -308,92 +326,3 @@ Attributes in config.json
         - `edges`: Defines the connections between nodes.
         - `entry_point`: Starting point of the agent workflow.
 
-
-#### Frontend
-
-2. Create a `.env` file in the `/frontend` directory with the following content:
-
-```bash
-# NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_API_URL=http://localhost:8000
-LOCAL_API_URL=http://localhost:3000
-NEXT_PUBLIC_AGENT_SERVICE_URL=localhost:9000
-NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL=localhost:9001
-NEXT_PUBLIC_SESSIONS_SERVICE_URL=localhost:9003
-NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL=localhost:9004
-NEXT_PUBLIC_SIMULATION_SERVICE_URL=localhost:9006
-```
-
-## Run it Locally
-
-### Backend
-1. Navigate to the `/backend` folder.
-2. Ensure that all the services are up and running by executing:
-```bash
-docker compose up -d
-```
-
-## Demo Presentation & Talk Track
-
-### Overview
-
-The Agentic Framework serves as a versatile AI-driven recommendation assistant capable of comprehending your data, performing a multi-step diagnostic workflow using LangGraph, and generating actionable recommendations. The framework integrates several key technologies. It reads timeseries data from a CSV file or MongoDB (simulating various data inputs), generates text embeddings using the Cohere English V3 model, performs vector searches to identify similar past queries from MongoDB, persists session and run data, and finally generates a diagnostic recommendation. MongoDB stores agent profiles, historical recommendations, timeseries data, session logs, and more. This persistent storage not only logs every step of the diagnostic process for traceability but also enables efficient querying and reusability of past data.
-  
-- **Backend:**  
-  Implements a multi-step diagnostic workflow using LangGraph. The backend reads timeseries data from a CSV file, generates text embeddings using Cohere English V3 model, performs vector searches to identify similar past queries, persists session and run data, and finally generates a diagnostic recommendation.
-
-- **MongoDB:**  
-  The flexible document model database stores agent profiles, historical recommendations, timeseries data, session logs, and more. This persistent storage not only logs every step of the diagnostic process for traceability but also enables efficient querying and reusability of past data.
-
-- **Next.js Frontend:**  
-  Provides a two-column view:
-  - **Left Column:** Displays the real-time agent workflow updates such as the chain-of-thought reasoning, update messages, and final recommendations.
-  - **Right Column:** Shows the documents inserted into MongoDB during the agent run, including session details, logs, historical recommendations, agent profiles and sample past issues.
-
-
-**System Architecture:**  
-   - **Backend Workflow:**  
-     - The agent receives a user’s query report (e.g., "What adjustments should I make to my portfolio given the current macro economic conditions?").
-     - It first retrieves timeseries data (simulated here via a CSV file) and logs the update.
-     - Next, it generates an embedding for the complaint using Cohere English V3 model.
-     - The system then performs a vector search against historical queries in MongoDB to find similar cases.
-     - All data (timeseries, embeddings, session logs) are persisted in MongoDB for traceability.
-     - Finally, the agent uses Anthropic Claude 3 Haiku model to generate a final recommendation.
-   - **MongoDB Role:**  
-     - MongoDB stores everything: the agent profile, session logs, timeseries data, historical recommendations, and even checkpoints. This makes the system highly traceable and scalable.
-   - **Frontend Interface:**  
-     - The two-column UI shows both the real-time workflow and the relevant MongoDB documents that validate each step.
-
-
-### Demo Presentation Flow
-
-3. **Live Demonstration (takes about 5-7 minutes):**  
-   - **Starting a New Diagnosis:**  
-     - Open the frontend and choose “New Diagnosis.”
-     - Enter a query in the text box (e.g. "What adjustments should I make to my portfolio given the current macro economic conditions?").
-     - Example prompts
-        - "What adjustments should I make to my portfolio given the current macro economic conditions?"
-        - "What should I do with my investments given the current economic climate?"
-        - "How should I adjust my portfolio based on the current economic indicators?"
-        - "What changes should I make to my investments based on the current economic data?"
-     - Click the “Run Agent” button and **wait** for a few mins as the agent finishes its run 
-   - **Viewing Workflow:**  
-     - The workflow , chain-of-thought output, and the final recommendation is shown in the left column.
-     - The workflow is being generated in real time, giving transparency into the agent's decision-making process.
-
-   - **Reviewing MongoDB Documents:**  
-     - In the right column, the documents shown are the records inserted during the current agent run.
-       - **agent_sessions:** Contains session metadata and the thread ID.
-       - **historical_recommendations:** Stores the final recommendations and related diagnostics.
-       - **timeseries_data:** Holds the timeseries data used in the diagnostic process.
-       - **logs:** Contains log entries for the diagnostic process.
-       - **agent_profiles:** Shows the agent's profile that was used during diagnosis.
-       - **past_issues:** (If available) Displays a sample of historical issues.
-       - **checkpoints:** (From the checkpointing database) Shows the last saved state for potential recovery.
-   - **Resume Functionality:**  
-     - Optionally, we can demonstrate the "Resume Diagnosis" feature by entering a thread ID and showing how the system retrieves the corresponding session.
-
-
-## Feedback or Suggestions
-
-* Contact the MongoDB Industry Solutions team.
