@@ -33,6 +33,7 @@ const FilterComponent = () => {
   const fleet1Name = useSelector((state) => state.User.fleet1Name);
   const fleet2Name = useSelector((state) => state.User.fleet2Name);
   const fleet3Name = useSelector((state) => state.User.fleet3Name);
+  const all_geofences = useSelector((state) => state.Geofences?.all_geofences || []);  
 
   // console.log("Selected Message:", isSelected);
   // console.log("Message Data:", message);
@@ -68,50 +69,19 @@ const FilterComponent = () => {
                 </Tooltip>
               </h3>
 
-              <Checkbox
-                onChange={(e) => setFilter("downtown", e.target.checked)}
-                label="Downtown"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("utxa", e.target.checked)}
-                label="University of Texas at Austin"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("north_austin", e.target.checked)}
-                label="North Austin"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("capitol_area", e.target.checked)}
-                label="Capitol Area"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("south_austin", e.target.checked)}
-                label="South Austin"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("airport_zone", e.target.checked)}
-                label="Airport Zone"
-              />
-              <Checkbox
-                onChange={(e) =>
-                  setFilter("south_east_austin", e.target.checked)
-                }
-                label="South East Austin"
-              />
-              <Checkbox
-                onChange={(e) =>
-                  setFilter("south_west_austin", e.target.checked)
-                }
-                label="South West Austin"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("barton_creek", e.target.checked)}
-                label="Barton Creek"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("georgetown", e.target.checked)}
-                label="Georgetown"
-              />
+              <div>  
+                {all_geofences.length > 0 ? (  
+                  all_geofences.map((geofence) => (  
+                    <Checkbox  
+                      key={geofence.name} // Use id instead of name for better uniqueness  
+                      onChange={(e) => setFilter(geofence.name, e.target.checked)}  
+                      label={geofence.displayName}  
+                    />  
+                  ))  
+                ) : (  
+                  <div>Loading geofences...</div>  
+                )}  
+              </div> 
             </div>
             <div className={styles.checkboxGroup}>
               <h3 className={styles.groupTitle}>

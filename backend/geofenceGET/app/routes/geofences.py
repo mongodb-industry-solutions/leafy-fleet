@@ -13,7 +13,7 @@ async def return_all_geofences():
     """  
     try:  
         # Synchronously query geofences and convert cursor to list  
-        geofences_cursor = geofences_coll.find({}, {"_id": 1, "name": 1, "geometry": 1, "centroid":1})   
+        geofences_cursor = geofences_coll.find({}, {"_id": 1, "name": 1, "geometry": 1, "centroid":1, "displayName": 1})   
         geofences = list(geofences_cursor)  # Convert cursor to list  
   
         if not geofences:  
