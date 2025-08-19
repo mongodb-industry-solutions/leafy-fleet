@@ -71,3 +71,49 @@ async def create_historic_batch(entries: List[TimeseriesModel]):
                 "error": str(e)
             })
         )
+    
+@router.post("/timeseries-batch")  
+async def create_timeseries_batch(entries: List[TimeseriesModel]):  
+    """Create multiple timeseries entries in batch for real-time data."""  
+    try:  
+        if not entries:  
+            return JSONResponse(  
+                status_code=status.HTTP_400_BAD_REQUEST,  
+                content=jsonable_encoder({"message": "No entries provided"})  
+            )  
+  
+        # Convert entries to documents  
+        documents = []  
+        for entry in entries:  
+            doc_dict = entry.dict()  
+              
+            # Handle timestamp - for real-time data it should already be datetime  
+            if entry.timestamp is None:  
+                doc_dict['timestamp'] = datetime.utcnow()  
+            elif isinstance(doc_dict['timestamp'], str):  
+                doc_dict['timestamp'] = datetime.fromisoformat(doc_dict['timestamp'].replace('Z', '+00:00'))  
+              
+            documents.append(doc_dict)  
+  
+        # Use bulk write for better performance  
+        operations = [InsertOne(doc) for doc in documents]  
+        result = timeseries_coll.bulk_write(operations, ordered=False)  
+  
+        return JSONResponse(  
+            status_code=status.HTTP_201_CREATED,  
+            content=jsonable_encoder({  
+                "message": "Timeseries batch created successfully",  
+                "inserted_count": result.inserted_count,  
+                "total_entries": len(entries)  
+            })  
+        )  
+  
+    except Exception as e:  
+        logger.error(f"Batch insert error: {str(e)}")  
+        return JSONResponse(  
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  
+            content=jsonable_encoder({  
+                "message": "Error creating timeseries batch",  
+                "error": str(e)  
+            })  
+        )  
