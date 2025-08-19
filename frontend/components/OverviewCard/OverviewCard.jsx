@@ -34,6 +34,18 @@ const OverviewCard = () => {
     const fleet2Name = useSelector(state => state.User.fleet2Name);
     const fleet3Name = useSelector(state => state.User.fleet3Name);
     const selectedFleets = useSelector(state => state.User.selectedFleets);
+
+    const getFleetName = (carId) => {  
+      if (carId >= 1 && carId <= 100) {  
+          return fleet1Name;  
+      } else if (carId >= 101 && carId <= 200) {  
+          return fleet2Name;  
+      } else if (carId >= 201 && carId <= 300) {  
+          return fleet3Name;  
+      } else {  
+          return `Fleet ${Math.floor(carId/100) + 1}`; // Fallback for car_ids outside expected ranges  
+      }  
+    };  
     const handleSearch = async () => {
 
         if (!location && selectedType === "nearest" || geofences.length === 0 && selectedType === "inside") {
@@ -64,8 +76,7 @@ const OverviewCard = () => {
         const formattedResults = results.map(({ metadata, ...rest }) => ({
             ...rest, // Spread all fields except metadata
             status: getCarStatus(rest), // Add status based on car state
-            fleet: `Fleet ${Math.floor(rest.car_id/100) + 1}`,
-
+            fleet: getFleetName(rest.car_id),
             distance: rest.distance_to_geofence ? 
                 (rest.distance_to_geofence/1000).toFixed(2) : null
             }));
@@ -92,7 +103,7 @@ const OverviewCard = () => {
     <div>
       <Card className={styles.overviewCard}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <H3>Geospatial Vehicle Search</H3>
+          <H3>Geospatial Vehicle Search {fleet1Name}</H3> 
           <Button
             variant={Variant.BaseGreen}
             darkMode={false}
