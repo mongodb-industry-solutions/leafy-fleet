@@ -189,7 +189,7 @@ class QueryTools(MongoDBConnector):
         logger.info(f"User preferences: {user_preferences}")
         match_stage = self.build_match_stage(user_filters, agent_filters, user_preferences)
         logger.info(f"Match stage for vehicle state search: {match_stage}")
-        if match_stage["$or"]:
+        if match_stage["$or"] != []:
             pipeline = [
                 {
                     "$match": match_stage
@@ -323,17 +323,17 @@ class QueryTools(MongoDBConnector):
        
         logger.info(f"Aggregation pipeline: {pipeline}")
 
-        #If user asked for timestamp based averages, we process them here
-        for fleet_prefs in user_filters: 
-            if fleet_prefs == "Last 30 min" or fleet_prefs == "Last hour" or fleet_prefs == "Last 2 hours":
-                average = await self.calculate_field_averages_by_timeframe(timeframe=fleet_prefs, user_preferences=user_preferences, user_filters=user_filters, match_stage=match_stage)
 
-        
-        
 
         cursor = collection.aggregate(pipeline)
         result = list(cursor)
 
+        #If user asked for timestamp based averages, we process them here
+        for fleet_prefs in user_filters: 
+            logger.info(f"Processing user filter: {fleet_prefs}")
+            if fleet_prefs == "Last 30 min" or fleet_prefs == "Last hour" or fleet_prefs == "Last 2 hours":
+                average = await self.calculate_field_averages_by_timeframe(timeframe=fleet_prefs, user_preferences=user_preferences, user_filters=user_filters, match_stage=match_stage)
+                result.append(average)
         logger.info(f"Sample: {result[:3]}")
 
          # We clean the outputs and only process whats in the user preferences
@@ -358,8 +358,6 @@ class QueryTools(MongoDBConnector):
                     for field in list(car.keys()):
                         if field not in allowed_fields:
                             car[field] = None
-        result.append(average)
-
         return result
 
     async def calculate_field_averages_by_timeframe(self, timeframe: str, user_preferences: str = None, user_filters: str = None, match_stage: dict = None):
@@ -607,7 +605,6 @@ class QueryTools(MongoDBConnector):
         
         else:
             logger.info("No user filters provided. Returning all data.")
-            match_stage = {}  # No filtering applied
 
         if match_stage["$or"] == []:
             match_stage["$or"].append({"car_id": {"$in": list(range(0, fleet_capacity[0]))}})
