@@ -21,10 +21,10 @@ const ResultSlice = createSlice({
         setIsModalOpen: (state, action) => {
             state.isModalOpen = action.payload.isModalOpen;
         },
-        setStaticSelectedCar: (state, action) => {
-            state.staticSelectedCar = action.payload.car;
-            console.log("Static selected car in ResultSlice:", state.staticSelectedCar);
-        }
+        setStaticSelectedCar: (state, action) => {  
+            state.staticSelectedCar = action.payload.staticCar;  
+            console.log("Static selected car in ResultSlice:", state.staticSelectedCar);  
+        }  
     }
 });
 
