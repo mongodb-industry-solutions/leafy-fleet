@@ -474,34 +474,32 @@ const LoginManager = () => {
                     onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
                     onChange={(e) => {  
                       const inputValue = e.target.value;  
-                        
-                      // Allow empty input while typing  
+                      console.log('Input value:', inputValue);
+                      
                       if (inputValue === '') {  
-                        handleFleetCapacityChange(index + 1, '');  
-                        return;  
-                      }  
-                        
-                      // Convert to number only when we have a complete value  
-                      const numValue = Number(inputValue);  
-                        
-                      // Validate bounds  
-                      if (numValue > 100) {  
-                        handleFleetCapacityChange(index + 1, 100);  
-                        e.target.value = '100';  
-                        return;  
-                      }  
-                        
-                      if (numValue < 0) {  
+                        console.log('Empty input, setting to 0');
                         handleFleetCapacityChange(index + 1, 0);  
-                        e.target.value = '0';  
                         return;  
                       }  
-                        
-                      // Only update if it's a valid number  
-                      if (!isNaN(numValue)) {  
-                        handleFleetCapacityChange(index + 1, numValue);  
-                      }  
-                    }}  
+                      
+                      const numValue = Number(inputValue);  
+                      console.log('Parsed number:', numValue);
+                      
+                      if (isNaN(numValue)) {  
+                        console.log('Invalid number, skipping');
+                        return;  
+                      }
+                      
+                      let finalValue = numValue;
+                      if (numValue > 100) {  
+                        finalValue = 100;
+                      } else if (numValue < 0) {  
+                        finalValue = 0;
+                      }
+                      
+                      console.log('Final value being dispatched:', finalValue);
+                      handleFleetCapacityChange(index + 1, finalValue);  
+                    }}
                   />
                   
                 </div>

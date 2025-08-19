@@ -126,19 +126,19 @@ const FilterComponent = () => {
                   Select which fleets to include in your query.
                 </Tooltip>
               </h3>
-              {fleet1Name && (
+              
                 <Checkbox
                   onChange={(e) => setFilter("Fleet 1", e.target.checked)}
                   label={fleet1Name}
                 />
-              )}
-              {fleet2Name && (
+             
+              {fleet2Capacity>0 && (
                 <Checkbox
                   onChange={(e) => setFilter("Fleet 2", e.target.checked)}
                   label={fleet2Name}
                 />
               )}
-              {fleet3Name && (
+              {fleet3Capacity >0 && (
                 <Checkbox
                   onChange={(e) => setFilter("Fleet 3", e.target.checked)}
                   label={fleet3Name}
