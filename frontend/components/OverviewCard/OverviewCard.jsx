@@ -103,7 +103,7 @@ const OverviewCard = () => {
     <div>
       <Card className={styles.overviewCard}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <H3>Geospatial Vehicle Search {fleet1Name}</H3> 
+          <H3>Geospatial Vehicle Search </H3> 
           <Button
             variant={Variant.BaseGreen}
             darkMode={false}
