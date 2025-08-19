@@ -18,7 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { usePathname } from "next/navigation";
 import { setLoggedFleet, setSelectedFleets, setFleet1Capacity, setFleet2Capacity, setFleet3Capacity, setSessionId , setFleet1Name, setFleet1Attributes, setFleet2Name, setFleet2Attributes, setFleet3Name, setFleet3Attributes} from "@/redux/slices/UserSlice";
 import { setSelectedUser } from "@/redux/slices/UserSlice";
-
+import { setGeofences } from "@/redux/slices/GeofencesSlice";  
 
 
 const LoginComp = ({ modalObserver }) => {
@@ -30,6 +30,25 @@ const LoginComp = ({ modalObserver }) => {
   const [threadId, setThreadId] = useState("");
   
   const dispatch = useDispatch();  
+
+  useEffect(() => {  
+    const fetchGeofences = async () => {  
+      try {  
+        const response = await fetch(`http://${process.env.NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL}/geofences`);  
+        if (!response.ok) {  
+          throw new Error("Failed to fetch geofences");  
+        }  
+        const data = await response.json();  
+        dispatch(setGeofences({ geofences: data.geofences })); // Fixed action name 
+        //console.log("Fetched geofences:", data.geofences); 
+        
+        //console.log("Fetched geofences:", data.geofences);
+      } catch (error) {  
+        console.error("Error fetching geofences:", error);  
+      }  
+    }  
+    fetchGeofences();  
+  }, [dispatch]);  
 
   
   const pathname = usePathname(); // Get the current route  
