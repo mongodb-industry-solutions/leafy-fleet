@@ -40,7 +40,7 @@ const LoginComp = ({ modalObserver }) => {
         }  
         const data = await response.json();  
         dispatch(setGeofences({ geofences: data.geofences })); // Fixed action name 
-        console.log("Fetched geofences:", data.geofences); 
+        //console.log("Fetched geofences:", data.geofences); 
         
         //console.log("Fetched geofences:", data.geofences);
       } catch (error) {  
