@@ -9,10 +9,13 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ["*"]
+    allow_origins=["*"],  # Specify your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-print("Starting Timeseries Post Microservice...")
+print("Starting Timeseries Get Microservice...")
 
 
 app.include_router(timeseries_api)

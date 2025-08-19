@@ -1,0 +1,16 @@
+version: '3.8'  
+  
+static-vehicle-service:  
+  static-service:  
+    container_name: static-vehicle-service  
+    build:  
+      context: .
+    ports:  
+      - "9006:9000"  # Map local port 9001 to container port 9000  
+    volumes:  
+      - ./:/static  # Mount the current directory into the container  
+    working_dir: /static/app  # Set the working directory inside the container  
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 9000  # Run your app directly using the mounted code  
+    environment:  
+      - MONGODB_URI=${MONGODB_URI}  # MongoDB connection string via environment variable  
+      - PYTHONUNBUFFERED=1  # Ensures real-time logging behavior  

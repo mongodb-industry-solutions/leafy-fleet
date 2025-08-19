@@ -9,8 +9,9 @@ print("Doing database connection...")
 MONGODB_URL = os.getenv("MONGODB_URI")
 DATABASE_NAME = "leafy_fleet"
 TIMESERIES_COLLECTION = "vehicleTelemetry"
-
+GEOFENCES_COLLECTION = "geofences"
 
 mdb_conn = MongoClient(MONGODB_URL)
 db_fleet = mdb_conn[DATABASE_NAME]
 timeseries_coll = db_fleet[TIMESERIES_COLLECTION]
+geofence_coll = db_fleet[GEOFENCES_COLLECTION]

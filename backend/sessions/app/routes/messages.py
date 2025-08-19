@@ -4,6 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from database import sessions_coll
 from datetime import datetime
 from model.sessionModel import Message
+from model.sessionModel import MessageEntry
 from bson import ObjectId
 from fastapi.encoders import jsonable_encoder  
 from pymongo import ReturnDocument  
@@ -11,23 +12,16 @@ from pymongo import ReturnDocument
 router = APIRouter()
 
 @router.post("/message")  
-async def update_message(  
-    payload: dict = Body(...)  
-):  
-    thread_id = payload.get("thread_id")  
-    message = payload.get("message")  
-    sender = payload.get("sender")
-    completed = payload.get("completed", True)  # Default to True if not provided  
-  
+async def update_message(entry: MessageEntry): 
     # Validate thread_id  
-    if not thread_id:  
+    if not entry.thread_id:  
         return JSONResponse(  
             status_code=status.HTTP_400_BAD_REQUEST,  
             content={"message": "Field thread_id is required in the request body."}  
         )  
       
     try:  
-        object_id = ObjectId(thread_id)  
+        object_id = ObjectId(entry.thread_id)  
     except Exception:  
         return JSONResponse(  
             status_code=status.HTTP_400_BAD_REQUEST,  
@@ -44,7 +38,7 @@ async def update_message(
           
         # Prepare new message  
         msg_index = len(session.get("chat_history", []))  # Use existing chat_history length  
-        new_msg = Message(message=message, index=msg_index, sender=sender, completed=completed).dict()  
+        new_msg = Message(message=entry.message, index=msg_index, sender=entry.sender, completed=entry.completed).dict()  
           
         # Update chat_history and last_used_at  
         updated_session = sessions_coll.find_one_and_update(  
@@ -53,9 +47,7 @@ async def update_message(
         "$push": {"chat_history": new_msg},  
         "$set": {"last_used_at": datetime.utcnow()},  
     },  
-    return_document=ReturnDocument.AFTER  # Ensure updated document is returned  
-)  
-  
+    return_document=ReturnDocument.AFTER ) 
         if updated_session:  
             # Convert last_used_at (datetime) to ISO format for JSON serialization  
             last_used_at = updated_session["last_used_at"].isoformat() if "last_used_at" in updated_session else None  
@@ -106,10 +98,3 @@ async def get_messages(thread_id: str):
             content={"message": "Error retrieving messages", "error": str(e)}
         )
     
- # JSON format for this approach:
-# {
-#   "thread_id": "688795a6bd4be05fdbfe3eab",
-#   "message": "Hello, this is my message text",
-#   "sender": "user"
-#   "completed": true  # Optional, defaults to true
-# }
