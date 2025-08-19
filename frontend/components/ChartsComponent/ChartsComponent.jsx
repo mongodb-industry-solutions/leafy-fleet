@@ -52,6 +52,23 @@ const ChartsComponent = () => {
     fetchData();
   }, []); // Empty dependency array ensures this runs once when the component mounts
 
+  // Create filtered chart URLs  
+  const createFilteredChartUrl = (chartId) => {  
+    const baseUrl = `https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts`;  
+    const params = new URLSearchParams({  
+      id: chartId,  
+      maxDataAge: '10', // 5 minutes  
+      theme: 'light',  
+      autoRefresh: 'true',  
+      // Add filter for metadata.sessions containing your thread_id  
+      filter: JSON.stringify({  
+        "metadata.sessions": thread_id  
+      })  
+    });  
+    return `${baseUrl}?${params.toString()}`;  
+  };  
+
+
   return (
     <div className={styles.container}>
       <div className={styles.topPart} style={{ flex: 1 }}>
@@ -63,7 +80,7 @@ const ChartsComponent = () => {
       </div>
       <div className={styles.bottomPart} style={{ flex: 5 }}>
         <iframe
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=d988fa09-c283-4247-a119-e07bd65d186b&maxDataAge=3600&theme=light&autoRefresh=true"
+          src={createFilteredChartUrl("d988fa09-c283-4247-a119-e07bd65d186b")}
           width="500"
           height="400"
           style={{
@@ -96,9 +113,22 @@ const ChartsComponent = () => {
           }}
           width="500"
           height="400"
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=330b642d-8ee9-49c5-a077-23ad41077600&maxDataAge=3600&theme=light&autoRefresh=true"
+          src={createFilteredChartUrl("330b642d-8ee9-49c5-a077-23ad41077600")}
           title="MongoDB Chart"
         ></iframe>
+        <iframe style={{
+          background: "#FFFFFF",
+          border: "none",
+          borderRadius: "2px",
+          boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)",
+         }} 
+         width="700" 
+         height="350" 
+         src={createFilteredChartUrl("069f2927-1e4a-49c1-b073-42a78a5d5c2e")}  
+         title="MongoDB Chart"         
+         >
+
+         </iframe>
         <iframe
           style={{
             background: "#FFFFFF",
@@ -108,19 +138,7 @@ const ChartsComponent = () => {
           }}
           width="700"
           height="350"
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=dd65364f-a16c-4e84-be3e-7d430a5929b9&maxDataAge=3600&theme=light&autoRefresh=true"
-          title="MongoDB Chart"
-        ></iframe>
-        <iframe
-          style={{
-            background: "#FFFFFF",
-            border: "none",
-            borderRadius: "2px",
-            boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)",
-          }}
-          width="700"
-          height="350"
-          src="https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts?id=cb9db670-b9f0-4812-9969-0335f591b6b1&maxDataAge=3600&theme=light&autoRefresh=true"
+          src={createFilteredChartUrl("67b340dc-612a-467a-a22b-ec1d6118c01b")}  
           title="MongoDB Chart"
         ></iframe>
       </div>
