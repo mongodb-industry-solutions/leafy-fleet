@@ -71,7 +71,7 @@ timeseries_send_every_n_steps = 5  # Send every 5 steps for performance, so ever
 timeseries_historic_send_every_n_steps = 10  # Send every 10 steps for history, so every 20-40 simulated seconds, is sent in batches of 1000 for performance with bulk
 
 batch_size = 1000  #  batch for efficiency using write bulk API, can be adjusted based on performance needs
-
+batch_time=10  # 10 seconds for batch processing, can be adjusted based on performance needs
 
 cdt = timezone(timedelta(hours=-5))
 
@@ -559,7 +559,7 @@ async def batch_processor():
                 queue_size = len(batch_queue)  
                   
                 # Send if batch is full OR if 10 seconds have passed and we have data  
-                if queue_size >= batch_size or (time_since_last_send >= 10 and queue_size > 0):  
+                if queue_size >= batch_size or (time_since_last_send >= batch_time and queue_size > 0):  
                     should_send = True  
                     # Extract up to batch_size items  
                     items_to_send = min(batch_size, queue_size)  
