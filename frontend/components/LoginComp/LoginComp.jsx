@@ -16,7 +16,7 @@ import WizardIcon from "@leafygreen-ui/icon/dist/Wizard";
 import { USER_MAP } from "@/lib/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { usePathname } from "next/navigation";
-import { setLoggedFleet, setSelectedFleets, setFleet1Capacity, setFleet2Capacity, setFleet3Capacity, setSessionId } from "@/redux/slices/UserSlice";
+import { setLoggedFleet, setSelectedFleets, setFleet1Capacity, setFleet2Capacity, setFleet3Capacity, setSessionId , setFleet1Name, setFleet1Attributes, setFleet2Name, setFleet2Attributes, setFleet3Name, setFleet3Attributes} from "@/redux/slices/UserSlice";
 import { setSelectedUser } from "@/redux/slices/UserSlice";
 
 
@@ -42,36 +42,52 @@ const LoginComp = ({ modalObserver }) => {
     setOpen(false);
   };
   
-  const handleRestore = async () => {
-    try {
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/${threadId}`);
+  const handleRestore = async () => {  
+  try {  
+    const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/${threadId}`);  
+  
+    if (!response.ok) {  
+      throw new Error('Session not found');  
+    }  
+  
+    const data = await response.json();  
+    console.log("Restored session:", data);  
+  
+    // Set session data in Redux  
+    dispatch(setSessionId({ sessionId: threadId }));  
+    dispatch(setSelectedUser({ name: "Restored User" }));  
+    dispatch(setLoggedFleet(true));          
+      
+    // Restore fleet configuration  
+    const fleetConfig = data.vehicle_fleet;  
+    dispatch(setSelectedFleets({ selectedFleets: fleetConfig.selected_fleets }));  
+      
+    // Use optional chaining and provide fallbacks  
+    dispatch(setFleet1Capacity(fleetConfig.fleet_size?.[0] || 20));  
+    dispatch(setFleet1Name(fleetConfig.fleet_names?.[0] || "Fleet 1"));  
+    dispatch(setFleet1Attributes(fleetConfig.attribute_list?.[0] || []));   
+      
+    if (fleetConfig.fleet_size?.length > 1) {  
+      dispatch(setFleet2Name(fleetConfig.fleet_names?.[1] || "Fleet 2"));  
+      dispatch(setFleet2Capacity(fleetConfig.fleet_size?.[1] || 0));  
+      dispatch(setFleet2Attributes(fleetConfig.attribute_list?.[1] || []));   
+    }     
+      
+    if (fleetConfig.fleet_size?.length > 2) {  
+      dispatch(setFleet3Name(fleetConfig.fleet_names?.[2] || "Fleet 3"));  
+      dispatch(setFleet3Capacity(fleetConfig.fleet_size?.[2] || 0));  
+      dispatch(setFleet3Attributes(fleetConfig.attribute_list?.[2] || []));  
+    }  
+      
+    // Close modal after successful restore  
+    setOpen(false);  
+  
+  } catch (error) {  
+    console.error("Error restoring session:", error);  
+    // You might want to show an error message to the user here  
+  }  
+};  
 
-      if (!response.ok) {
-        throw new Error('Session not found');
-      }
-
-      const data = await response.json();
-      console.log("Restored session:", data);
-
-      // Set session data in Redux
-      dispatch(setSessionId({ sessionId: threadId }));
-      dispatch(setSelectedUser({ name: "Restored User" }));
-      dispatch(setLoggedFleet(true)); // This is what keeps you logged in      
-      // Restore fleet configuration
-      const fleetConfig = data.vehicle_fleet;
-      dispatch(setSelectedFleets({ selectedFleets: fleetConfig.selected_fleets }));
-      dispatch(setFleet1Capacity(fleetConfig.fleet_size[0] || 20));
-      dispatch(setFleet2Capacity(fleetConfig.fleet_size[1] || 0));
-      dispatch(setFleet3Capacity(fleetConfig.fleet_size[2] || 0));
-      // Close modal after successful restore
-      setOpen(false);
-
-     
-    } catch (error) {
-      console.error("Error restoring session:", error);
-      // You might want to show an error message to the user here
-    }
-  };
 
   if (shouldShowLoginPopup) {  
     return (  
