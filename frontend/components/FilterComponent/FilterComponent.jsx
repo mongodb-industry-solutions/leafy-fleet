@@ -68,20 +68,20 @@ const FilterComponent = () => {
                   areas of interest in your fleet management tasks.
                 </Tooltip>
               </h3>
+              <div className={styles.checkboxGroupGeo}>      
+                {all_geofences.length > 0 ? (      
+                  all_geofences.map((geofence) => (      
+                    <Checkbox      
+                      key={geofence.name} // Use id instead of name for better uniqueness      
+                      onChange={(e) => setFilter(geofence.name, e.target.checked)}      
+                      label={geofence.displayName}      
+                    />      
+                  ))      
+                ) : (      
+                  <div>Loading geofences...</div>      
+                )}      
+              </div>  
 
-              <div>  
-                {all_geofences.length > 0 ? (  
-                  all_geofences.map((geofence) => (  
-                    <Checkbox  
-                      key={geofence.name} // Use id instead of name for better uniqueness  
-                      onChange={(e) => setFilter(geofence.name, e.target.checked)}  
-                      label={geofence.displayName}  
-                    />  
-                  ))  
-                ) : (  
-                  <div>Loading geofences...</div>  
-                )}  
-              </div> 
             </div>
             <div className={styles.checkboxGroup}>
               <h3 className={styles.groupTitle}>
@@ -152,7 +152,7 @@ const FilterComponent = () => {
           flagText=""
           darkMode={false}
         >
-          <div className={styles.filterGrid}>
+          <div className={styles.normalGrid}>
             {fleet1Capacity > 0 && (
               <NumberInput
                 data-lgid="fleet-1"

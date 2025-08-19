@@ -52,12 +52,12 @@ const ChartsComponent = () => {
     fetchData();
   }, []); // Empty dependency array ensures this runs once when the component mounts
 
-  // Create filtered chart URLs  
+  // Create filtered chart URLs  - here u can change refresh time 
   const createFilteredChartUrl = (chartId) => {  
     const baseUrl = `https://charts.mongodb.com/charts-jeffn-zsdtj/embed/charts`;  
     const params = new URLSearchParams({  
       id: chartId,  
-      maxDataAge: '10', // 5 minutes  
+      maxDataAge: '10', // 10 seconds per refresh
       theme: 'light',  
       autoRefresh: 'true',  
       // Add filter for metadata.sessions containing your thread_id  
