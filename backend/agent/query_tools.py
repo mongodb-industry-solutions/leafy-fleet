@@ -321,9 +321,7 @@ class QueryTools(MongoDBConnector):
                 }
             ]
        
-        logger.info(f"Aggregation pipeline: {pipeline}")
-
-
+        
 
         cursor = collection.aggregate(pipeline)
         result = list(cursor)

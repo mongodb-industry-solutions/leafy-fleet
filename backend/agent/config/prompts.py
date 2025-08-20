@@ -3,8 +3,7 @@
 from datetime import datetime
 
 
-def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_instructions: str, agent_goals: str, query_reported: str, agent_motive: str,
-                                 agent_kind_of_data: str, embedding_model_name: str, chat_completion_model_name: str) -> str:
+def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_instructions: str, agent_goals: str, query_reported: str, agent_motive: str) -> str:
     """
     Generate a prompt for the tool and keyword selection.
 
@@ -15,9 +14,6 @@ def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_ins
         agent_goals (str): Goals of the agent.
         query_reported (str): Query reported to the agent.
         agent_motive (str): Motive of the agent.
-        agent_kind_of_data (str): Kind of data the agent consumes.
-        embedding_model_name (str): Name of the embedding model.
-        chat_completion_model_name (str): Name of the chat completion model.
 
     Returns:
         str: The prompt for tool and keyword selection.

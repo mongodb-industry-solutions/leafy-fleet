@@ -31,6 +31,7 @@ const UserSlice = createSlice({
       "Avaliability",
       "Quality",
       "Performance",
+      "Speed"
     ],
     fleet3Attributes: [
       "Coordinates",
@@ -40,6 +41,7 @@ const UserSlice = createSlice({
       "Avaliability",
       "Quality",
       "Performance",
+      "Speed"
     ],
     editFleet: 1,
     isLoggedIn: false,

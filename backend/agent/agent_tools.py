@@ -211,8 +211,8 @@ class AgentTools(MongoDBConnector):
             chain_of_thought = chat_completions.predict(CHAIN_OF_THOUGHTS_PROMPT)
             JSON_chain_of_thought = json.loads(chain_of_thought)
 
-            # logger.info(f"[LLM] Chain-of-Thought Reasoning: {JSON_chain_of_thought}")
-            # logger.info(f"[LLM] Chain-of-Thought Reasoning: {chain_of_thought}")
+            logger.info(f"[LLM] Chain-of-Thought Reasoning: {JSON_chain_of_thought}")
+            logger.info(f"[LLM] Chain-of-Thought Reasoning: {chain_of_thought}")
 
             next_step = JSON_chain_of_thought.get("tool", "vehicle_state_search_tool")
             
@@ -292,7 +292,7 @@ class AgentTools(MongoDBConnector):
 
         try: 
             # Instantiate the Embedder
-            # embedder = Embedder(collection_name=self.mdb_embeddings_collection) # historical_recommendations collection
+            embedder = Embedder(collection_name=self.mdb_embeddings_collection) # historical_recommendations collection
             # embedding = embedder.get_embedding(text)
 
 
@@ -300,6 +300,8 @@ class AgentTools(MongoDBConnector):
             historical_recommendation = {
                 "query": text,
                 "recommendation": state.get("next_step", ""),
+                "time_field": additional_fields.get("time_range", ""),
+                "fields": additional_fields.get("fields", []),
                 "embedding": embedding,
                 "thread_id": state.get("thread_id", ""),
                 "created_at": datetime.datetime.now(datetime.timezone.utc)

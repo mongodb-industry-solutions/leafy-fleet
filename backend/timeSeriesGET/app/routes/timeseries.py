@@ -1,21 +1,17 @@
 import ast
 import logging
-from fastapi import APIRouter, status, Body
+from fastapi import FastAPI, HTTPException,status, Request, Query, APIRouter, WebSocket, WebSocketDisconnect, Body
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder  
 from database import timeseries_coll, geofence_coll
 from datetime import datetime, timezone
 from model.timeseriesModel import TimeseriesModel
-from model.timeseriesModel import VehicleModel
 import time
-
 from bson import ObjectId  
 from typing import List, Optional  
-from fastapi import Query  
 import math  
 import json
 
-from fastapi import FastAPI, HTTPException, Request, Query, APIRouter, WebSocket, WebSocketDisconnect, Body
 
 # Configure logging
 logging.basicConfig(
@@ -44,18 +40,17 @@ async def get_timeseries_entries():
                 content={"timestamp": jsonable_encoder(latest_entries[0]["timestamp"])}  
             )  
         else:  
-            return JSONResponse(  
+            raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,         
-                content={"message": "No timeseries entries found"}  
+                detail= "No timeseries entries found"
             )  
+    except HTTPException:  
+        raise  
     except Exception as e:  
         logger.error(f"Error fetching latest timeseries entry: {e}")  
-        return JSONResponse(  
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,         
-            content={  
-                "message": "Error fetching latest timeseries entry",     
-                "error": str(e)  
-            }  
+        raise HTTPException(  
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  
+            detail="Error fetching latest timeseries entry"  
         )  
 
 
@@ -68,9 +63,14 @@ async def get_latest_timeseries_by_carID(carID: str):
             return JSONResponse(status_code=status.HTTP_200_OK, content=entry)
         else:
             return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message": f"No timeseries entry found for carID {carID}"})
-    except Exception as e:
-        print(f"Error fetching latest timeseries entry for carID {carID}: {e}")
-        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"message": f"Error fetching latest timeseries entry for carID {carID}", "error": str(e)})
+    except HTTPException:  
+        raise  
+    except Exception as e:  
+        logger.error(f"Error fetching latest timeseries entry for car_id {carID}: {e}")  
+        raise HTTPException(  
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  
+            detail=f"Error fetching latest timeseries entry for car_id {carID}"  
+        )
     
 @router.get("/timeseries/all/latest")
 async def get_latest_timeseries_entries(thread_id: Optional[str] = Query(None, description="Thread ID")):
@@ -188,7 +188,7 @@ async def get_vehicles_nearest_to_geofence(
         geofences = list(geofence_coll.find({"name": {"$in": geofence_names}}))          
                   
         if not geofences:          
-            return JSONResponse(status_code=404, content={"message": "Geofences not found"})          
+            return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Geofences not found"})          
                   
         # Create centroids list      
         if len(geofences) == 1:          
@@ -305,11 +305,14 @@ async def get_vehicles_nearest_to_geofence(
                   
         return JSONResponse(status_code=status.HTTP_200_OK,content=result)          
                   
-    except Exception as e:          
-        return JSONResponse(          
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,           
-            content={"message": "Error fetching vehicles near geofence", "error": str(e)}          
-        )      
+    except HTTPException:  
+        raise  
+    except Exception as e:  
+        logger.error(f"Error fetching vehicles near geofence: {e}")  
+        raise HTTPException(  
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  
+            detail="Error fetching vehicles near geofence"  
+        )  
   
 @router.post("/timeseries/inside-geofence")          
 async def get_vehicles_inside_geofence(          
@@ -411,11 +414,14 @@ async def get_vehicles_inside_geofence(
                   
         return JSONResponse(status_code=status.HTTP_200_OK,content=result)          
                   
-    except Exception as e:          
-        return JSONResponse(          
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,           
-            content={"message": "Error fetching vehicles inside geofence", "error": str(e)}          
-        )      
+    except HTTPException:  
+        raise  
+    except Exception as e:  
+        logger.error(f"Error fetching vehicles inside geofence: {e}")  
+        raise HTTPException(  
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  
+            detail="Error fetching vehicles inside geofence"  
+        )        
 
 def understand_fleet_number(user_preferences: str):
     """       
