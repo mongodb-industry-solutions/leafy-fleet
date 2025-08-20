@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Card from '@leafygreen-ui/card';
 import { H2, H3 } from '@leafygreen-ui/typography';
@@ -7,11 +7,18 @@ import Icon from '@leafygreen-ui/icon';
 import { Combobox, ComboboxOption,ComboboxGroup } from '@leafygreen-ui/combobox';
 import styles from './OverviewCard.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSelectedType, setSelectedFleets, setGeoFences, setMaxDistance, setMinDistance, setLocation } from  '@/redux/slices/OverviewSlice';
-import CodeComponent from '../CodeComponet/CodeComponent.jsx';
+import { setSelectedType, setSelectedFleets, setGeoFences, setMaxDistance, setMinDistance, setLocation, setIsLoading } from  '@/redux/slices/OverviewSlice';
+import dynamic from 'next/dynamic';
 import Banner from '@leafygreen-ui/banner';
 import { NumberInput } from '@leafygreen-ui/number-input';
-import ResultsComponent from '../ResultsComponent/ResultsComponent';
+import { setResults } from '@/redux/slices/ResultSlice';
+import { geospatialAPI } from './geospatialAPI';
+import { geofences } from '@/components/Geofences/geofences'; // Import the geofences data  
+
+
+// Dynamically import components that might use browser APIs
+const CodeComponent = dynamic(() => import('../CodeComponet/CodeComponent.jsx'), { ssr: false });
+const ResultsComponent = dynamic(() => import('../ResultsComponent/ResultsComponent'), { ssr: false });
 const OverviewCard = () => {
 
     // State to manage the selected option for the geospatial search
@@ -22,20 +29,81 @@ const OverviewCard = () => {
     const location = useSelector(state => state.Overview.location);
     const maxDistance = useSelector(state => state.Overview.maxDistance);
     const minDistance = useSelector(state => state.Overview.minDistance);
+    const sessionId = useSelector(state => state.User.sessionId);
+    const fleet1Name = useSelector(state => state.User.fleet1Name);
+    const fleet2Name = useSelector(state => state.User.fleet2Name);
+    const fleet3Name = useSelector(state => state.User.fleet3Name);
+
+    const handleSearch = async () => {
+
+        if (!location && selectedType === "nearest" || geofences.length === 0 && selectedType === "inside") {
+            alert("Please select a geofence or location to search.");
+            return;
+        }
+        dispatch(setIsLoading({ isLoading: true })); // Set loading state to true
+        try {
+            let results;
+            if (selectedType === "nearest") {
+            results = await geospatialAPI.searchNearestVehicles({
+                sessionId,
+                location,
+                minDistance,
+                maxDistance,
+                fleetsFilter
+
+            });
+            } else {
+            results = await geospatialAPI.searchInsideVehicles({
+                sessionId,
+                geoFences,
+                fleetsFilter
+            });
+            }
+
+        // Transform results, excluding metadata but keeping all other fields
+        const formattedResults = results.map(({ metadata, ...rest }) => ({
+            ...rest, // Spread all fields except metadata
+            status: getCarStatus(rest), // Add status based on car state
+            fleet: `Fleet ${Math.floor(rest.car_id/100) + 1}`,
+
+            distance: rest.distance_to_geofence ? 
+                (rest.distance_to_geofence/1000).toFixed(2) : null
+            }));
+
+            console.log('Formatted results:', formattedResults);
+            dispatch(setResults({ results: formattedResults }));
+        } catch (error) {
+            console.error('Search failed:', error);
+            dispatch(setResults({ results: [] }));
+        } finally {
+            dispatch(setIsLoading({ isLoading: false })); // Set loading state to false
+        }
+    };
+
+
+  const getCarStatus = (car) => {
+    if (car.is_crashed) return "Issue";
+    if (car.is_oil_leak) return "Maintenance";
+    if (car.is_engine_running) return "Active";
+    return "Issue";
+  };
+
   return (
-<div> 
-<Card className={styles.overviewCard}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' ,  }}>
-            <H3 >Geospatial Vehicle Search</H3>
-            <Button
-              variant={Variant.Default}
-              darkMode={true}
-              size={Size.Default}
-              rightGlyph={<Icon glyph="MagnifyingGlass" />}
-            >
-              Search Vehicles
-            </Button>
-          </div>
+    <div>
+      <Card className={styles.overviewCard}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <H3>Geospatial Vehicle Search</H3>
+          <Button
+            variant={Variant.Default}
+            darkMode={true}
+            size={Size.Default}
+            rightGlyph={<Icon glyph="MagnifyingGlass" />}
+            onClick={handleSearch}
+            disabled={!selectedType || (selectedType === "nearest" && !location) || (selectedType === "inside" && geoFences.length === 0)}
+          >
+            Search Vehicles
+          </Button>
+        </div>
 
             <div className={styles.topComboboxes}> 
             <Combobox
@@ -59,12 +127,16 @@ const OverviewCard = () => {
                 placeholder="Choose if you want to filter by fleet"
                 multiselect={true}
                 initialValue={fleetsFilter}
-                onChange={fleets => dispatch(setSelectedFleets({ fleets }))}
+                onChange={fleets => {
+                    // Convert selected fleet strings to integers
+                    const fleetNumbers = fleets ? fleets.map(f => parseInt(f, 10)) : [];
+                    console.log('Selected fleet numbers:', fleetNumbers);
+                    dispatch(setSelectedFleets({ fleets: fleetNumbers }));
+                }}
             >
-                <ComboboxOption value="fleet1" displayName='Fleet 1' />
-                <ComboboxOption value="fleet2" displayName='Fleet 2'/>
-                <ComboboxOption value="fleet3" displayName='Fleet 3'/>
-                <ComboboxOption value="fleet4" displayName='Fleet 4' disabled={true}/>
+                <ComboboxOption value="1" displayName={fleet1Name} />
+                <ComboboxOption value="2" displayName={fleet2Name}/>
+                <ComboboxOption value="3" displayName={fleet3Name}/>
             </Combobox>
 
             {selectedType==="inside" && 
@@ -78,9 +150,13 @@ const OverviewCard = () => {
                     console.log('Selected geofences:', zone);
                     dispatch(setGeoFences({ geoFences: zone || [] }));
                 }}>
-                <ComboboxOption value="zone1" displayName='Zone 1' />
-                <ComboboxOption value="zone2" displayName='Zone 2' />
-                <ComboboxOption value="zone3" displayName='Zone 3' />
+                {geofences.map(geofence => (  
+              <ComboboxOption   
+                key={geofence.name}   
+                value={geofence.name}   
+                displayName={geofence.displayName || geofence.name}   
+              />  
+            ))}  
             </Combobox>
             }
 
@@ -95,9 +171,13 @@ const OverviewCard = () => {
                 onChange={loc => {
                     dispatch(setLocation({ location: loc || null }));
                 }}>
-                <ComboboxOption value="zone1" displayName='Zone 1' />
-                <ComboboxOption value="zone2" displayName='Zone 2' />
-                <ComboboxOption value="zone3" displayName='Zone 3' />
+                {geofences.map(geofence => (  
+              <ComboboxOption   
+                key={`nearest-${geofence.name}`} 
+                value={geofence.name}   
+                displayName={geofence.displayName || geofence.name}   
+              />  
+            ))}  
             </Combobox>
           }
             </div>

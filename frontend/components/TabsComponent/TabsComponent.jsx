@@ -1,51 +1,57 @@
-import { Tabs, Tab } from '@leafygreen-ui/tabs';
-import VehicleDataComponent from '../VehicleDataComponent/VehicleDataComponent.jsx';
-import { H3, Body, Subtitle } from '@leafygreen-ui/typography';
-import { useSelector } from 'react-redux';
-import styles from './TabsComponent.module.css';
-
-const TabsComponent = () => {
-const car = useSelector((state) => state.Result.selectedCar);
-
-return (
-    <Tabs  aria-label="Details tabs">
-        <Tab name="Overview" default>
-            <div className={styles.HorizontalCutHalf}> 
-            <div className={styles.VerticalCutHalf}>
-                <div className={styles.topHalf}> 
-                    <Subtitle >Performance</Subtitle> <br />
-                    <Body weight='medium'> OEE: {car.efficiency*9}</Body>
-                </div>
-                <div className={styles.topHalf}>
-                    <Subtitle >Usage</Subtitle> <br />
-                    <Body weight='medium'> Distance current trip: {car.distance*20} miles</Body>
-                    <Body weight='medium'> Oil level: {car.fuel-13} %</Body>
-                </div>
-
-            </div>
-            <div className={styles.bottomHalf}> 
-                <Subtitle >Vehicle Document Model</Subtitle> 
-                <br />
-                <VehicleDataComponent/></div>
-            </div>
+import { Tabs, Tab } from '@leafygreen-ui/tabs';    
+import VehicleDataComponent from '../VehicleDataComponent/VehicleDataComponent.jsx';    
+import { H3, Body, Subtitle } from '@leafygreen-ui/typography';    
+import { useSelector } from 'react-redux';    
+import styles from './TabsComponent.module.css';    
+import StaticComponent from '../StaticComponent/StaticComponent.jsx';
+    
+const TabsComponent = () => {    
+  const car = useSelector((state) => state.Result.selectedCar);    
+    
+  // Add comprehensive null checks  
+  if (!car || Object.keys(car).length === 0) {  
+    return <div>Loading car data...</div>;  
+  }  
+  
+  // Log to debug what we're actually getting  
+  console.log("TabsComponent car data:", car);  
+  
+  return (    
+    <Tabs aria-label="Details tabs">    
+      <Tab name="Overview" default>    
+        <div className={styles.HorizontalCutHalf}>     
+          <div className={styles.VerticalCutHalf}>    
+            <div className={styles.topHalf}>     
+              <Subtitle>Performance</Subtitle>
+              <Body weight='medium'>Quality Score: {car.quality_score ? (car.quality_score * 100).toFixed(1) : 'N/A'}%</Body>  
+              <Body weight='medium'>Availability Score: {car.availability_score ? (car.availability_score * 100).toFixed(1) : 'N/A'}%</Body>  
+              <Body weight='medium'>Performance Score: {car.performance_score ? (car.performance_score * 100).toFixed(1) : 'N/A'}%</Body>
+            </div>    
+            <div className={styles.topHalf}>    
+              <Subtitle>Usage</Subtitle>   
+              <Body weight='medium'>Traveled Distance: {car.traveled_distance ? car.traveled_distance.toFixed(2) : 'N/A'} km</Body>  
+              <Body weight='medium'>Average Speed: {car.average_speed || 'N/A'} km/h</Body>  
+              <Body weight='medium'>Engine Oil Level: {car.engine_oil_level || 'N/A'} L</Body>  
+            </div>    
+          </div>    
+          <div className={styles.bottomHalf}>     
+            <Subtitle>Vehicle Document Model</Subtitle>     
+            <br />    
+            <VehicleDataComponent/>  
+          </div>    
+        </div>    
+      </Tab>    
           
-        </Tab>
+      <Tab name="Specs">  
+        <div className={styles.bottomHalf}>     
+            <Subtitle>Vehicle Static Model</Subtitle>     
+            <br />    
+            <StaticComponent/>  
+          </div>     
         
-        <Tab name="Specs">
-                            
-            <H3>Specs</H3>
-            <br />
-            <Body weight='medium'> Make and Model</Body>
-            <Subtitle>{car.year} {car.name}</Subtitle>
-            <br />
-            <Body weight='medium'> Fleet</Body>
-            <Subtitle>{car.fleet}</Subtitle>
-            <br />
-            <Body weight='medium'> Licence Plate</Body>
-            <Subtitle>{car.licencePlate}</Subtitle> 
-        </Tab>
-    </Tabs>)
-
-};
-
-export default TabsComponent;
+      </Tab>    
+    </Tabs>  
+  );    
+};    
+    
+export default TabsComponent;  

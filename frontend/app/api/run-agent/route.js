@@ -1,27 +1,55 @@
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const query_reported = searchParams.get("query_reported");
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const apiEndpoint = `${apiUrl}/run-agent?query_reported=${encodeURIComponent(query_reported)}`;
-    console.log("API Endpoint:", apiEndpoint); // Debugging log
-    const res = await fetch(apiEndpoint);
+import { NextResponse } from 'next/server';
 
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error(`Unexpected response type: ${contentType}`);
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const query_reported = searchParams.get('query_reported');
+    const thread_id = searchParams.get('thread_id');
+    const filters = searchParams.get('filters');
+    const preferences = searchParams.get('preferences');
+
+    if (!query_reported || !thread_id) {
+      return NextResponse.json(
+        { error: 'query_reported and thread_id are required' },
+        { status: 400 }
+      );
     }
 
-    const data = await res.json();
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const url = `http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/run-agent?query_reported=${encodeURIComponent(
+      query_reported
+    )}&thread_id=${thread_id}&filters=${encodeURIComponent(
+      filters || '[]'
+    )}&preferences=${encodeURIComponent(preferences || '[]')}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const text = await response.text();
+    
+    try {
+      // Parse JSON if valid
+      const parsedData = JSON.parse(text);
+      return NextResponse.json(parsedData);
+    } catch (jsonParseError) {
+      console.error("Error parsing JSON:", jsonParseError);
+      return NextResponse.json(
+        { error: "Invalid response format from agent service" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error("Error in API call:", error.message); // Log error
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error('Error calling agent service:', error);
+    return NextResponse.json(
+      { error: 'Failed to call agent service' },
+      { status: 500 }
+    );
   }
 }

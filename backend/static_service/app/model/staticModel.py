@@ -24,7 +24,11 @@ class PyObjectId(ObjectId):
         field_schema.update(type="string") 
 
 
-
+class MaintenanceLog(BaseModel):
+    date: datetime
+    description: str
+    cost: Optional[float] = None
+    
 #  Class for the Static Model will no longer be nested 
 class VehicleModel(BaseModel):  
     # _id: PyObjectId = Field(default_factory=PyObjectId) # Mongo assignes a unique ID to each document
