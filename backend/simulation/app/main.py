@@ -71,6 +71,7 @@ timeseries_send_every_n_steps = 5  # Send every 5 steps for performance, so ever
 timeseries_historic_send_every_n_steps = 10  # Send every 10 steps for history, so every 20-40 simulated seconds, is sent in batches of 1000 for performance with bulk
 
 batch_size = 1000  #  batch for efficiency using write bulk API, can be adjusted based on performance needs
+batch_size_history=250
 batch_time=10  # 10 seconds for batch processing, can be adjusted based on performance needs
 
 cdt = timezone(timedelta(hours=-5))
@@ -409,7 +410,7 @@ class Car:
                         total_steps_processed += 1
                         
                         # Send batch when full (optimized for history)
-                        if len(batch_data) >= batch_size:
+                        if len(batch_data) >= batch_size_history:
                             success = await self._send_historic_batch(session, batch_data)
                             if success:
                                 logger.info(f"Car {self.car_id}: Sent history batch of {len(batch_data)} records")
@@ -541,6 +542,7 @@ async def add_to_batch(document):
         batch_queue.append(document)  
         logger.debug(f"Added document to batch. Queue size: {len(batch_queue)}")  
   
+#this function only uses timeseries normal inserts
 async def batch_processor():  
     """Background task that processes batches when they reach target size or timeout."""  
     logger.info("Batch processor started")  
