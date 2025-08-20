@@ -12,6 +12,7 @@ services:
       - ./frontend/.env
     networks:  
       - simulation-network 
+      - nginxproxymanager_default
 
   agent-service:  # Port: 9000  
     container_name: agent-service  
@@ -140,3 +141,5 @@ services:
 networks:  
   simulation-network:  
     external: true  
+  nginxproxymanager_default:
+    external: true

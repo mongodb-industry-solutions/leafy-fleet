@@ -679,6 +679,7 @@ class QueryTools(MongoDBConnector):
                     "_id": 0,
                     "car_id": 1,
                     "maintenance_log": 1
+                    
                 }
             }
         ]
