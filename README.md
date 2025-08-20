@@ -119,23 +119,47 @@ git clone <REPOSITORY_URL>
 
 This demo consists of a backend with multiple microservices. Each microservice has its own `Dockerfile` and can be run independently. The backend services are defined in the `docker-compose.yml` file located in the root directory.
 
-### Step 1: Set Up MongoDB Database and Collections
+### Step 1: Retreieve your MongoDB connection string
 
 1. Log in to **MongoDB Atlas** and obtain your **MongoDB connection string URI**. Follow [this guide](https://www.mongodb.com/resources/products/fundamentals/mongodb-connection-string) if you need help obtaining a connection string.
 
-### Step 2: Obtain access to LLMs
+###  Step 2. Populate your database
+Next, populate your database with the required data and metadata required for the demo. In the application code locate the dump/leafy_popup_store directory. Inside it, there are several .gz files which contain the data and metadata of the collections: users, products, orders, locations and carts.
+
+Use the [mongorestore](https://www.mongodb.com/docs/database-tools/mongorestore/) command to load the data from the database dump into a new database within your Cluster.
+
+Let's go back to your terminal, navigate to the directory /leafy-fleet (the root level of the application code), and run the following command:
+
+```bash
+mongorestore --uri "mongodb+srv://<user>:<password>@<cluster-url>" ./dmp/leafy_fleet
+```
+
+This command will create the database and collections and log its progress. Upon completion, you should see a log like this:
+
+```bash
+X document(s) restored successfully. 0 document(s) failed to restore.
+```
+
+Perfect! You now have your application code with environment variables, all the dependencies installed and the database created with the required data loaded.
+
+
+Curious about how the database dump was generated? Check out  the documentation for the mongodump command. 
+
+
+
+### Step 3: Obtain access to LLMs
 
 1. Set up an account with **AWS** and ensure you have a role which you can access on the computer where you will run the backend service. The role must have access to **AWS Bedrock** service.
 2. Ensure that you have access to the **Anthropic Claude 3 Haiku** for chat completions.
 
-### Step 3: Obtain the VoyageAI API Key
+### Step 4: Obtain the VoyageAI API Key
 1. Sign up for a **VoyageAI** account if you don't have one already.
 2. Navigate to the API section of your VoyageAI account to generate an API key.
 3. Copy the generated API key and keep it secure, as you will need it to configure the backend service.
 
 This API key will be used to access the Voyage-3.5 model for generating embeddings.
 
-### Step 4: Configure the `.env` files
+### Step 5: Configure the `.env` files
 
 You will need to have 2 sets of environment variables, one for the backend and one for the frontend.
 
