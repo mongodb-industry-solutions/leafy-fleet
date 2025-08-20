@@ -5,6 +5,7 @@ import asyncio
 import aiohttp  
 import logging  
 from dataclasses import dataclass
+from collections import deque  
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware  
@@ -37,7 +38,9 @@ app.add_middleware(
 geofence_manager = GeofenceManager()  
 # telemetry global time for history  
 
-
+batch_queue = deque()  # Global batch queue  
+batch_lock = asyncio.Lock()  # Lock for thread-safe batch operations  
+batch_task = None  # Background task for batch processing  
 
 # Logging setup  
 logging.basicConfig(  
@@ -68,7 +71,7 @@ timeseries_send_every_n_steps = 5  # Send every 5 steps for performance, so ever
 timeseries_historic_send_every_n_steps = 10  # Send every 10 steps for history, so every 20-40 simulated seconds, is sent in batches of 1000 for performance with bulk
 
 batch_size = 1000  #  batch for efficiency using write bulk API, can be adjusted based on performance needs
-
+batch_time=10  # 10 seconds for batch processing, can be adjusted based on performance needs
 
 cdt = timezone(timedelta(hours=-5))
 
@@ -129,6 +132,7 @@ class Car:
     speed_total: int = 0
     
 
+    last_batch_send: datetime = None  
     def __post_init__(self):
         self.route_ids = [self.car_id, self.car_id + 1] if self.car_id % 2 == 1 else [self.car_id, self.car_id - 1]
         # Initialize sessions list and lock properly
@@ -136,6 +140,8 @@ class Car:
             self.sessions = []
         if self.sessions_lock is None:
             self.sessions_lock = asyncio.Lock()
+        if self.last_batch_send is None:  
+            self.last_batch_send = datetime.now(timezone.utc)
 
     async def update(self, move_distance_m: float, time_per_step: float):
         self.real_step+=1
@@ -254,14 +260,16 @@ class Car:
 
                     # Send timeseries data every step
                     if self.step_index % timeseries_send_every_n_steps == 0 and self.is_engine_running:  # Send every 5 steps, so once per 5-10 seconds for performance, but not if crashed or not running (log those)
-                        try:
-                            document = await self.to_document() 
-                            await session.post(
-                                f"{timeseries_post}:9002/timeseries",
-                                json=document
-                            )
-                        except Exception as e:
-                            logger.warning(f" Error sending timeseries for Car {self.car_id}: {e}")
+                        try:  
+                            document = await self.to_document()  
+                            # Add current timestamp  
+                            document["timestamp"] = datetime.now(timezone.utc).isoformat()  
+                              
+                            # Add to global batch queue  
+                            await add_to_batch(document)  
+                              
+                        except Exception as e:  
+                            logger.warning(f"Error creating document for batch for Car {self.car_id}: {e}")
                     
                     self.step_index += 1
 
@@ -409,6 +417,7 @@ class Car:
                             else:
                                 logger.error(f"Car {self.car_id}: Failed to send history batch - stopping history simulation")
                                 return  # Exit gracefully instead of breaking inner loop
+                            await asyncio.sleep(1)  # Small delay to avoid overwhelming the API
                         
                         # Handle car failures in history (same logic as run function, but no sleep)
                         if not self.is_engine_running:
@@ -502,10 +511,10 @@ class Car:
         async with self.sessions_lock:
             """Append a new session ID to metadata['sessions']."""      
             if not self.sessions:      
-                self.sessions = []      
-        
-            self.sessions.append(session_id)      
-            #logger.info(f"Added session {session_id} to car {self.car_id}. Current sessions: {self.sessions}")  
+                self.sessions = [] 
+            if session_id not in self.sessions:  
+                self.sessions.append(session_id)     
+                #logger.info(f"Added session {session_id} to car {self.car_id}. Current sessions: {self.sessions}")  else logger alreeady has this session, so no need to add it again
 
     async def clear_sessions(self): 
         async with self.sessions_lock: 
@@ -526,12 +535,104 @@ async def increment_cars_correctly_running():
         cars_correctly_running += 1  
 
 
+async def add_to_batch(document):  
+    """Add document to batch queue in a thread-safe manner."""  
+    async with batch_lock:  
+        batch_queue.append(document)  
+        logger.debug(f"Added document to batch. Queue size: {len(batch_queue)}")  
+  
+async def batch_processor():  
+    """Background task that processes batches when they reach target size or timeout."""  
+    logger.info("Batch processor started")  
+    last_send_time = datetime.now(timezone.utc)  
+      
+    while True:  
+        try:  
+            current_time = datetime.now(timezone.utc)  
+            time_since_last_send = (current_time - last_send_time).total_seconds()  
+              
+            # Check if we should send batch (either size limit or time limit)  
+            should_send = False  
+            batch_data = []  
+              
+            async with batch_lock:  
+                queue_size = len(batch_queue)  
+                  
+                # Send if batch is full OR if 10 seconds have passed and we have data  
+                if queue_size >= batch_size or (time_since_last_send >= batch_time and queue_size > 0):  
+                    should_send = True  
+                    # Extract up to batch_size items  
+                    items_to_send = min(batch_size, queue_size)  
+                    batch_data = [batch_queue.popleft() for _ in range(items_to_send)]  
+                    logger.info(f"Preparing to send batch of {len(batch_data)} items (queue had {queue_size})")  
+              
+            if should_send and batch_data:  
+                success = await send_batch_to_api(batch_data)  
+                if success:  
+                    last_send_time = current_time  
+                    logger.info(f"Successfully sent batch of {len(batch_data)} items")  
+                else:  
+                    # If failed, put items back at front of queue  
+                    async with batch_lock:  
+                        batch_queue.extendleft(reversed(batch_data))  
+                    logger.error(f"Failed to send batch, items returned to queue")  
+              
+            # Small sleep to prevent busy waiting  
+            await asyncio.sleep(1)  
+              
+        except asyncio.CancelledError:  
+            logger.info("Batch processor cancelled")  
+            break  
+        except Exception as e:  
+            logger.error(f"Error in batch processor: {e}")  
+            await asyncio.sleep(5)  # Wait before retrying  
+  
+async def send_batch_to_api(batch_data):  
+    """Send batch data to the timeseries API."""  
+    try:  
+        session = get_session()  
+        if not session or session.closed:  
+            logger.error("HTTP session not available for batch send")  
+            return False  
+          
+        # Convert numpy types to regular Python types  
+        formatted_data = convert_numpy_types(batch_data)  
+          
+        response = await session.post(  
+            f"{timeseries_post}:9002/timeseries-batch",  # Assuming you have a batch endpoint  
+            json=formatted_data,  
+            headers={"Content-Type": "application/json"}  
+        )  
+          
+        if response.status in [200, 201]:  
+            return True  
+        else:  
+            response_text = await response.text()  
+            logger.error(f"Batch API error {response.status}: {response_text}")  
+            return False  
+              
+    except Exception as e:  
+        logger.error(f"Error sending batch to API: {e}")  
+        return False  
+  
+async def flush_remaining_batch():  
+    """Send any remaining items in batch queue (called during shutdown)."""  
+    async with batch_lock:  
+        if batch_queue:  
+            remaining_data = list(batch_queue)  
+            batch_queue.clear()  
+            logger.info(f"Flushing {len(remaining_data)} remaining items from batch queue")  
+            await send_batch_to_api(remaining_data)  
+
+
+
 
 # API Endpoints
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize the microservice."""
+    global batch_task
     session = aiohttp.ClientSession()  
     set_session(session)
     global latest_telemetry 
@@ -544,12 +645,28 @@ async def startup_event():
   # Load geofences from an API  
     except Exception as e:  
         logger.error(f"Failed to load geofences from API during startup: {str(e)}")
+
+    batch_task = asyncio.create_task(batch_processor())  
+    logger.info("Batch processor started")  
+
     logger.info("Car Simulation Microservice started")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
+    global batch_task  
+      
+    # Stop batch processor and flush remaining data  
+    if batch_task:  
+        batch_task.cancel()  
+        try:  
+            await batch_task  
+        except asyncio.CancelledError:  
+            pass  
+      
+    # Flush any remaining batch data  
+    await flush_remaining_batch()  
     
     # Stop simulation first (this will handle task cleanup)
     try:

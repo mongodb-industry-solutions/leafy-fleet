@@ -148,7 +148,7 @@ def process_all_routes(csv_file :str, output_file: str ):
     rows = df.iterrows()
 
     for i, row in rows:
-        print(f"Processing route {i+1}/{len(df)}: {row['From_ID']} → {row['To_ID']}")
+        logger.info(f"Processing route {i+1}/{len(df)}: {row['From_ID']} → {row['To_ID']}")
         from_id, to_id = int(row["From_ID"]), int(row["To_ID"])
         origin = coordinates.get(from_id)
         destination = coordinates.get(to_id)

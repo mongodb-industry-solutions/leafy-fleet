@@ -13,7 +13,6 @@ import Banner from '@leafygreen-ui/banner';
 import { NumberInput } from '@leafygreen-ui/number-input';
 import { setResults } from '@/redux/slices/ResultSlice';
 import { geospatialAPI } from './geospatialAPI';
-import { geofences } from '@/components/Geofences/geofences'; // Import the geofences data  
 
 
 // Dynamically import components that might use browser APIs
@@ -34,6 +33,7 @@ const OverviewCard = () => {
     const fleet2Name = useSelector(state => state.User.fleet2Name);
     const fleet3Name = useSelector(state => state.User.fleet3Name);
     const selectedFleets = useSelector(state => state.User.selectedFleets);
+    const all_geofences = useSelector(state=> state.Geofences.all_geofences);
 
     const getFleetName = (carId) => {  
       if (carId >= 1 && carId <= 100) {  
@@ -48,7 +48,7 @@ const OverviewCard = () => {
     };  
     const handleSearch = async () => {
 
-        if (!location && selectedType === "nearest" || geofences.length === 0 && selectedType === "inside") {
+        if (!location && selectedType === "nearest" || geoFences.length === 0 && selectedType === "inside") {
             alert("Please select a geofence or location to search.");
             return;
         }
@@ -103,7 +103,7 @@ const OverviewCard = () => {
     <div>
       <Card className={styles.overviewCard}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <H3>Geospatial Vehicle Search {fleet1Name}</H3> 
+          <H3>Geospatial Vehicle Search </H3> 
           <Button
             variant={Variant.BaseGreen}
             darkMode={false}
@@ -163,7 +163,7 @@ const OverviewCard = () => {
                     console.log('Selected geofences:', zone);
                     dispatch(setGeoFences({ geoFences: zone || [] }));
                 }}>
-                {geofences.map(geofence => (  
+                {all_geofences.map(geofence => (  
               <ComboboxOption   
                 key={geofence.name}   
                 value={geofence.name}   
@@ -184,7 +184,7 @@ const OverviewCard = () => {
                 onChange={loc => {
                     dispatch(setLocation({ location: loc || null }));
                 }}>
-                {geofences.map(geofence => (  
+                {all_geofences.map(geofence => (  
               <ComboboxOption   
                 key={`nearest-${geofence.name}`} 
                 value={geofence.name}   

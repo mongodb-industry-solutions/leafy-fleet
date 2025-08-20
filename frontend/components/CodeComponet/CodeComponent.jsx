@@ -2,7 +2,6 @@ import {Code, Panel} from '@leafygreen-ui/code';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './CodeComponent.module.css'; // Adjust the path as necessary
-import { geofenceCoordinates, getGeofenceByName } from '@/components/Geofences/geofences'; // Import the geofence data  
 
 
 
@@ -14,7 +13,12 @@ const CodeComponent = () => {
     const location = useSelector(state => state.Overview.location);  
     const maxDist = useSelector(state => state.Overview.maxDistance);  
     const minDist = useSelector(state => state.Overview.minDistance);  
-  
+    const all_geofences = useSelector(state => state.Geofences?.all_geofences || []);
+    
+    const getGeofenceByName = (geofenceName) => {  
+        return all_geofences.find(geofence => geofence.name === geofenceName);  
+    };  
+
     const generateDynamicQuery = () => {  
         if (selectedType === "nearest") {  
             const selectedGeofence = getGeofenceByName(location);  
@@ -25,10 +29,10 @@ const CodeComponent = () => {
       $geometry: {  
         type: "Point",  
         coordinates: [ , ]  
-      }${minDist ? `,  
-      $minDistance: ${minDist}` : ""}${maxDist ? `,  
-      $maxDistance: ${maxDist}` : ""}  
-    }  
+        }${minDist ? `,  
+        $minDistance: ${minDist}` : ""}${maxDist ? `,  
+        $maxDistance: ${maxDist}` : ""}  
+      }  
   }  
 })`;  
             }  
@@ -39,7 +43,7 @@ const CodeComponent = () => {
     $nearSphere: {  
       $geometry: {  
         type: "Point",  
-        coordinates: [${lon}, ${lat}]  
+          coordinates: [${lon}, ${lat}]  
       }${minDist ? `,  
       $minDistance: ${minDist}` : ""}${maxDist ? `,  
       $maxDistance: ${maxDist}` : ""}  
@@ -69,7 +73,7 @@ const CodeComponent = () => {
     $geoWithin: {  
       $geometry: {  
         type: "Polygon",  
-        coordinates: ${JSON.stringify(selectedGeofence.geometry.coordinates, null, 2)}  
+          coordinates: ${JSON.stringify(selectedGeofence.geometry.coordinates, null, 2)}  
       }  
     }  
   }  

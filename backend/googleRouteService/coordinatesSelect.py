@@ -7,7 +7,8 @@ import itertools
 from geopy.distance import geodesic
 import random
 from collections import defaultdict
-
+import logging
+logger = logging.getLogger(__name__)
 # Coordinates list
 data = [
     (1, 30.296986, -97.832127),
@@ -114,4 +115,5 @@ limited_df = pd.DataFrame(selected_routes)
 limited_df.to_csv("random_routes.csv", index=False)
 
 
-print("  CSV saved as random_routes.csv")
+#print("  CSV saved as random_routes.csv")
+logger.info(f"CSV saved as random_routes.csv")
