@@ -172,9 +172,7 @@ const LoginComp = ({ modalObserver }) => {
             Look out for <WizardIcon></WizardIcon> to find out more about what
             is going on behind the scenes!
           </Banner>
-          {/* <Description className={`${styles.descriptionModal} mb-3`}>
-            Note: Demo to display MongoDb's use cases of time series with fleet managment.
-          </Description> */}
+          
         </div>
       </Container>
     </Modal>
