@@ -5,12 +5,12 @@ import styles from "./AttributesComponent.module.css";
 import { Subtitle } from "@leafygreen-ui/typography";
 
 const ALL_ATTRIBUTES = [  
-  "Gas efficiency",
   "Oil level",
-  "Last maintance",
   "Temperature",
   "Speed",
   "Gas level",
+   "Has Oil Leak",
+  "Is Moving",
   "Distance driven",
   "Performance",
   "Run Time",
@@ -19,6 +19,7 @@ const ALL_ATTRIBUTES = [
   "OEE",
   "Current Geozone",
   "Coordinates",
+ 
   
 ];
 
@@ -30,6 +31,7 @@ export const ATTR_KEY_MAP = {
   "OEE": "oee",  
   "Gas efficiency": "fuel_efficiency",  
   "Oil level": "engine_oil_level",  
+  "Has Oil Leak": "is_oil_leak",
   "Last maintance": "last_maintenance_date",  
   "Temperature": "oil_temperature",  
   "Speed": "speed",  
@@ -37,6 +39,7 @@ export const ATTR_KEY_MAP = {
   "Distance driven": "traveled_distance",  
   "Current Geozone": "current_geozone",  
   "Coordinates": "coordinates",  
+  "Is Moving": "is_moving"
 };  
 
 const AttributesComponent = () => {

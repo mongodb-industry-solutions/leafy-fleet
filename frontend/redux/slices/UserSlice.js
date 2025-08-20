@@ -21,6 +21,7 @@ const UserSlice = createSlice({
       "Avaliability",
       "Quality",
       "Performance",
+      "Speed"
     ],
     fleet2Attributes: [
       "Coordinates",
