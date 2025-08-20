@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"geometry":"2dsphere"},"name":"geometry_2dsphere","2dsphereIndexVersion":{"$numberInt":"3"}}],"uuid":"46b16957af6e4c34a882bc8730174cca","collectionName":"geofences","type":"collection"}
