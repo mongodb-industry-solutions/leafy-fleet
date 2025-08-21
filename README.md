@@ -206,7 +206,6 @@ docker network create -d bridge simulation-network
 2. Create a `.env` file in the `/frontend` directory with the following content:
 
 ```bash
-# NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_API_URL=http://localhost:8000
 LOCAL_API_URL=http://localhost:3000
 NEXT_PUBLIC_AGENT_SERVICE_URL=localhost:9000
