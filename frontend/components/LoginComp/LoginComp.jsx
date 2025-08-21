@@ -100,6 +100,44 @@ const LoginComp = ({ modalObserver }) => {
       
     // Close modal after successful restore  
     setOpen(false);  
+
+    //in case session does exist but not currently in 
+    try {  
+        // Get fleet configuration from Redux to use as fleetConfig  
+        const fleetConfig = {  
+          fleet_size: [  
+            fleet1Capacity || 20,  
+            fleet2Capacity || 10,  
+            fleet3Capacity || 20  
+          ]  
+        };  
+  
+        const simResponse = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/sessions`, {  
+          method: 'POST',  
+          headers: {  
+            'Content-Type': 'application/json',  
+          },  
+          body: JSON.stringify({  
+            session_id: sessionId, // Use sessionId from Redux  
+            range1: fleetConfig.fleet_size[0] || 20,  
+            range2: fleetConfig.fleet_size[1] || 10,  
+            range3: fleetConfig.fleet_size[2] || 20  
+          })  
+        });  
+  
+        if (!simResponse.ok) {  
+          const errorData = await simResponse.json();  
+          throw new Error(`Simulation service error: ${errorData.detail || simResponse.status}`);  
+        }  
+  
+        const simData = await simResponse.json();  
+        console.log("Simulation session started:", simData);  
+  
+      } catch (simError) {  
+        console.error("Error starting simulation session:", simError);  
+        // You might want to show a warning but not fail the entire restore process  
+      }
+
   
   } catch (error) {  
     console.error("Error restoring session:", error);  
