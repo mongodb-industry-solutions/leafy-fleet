@@ -196,9 +196,7 @@ class AgentTools(MongoDBConnector):
             agent_goals=p["goals"],
             query_reported=query_reported,
             agent_motive=p["goals"],
-            agent_kind_of_data=p["kind_of_data"],
-            embedding_model_name=self.embeddings_model_name,
-            chat_completion_model_name=self.chatcompletions_model_name
+        
         )
 
         # CHAIN_OF_THOUGHTS_PROMPT = (f"""Just provide an answer to the user query: {query_reported}. """)
