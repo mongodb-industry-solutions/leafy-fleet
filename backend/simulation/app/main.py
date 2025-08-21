@@ -5,6 +5,7 @@ import asyncio
 import aiohttp  
 import logging  
 from dataclasses import dataclass
+from collections import deque  
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware  
@@ -37,7 +38,9 @@ app.add_middleware(
 geofence_manager = GeofenceManager()  
 # telemetry global time for history  
 
-
+batch_queue = deque()  # Global batch queue  
+batch_lock = asyncio.Lock()  # Lock for thread-safe batch operations  
+batch_task = None  # Background task for batch processing  
 
 # Logging setup  
 logging.basicConfig(  
@@ -56,6 +59,21 @@ state_lock = asyncio.Lock()
 # Helpers for tracking simulation state  
 cars_correctly_running = 300  # Updated for 300 cars
 total_cars = 300  
+
+#variables for simulation, change performance and oee.
+
+# will start with 1000 steps completed of 1000+ route steps, so should start with around 1000/1300, 
+#around 0.77 ish and go up consistently and continue previous logic. 
+oee_not_zero_on_start = 1200 
+
+#to modify I into db, will also send every n steps
+timeseries_send_every_n_steps = 5  # Send every 5 steps for performance, so every 5-10 seconds per car.
+timeseries_historic_send_every_n_steps = 10  # Send every 10 steps for history, so every 20-40 simulated seconds, is sent in batches of 1000 for performance with bulk
+
+batch_size = 1000  #  batch for efficiency using write bulk API, can be adjusted based on performance needs
+batch_size_history=250
+batch_time=10  # 10 seconds for batch processing, can be adjusted based on performance needs
+
 cdt = timezone(timedelta(hours=-5))
 
 def convert_numpy_types(obj):
@@ -101,7 +119,7 @@ class Car:
     #body_type: str
     #license_plate: str
 
-    steps_route:int =0 
+    steps_route:int = 0  # Total steps in the current route 
     # Internal state
     performance_score: float =0 # From 0 to 1
     sessions: list = None  # List of session IDs, can be used for tracking or logging
@@ -115,6 +133,7 @@ class Car:
     speed_total: int = 0
     
 
+    last_batch_send: datetime = None  
     def __post_init__(self):
         self.route_ids = [self.car_id, self.car_id + 1] if self.car_id % 2 == 1 else [self.car_id, self.car_id - 1]
         # Initialize sessions list and lock properly
@@ -122,6 +141,8 @@ class Car:
             self.sessions = []
         if self.sessions_lock is None:
             self.sessions_lock = asyncio.Lock()
+        if self.last_batch_send is None:  
+            self.last_batch_send = datetime.now(timezone.utc)
 
     async def update(self, move_distance_m: float, time_per_step: float):
         self.real_step+=1
@@ -153,9 +174,10 @@ class Car:
             logger.warning(f" Car {self.car_id} has an oil leak!")
             await decrement_cars_correctly_running()
         self.is_moving = self.speed > 0
-        self.performance_score = (self.real_step /self.steps_route) if self.steps_route > 0 else 0
+        #performance attributes
+        self.performance_score = min(1,((self.real_step + oee_not_zero_on_start) /(self.steps_route + oee_not_zero_on_start))) if self.steps_route > 0 else 0
         self.quality_score = cars_correctly_running/total_cars
-        self.availability_score = min(1, max(0, self.availability_score + (random.uniform(-0.02, 0.02))))
+        self.availability_score = min(1, max(0.6, self.availability_score + (random.uniform(-0.02, 0.02))))
         self.oee = self.quality_score * self.availability_score * self.performance_score
 
     async def get_sessions(self):
@@ -169,22 +191,22 @@ class Car:
         
         doc = {
             "car_id": self.car_id,
-            "fuel_level": float(round(self.fuel_level, 1)),
-            "engine_oil_level": float(round(self.engine_oil_level, 1)),
-            "traveled_distance": float(round(self.traveled_distance, 4)),
-            "run_time": float(self.run_time),
-            "performance_score": float(self.performance_score),
-            "quality_score": float(self.quality_score),
-            "availability_score": float(self.availability_score),
-            "max_fuel_level": float(self.max_fuel_level),
-            "oee": float(self.oee),
-            "oil_temperature": float(self.oil_temperature),
-            "is_oil_leak": self.is_oil_leak,
-            "is_engine_running": self.is_engine_running,
-            "is_crashed": self.is_crashed,
-            "current_route": self.current_route,
-            "speed": float(round(self.speed, 2)),
-            "average_speed": float(round(self.average_speed, 2)),
+            "fuel_level": float(round(self.fuel_level, 1)),  
+            "engine_oil_level": float(round(self.engine_oil_level, 1)),  
+            "traveled_distance": float(round(self.traveled_distance, 2)),  
+            "run_time": float(round(self.run_time, 2)),                
+            "performance_score": float(round(self.performance_score, 2)),    
+            "quality_score": float(round(self.quality_score, 2)),      
+            "availability_score": float(round(self.availability_score, 2)),    
+            "max_fuel_level": float(round(self.max_fuel_level, 2)),    
+            "oee": float(round(self.oee, 2)),                          
+            "oil_temperature": float(round(self.oil_temperature, 2)),   
+            "is_oil_leak": self.is_oil_leak,  
+            "is_engine_running": self.is_engine_running,  
+            "is_crashed": self.is_crashed,  
+            "current_route": self.current_route,  
+            "speed": float(round(self.speed, 2)),  
+            "average_speed": float(round(self.average_speed, 2)),  
             "is_moving": self.is_moving,
             "current_geozone": self.current_geozone,
             "coordinates": {
@@ -222,13 +244,14 @@ class Car:
                 
                 while self.step_index < len(steps) and  state_manager.is_running():
                     self.latitude, self.longitude = steps[self.step_index]
-                    await self.update(dist_per_step, time_per_step)
+                    await self.update(dist_per_step, time_per_step) # will always update, so its realistic.
                     # Access sessions with proper locking (reduced logging frequency)
-                    if self.step_index % 30 == 0:  # Log less frequently, maso 30 segundos
+                    if self.step_index % 30 == 0:  # check every 30-60 seconds if new user joined.
                         current_sessions = await self.get_sessions()
-                        if current_sessions:  # Only log if there are sessions
-                            logger.info(f"Car {self.car_id} has {current_sessions}")
-                    if self.step_index % 10 == 0:
+                        if self.step_index % 60 == 0:  # Log every 2 checks, less IO (will delete this before production)
+                            if current_sessions:  # Only log if there are sessions
+                                logger.info(f"Car {self.car_id} has {current_sessions}")
+                    if self.step_index % 10 == 0: #check geofence every 10 steps
                         try:
                             self.current_geozone = geofence_manager.check_point_in_geofences(self.longitude, self.latitude)  
                             logger.info(f"Car {self.car_id}: Current geozone: {self.current_geozone}")
@@ -237,14 +260,17 @@ class Car:
                             self.current_geozone = "Error checking geofence"
 
                     # Send timeseries data every step
-                    try:
-                        document = await self.to_document() 
-                        await session.post(
-                            f"{timeseries_post}:9002/timeseries",
-                            json=document
-                        )
-                    except Exception as e:
-                        logger.warning(f" Error sending timeseries for Car {self.car_id}: {e}")
+                    if self.step_index % timeseries_send_every_n_steps == 0 and self.is_engine_running:  # Send every 5 steps, so once per 5-10 seconds for performance, but not if crashed or not running (log those)
+                        try:  
+                            document = await self.to_document()  
+                            # Add current timestamp  
+                            document["timestamp"] = datetime.now(timezone.utc).isoformat()  
+                              
+                            # Add to global batch queue  
+                            await add_to_batch(document)  
+                              
+                        except Exception as e:  
+                            logger.warning(f"Error creating document for batch for Car {self.car_id}: {e}")
                     
                     self.step_index += 1
 
@@ -286,10 +312,11 @@ class Car:
         self.speed_total += self.speed
         self.average_speed = self.speed_total / self.real_step
         self.is_moving = self.speed > 0
-        self.performance_score = (self.real_step /self.steps_route) if self.steps_route > 0 else 0
+        self.performance_score = min(1,((self.real_step + oee_not_zero_on_start) /(self.steps_route + oee_not_zero_on_start))) if self.steps_route > 0 else 0
         self.quality_score = cars_correctly_running/total_cars
-        self.availability_score = min(1, max(0, self.availability_score + (random.uniform(-0.02, 0.02))))
-        self.oee = self.quality_score * self.availability_score * self.performance_score    
+        self.availability_score = min(1, max(0.6, self.availability_score + (random.uniform(-0.02, 0.02))))
+        self.oee = self.quality_score * self.availability_score * self.performance_score
+
     
     async def run_history(self, session, latest_timestamp: datetime):
         """Run historic simulation for this car - emulates run() logic but for past data."""
@@ -300,7 +327,6 @@ class Car:
             target_duration_seconds = 3600  # 1 hour
             total_steps_processed = 0
             batch_data = []
-            batch_size = 500  # Larger batch for efficiency
 
             start_time = datetime.now(timezone.utc)
             logger.info(f"Car {self.car_id}: Current time: {start_time}")  
@@ -333,7 +359,7 @@ class Car:
             counter = latest_timestamp.timestamp()  
 
             # Initialize route switching variables (same as run function)
-            route_step_index = 0
+            self.step_index = 0
             route_index = 0  # Start with first route (0 or 1)
             
             while counter < start_time.timestamp():
@@ -351,16 +377,16 @@ class Car:
                 #logger.info(f"Car {self.car_id}: History processing route {self.current_route} with {len(steps)} steps")
                 
                 # Process steps in current route (same logic as run function)
-                while route_step_index < len(steps) and counter < start_time.timestamp():
+                while self.step_index < len(steps) and counter < start_time.timestamp():
                     try:
                         # Update position (same as run function)
-                        self.latitude, self.longitude = steps[route_step_index]
+                        self.latitude, self.longitude = steps[self.step_index]
                         
                         # Update car state using history method
                         await self.update_history(dist_per_step, time_per_step)
                         
                         # Check geofence every 10 steps (same as run function)
-                        if route_step_index % 10 == 0:
+                        if self.step_index % 10 == 0:
                             try:
                                 self.current_geozone = geofence_manager.check_point_in_geofences(self.longitude, self.latitude)  
                             except Exception as e:
@@ -368,21 +394,23 @@ class Car:
                                 self.current_geozone = "Error checking geofence"
                         
                         # Create document with historical timestamp
-                        data_point = await self.to_document()
+                        
                         counter+=time_per_step
                         # Set timestamp to simulate past data (going backwards from current time)
                         historical_timestamp = counter
-                        local_dt = datetime.fromtimestamp(historical_timestamp, tz=cdt)
-                        utc_dt = local_dt.astimezone(timezone.utc)
-                        data_point["timestamp"] = utc_dt.isoformat()
-
                         
-                        batch_data.append(data_point)
-                        route_step_index += 1
+
+                        if self.step_index % timeseries_historic_send_every_n_steps == 0 and self.is_engine_running: 
+                            data_point = await self.to_document()
+                            local_dt = datetime.fromtimestamp(historical_timestamp, tz=cdt)
+                            utc_dt = local_dt.astimezone(timezone.utc)
+                            data_point["timestamp"] = utc_dt.isoformat()
+                            batch_data.append(data_point)
+                        self.step_index += 1
                         total_steps_processed += 1
                         
                         # Send batch when full (optimized for history)
-                        if len(batch_data) >= batch_size:
+                        if len(batch_data) >= batch_size_history:
                             success = await self._send_historic_batch(session, batch_data)
                             if success:
                                 logger.info(f"Car {self.car_id}: Sent history batch of {len(batch_data)} records")
@@ -390,10 +418,11 @@ class Car:
                             else:
                                 logger.error(f"Car {self.car_id}: Failed to send history batch - stopping history simulation")
                                 return  # Exit gracefully instead of breaking inner loop
+                            await asyncio.sleep(1)  # Small delay to avoid overwhelming the API
                         
                         # Handle car failures in history (same logic as run function, but no sleep)
                         if not self.is_engine_running:
-                            logger.info(f"Car {self.car_id}: Engine stopped in history at step {route_step_index}")
+                            logger.info(f"Car {self.car_id}: Engine stopped in history at step {self.step_index}")
                             # Reset conditions immediately in history (no waiting)
                             if self.is_crashed:
                                 self.is_crashed = False
@@ -407,12 +436,12 @@ class Car:
                                 self.is_engine_running = True
                             
                     except Exception as e:
-                        logger.error(f"Car {self.car_id}: Error processing history step {route_step_index}: {e}")
+                        logger.error(f"Car {self.car_id}: Error processing history step {self.step_index}: {e}")
                         continue
                 
                 # Finished current route - switch to next route (same as run function)
                 route_index = 1 - route_index  # Switch between 0 and 1
-                route_step_index = 0  # Reset step index for new route
+                self.step_index = 0  # Reset step index for new route
                 
                 logger.info(f"Car {self.car_id}: Switched to route {self.route_ids[route_index]} for history")
             
@@ -483,10 +512,10 @@ class Car:
         async with self.sessions_lock:
             """Append a new session ID to metadata['sessions']."""      
             if not self.sessions:      
-                self.sessions = []      
-        
-            self.sessions.append(session_id)      
-            #logger.info(f"Added session {session_id} to car {self.car_id}. Current sessions: {self.sessions}")  
+                self.sessions = [] 
+            if session_id not in self.sessions:  
+                self.sessions.append(session_id)     
+                #logger.info(f"Added session {session_id} to car {self.car_id}. Current sessions: {self.sessions}")  else logger alreeady has this session, so no need to add it again
 
     async def clear_sessions(self): 
         async with self.sessions_lock: 
@@ -507,12 +536,105 @@ async def increment_cars_correctly_running():
         cars_correctly_running += 1  
 
 
+async def add_to_batch(document):  
+    """Add document to batch queue in a thread-safe manner."""  
+    async with batch_lock:  
+        batch_queue.append(document)  
+        logger.debug(f"Added document to batch. Queue size: {len(batch_queue)}")  
+  
+#this function only uses timeseries normal inserts
+async def batch_processor():  
+    """Background task that processes batches when they reach target size or timeout."""  
+    logger.info("Batch processor started")  
+    last_send_time = datetime.now(timezone.utc)  
+      
+    while True:  
+        try:  
+            current_time = datetime.now(timezone.utc)  
+            time_since_last_send = (current_time - last_send_time).total_seconds()  
+              
+            # Check if we should send batch (either size limit or time limit)  
+            should_send = False  
+            batch_data = []  
+              
+            async with batch_lock:  
+                queue_size = len(batch_queue)  
+                  
+                # Send if batch is full OR if 10 seconds have passed and we have data  
+                if queue_size >= batch_size or (time_since_last_send >= batch_time and queue_size > 0):  
+                    should_send = True  
+                    # Extract up to batch_size items  
+                    items_to_send = min(batch_size, queue_size)  
+                    batch_data = [batch_queue.popleft() for _ in range(items_to_send)]  
+                    logger.info(f"Preparing to send batch of {len(batch_data)} items (queue had {queue_size})")  
+              
+            if should_send and batch_data:  
+                success = await send_batch_to_api(batch_data)  
+                if success:  
+                    last_send_time = current_time  
+                    logger.info(f"Successfully sent batch of {len(batch_data)} items")  
+                else:  
+                    # If failed, put items back at front of queue  
+                    async with batch_lock:  
+                        batch_queue.extendleft(reversed(batch_data))  
+                    logger.error(f"Failed to send batch, items returned to queue")  
+              
+            # Small sleep to prevent busy waiting  
+            await asyncio.sleep(1)  
+              
+        except asyncio.CancelledError:  
+            logger.info("Batch processor cancelled")  
+            break  
+        except Exception as e:  
+            logger.error(f"Error in batch processor: {e}")  
+            await asyncio.sleep(5)  # Wait before retrying  
+  
+async def send_batch_to_api(batch_data):  
+    """Send batch data to the timeseries API."""  
+    try:  
+        session = get_session()  
+        if not session or session.closed:  
+            logger.error("HTTP session not available for batch send")  
+            return False  
+          
+        # Convert numpy types to regular Python types  
+        formatted_data = convert_numpy_types(batch_data)  
+          
+        response = await session.post(  
+            f"{timeseries_post}:9002/timeseries-batch",  # Assuming you have a batch endpoint  
+            json=formatted_data,  
+            headers={"Content-Type": "application/json"}  
+        )  
+          
+        if response.status in [200, 201]:  
+            return True  
+        else:  
+            response_text = await response.text()  
+            logger.error(f"Batch API error {response.status}: {response_text}")  
+            return False  
+              
+    except Exception as e:  
+        logger.error(f"Error sending batch to API: {e}")  
+        return False  
+  
+async def flush_remaining_batch():  
+    """Send any remaining items in batch queue (called during shutdown)."""  
+    async with batch_lock:  
+        if batch_queue:  
+            remaining_data = list(batch_queue)  
+            batch_queue.clear()  
+            logger.info(f"Flushing {len(remaining_data)} remaining items from batch queue")  
+            await send_batch_to_api(remaining_data)  
+
+
+
 
 # API Endpoints
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize the microservice."""
+    global batch_task
     session = aiohttp.ClientSession()  
     set_session(session)
     global latest_telemetry 
@@ -525,12 +647,28 @@ async def startup_event():
   # Load geofences from an API  
     except Exception as e:  
         logger.error(f"Failed to load geofences from API during startup: {str(e)}")
+
+    batch_task = asyncio.create_task(batch_processor())  
+    logger.info("Batch processor started")  
+
     logger.info("Car Simulation Microservice started")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
+    global batch_task  
+      
+    # Stop batch processor and flush remaining data  
+    if batch_task:  
+        batch_task.cancel()  
+        try:  
+            await batch_task  
+        except asyncio.CancelledError:  
+            pass  
+      
+    # Flush any remaining batch data  
+    await flush_remaining_batch()  
     
     # Stop simulation first (this will handle task cleanup)
     try:

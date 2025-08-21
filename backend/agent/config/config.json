@@ -27,7 +27,7 @@
         "kind_of_data": "User question and a knowledge of internal tools to choose",
         "motive": "Given the user input data and information about internal fleet management tools, decide which tool or tools to use for processing fleet data",
         "instructions": "Analyze the user query to extract: 1) Which fleet management tool to use, 2) Time parameters (dates, periods), 3) Vehicle filters (specific cars, routes), 4) Relevant data fields. Available tools: vehicle_state_search_tool, fleet_position_search_tool, get_vehicle_maintenance_data_tool",
-        "rules": "Return ONLY valid JSON. Extract time references like 'last week', 'since Monday', 'past 7 days' and convert to date ranges. If no time specified, use a timerange from today to today. Include vehicle filters and relevant database fields.",
+        "rules": "Return ONLY valid JSON.",
         "goals": "Provide accurate tool selection with proper time parameters and filters for fleet management queries."
         },
     "DEFAULT_AGENT_PROFILE": {

@@ -9,12 +9,14 @@ import { setIsModalOpen, setSelectedCar } from "../../redux/slices/ResultSlice";
 const DetailsComponent = () => {
   const dispatch = useDispatch();
   const car = useSelector((state) => state.Result.selectedCar);
+  //const staticSelectedCar = useSelector((state => state.Result.staticSelectedCar));
   // Example: You can extend this with more data as needed
-  const quickMetrics = [
-    { label: "Fuel Level", value: `${Math.round(car.fuel_level/car.max_fuel_level,2)}%` },
-    { label: "Current Route", value: `${car.current_route} ` },
-    { label: "OEE", value: car.oee ? (car.oee * 100).toFixed(2) : 'N/A' },
-  ];
+  const quickMetrics = [    
+    { label: "Fuel Level", value: `${(car.fuel_level/car.max_fuel_level * 100).toFixed(2)}%` },    
+    { label: "Current Route", value: `${car.current_route}` },    
+    { label: "OEE", value: car.oee ? (car.oee * 100).toFixed(2) : 'N/A' },    
+  ];  
+
 
   const handleClose = () => {
     dispatch(setIsModalOpen({ isModalOpen: false }));
@@ -53,7 +55,7 @@ const DetailsComponent = () => {
             <div className={getStatusBadgeClass(car.status)}>
               <Subtitle weight="medium">{car.status}</Subtitle>
             </div>
-            <Body> {car.fleet}</Body>
+            
           </div>
 
           <div className={styles.detailsGrid}>
@@ -65,7 +67,7 @@ const DetailsComponent = () => {
                   <Subtitle>Current Status</Subtitle>
                 </div>
                 <Body>Location: {car.current_geozone}</Body>
-                <Body>Driver: {car.driver}</Body>
+                <Body>Speed: {car.speed} km/h</Body>
               </div>
               <div className={styles.metricsBlock}>
                 <div className={styles.IconSubtitle}>

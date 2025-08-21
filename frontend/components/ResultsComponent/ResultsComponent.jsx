@@ -48,9 +48,9 @@ const ResultsComponent = () => {
         try {  
             let baseUrl = process.env.NEXT_PUBLIC_STATIC_SERVICE_URL;  
   
-            if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {  
-                baseUrl = `http://${baseUrl}`;  
-            }  
+              
+            baseUrl = `http://${baseUrl}`;  
+              
   
             const response = await fetch(`${baseUrl}/static/${id}`);  
   

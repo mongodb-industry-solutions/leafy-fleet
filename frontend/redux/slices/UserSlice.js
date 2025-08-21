@@ -10,35 +10,38 @@ const UserSlice = createSlice({
     fleet1Name: "Fleet 1",
     fleet2Name: "Fleet 2",
     fleet3Name: "Fleet 3",
-    fleet1Capacity: 0,
-    fleet2Capacity: 0,
-    fleet3Capacity: 0,
+    fleet1Capacity: 20,
+    fleet2Capacity: 10,
+    fleet3Capacity: 25,
     fleet1Attributes: [
       "Coordinates",
-      "Geozone",
+      "Current Geozone",
       "Run Time",
       "OEE",
       "Avaliability",
       "Quality",
       "Performance",
+      "Speed"
     ],
     fleet2Attributes: [
       "Coordinates",
-      "Geozone",
+      "Current Geozone",
       "Run Time",
       "OEE",
       "Avaliability",
       "Quality",
       "Performance",
+      "Speed"
     ],
     fleet3Attributes: [
       "Coordinates",
-      "Geozone",
+      "Current Geozone",
       "Run Time",
       "OEE",
       "Avaliability",
       "Quality",
       "Performance",
+      "Speed"
     ],
     editFleet: 1,
     isLoggedIn: false,
@@ -82,7 +85,6 @@ const UserSlice = createSlice({
     setEditFleet: (state, action) => {
       state.editFleet = action.payload.editFleet;
     },
-
     setLoggedFleet: (state, action) => {
       state.isLoggedIn = action.payload; // Set the login status based on the action payload
     },
@@ -101,9 +103,6 @@ const UserSlice = createSlice({
           (filter) => filter !== label
         );
       }
-    },
-    setLoggedFleet: (state, action) => {
-      state.isLoggedIn = action.payload; // Set the login status based on the action payload
     }
 
 }

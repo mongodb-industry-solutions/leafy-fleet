@@ -30,17 +30,17 @@ const ChatComponent = () => {
   const fleet3Capacity = useSelector((state) => state.User.fleet3Capacity);
   const thread_id = useSelector((state) => state.User.sessionId);
 
-
   const userPreferences = [
     [...fleet1Atributes, fleet1Capacity],
     [...fleet2Atributes, fleet2Capacity],
     [...fleet3Atributes, fleet3Capacity],
   ];
 
-
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
-    const socket = new WebSocket(`ws://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/ws?thread_id=${thread_id}`);
+    const socket = new WebSocket(
+      `ws://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/ws?thread_id=${thread_id}`
+    );
     socketRef.current = socket; // Store it in the ref
 
     socket.onopen = () => {
@@ -98,7 +98,7 @@ const ChatComponent = () => {
     dispatch(setIsChatbotThinking(true));
     let data = {
       chain_of_thought:
-        "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
+        "Sending question... ",
     }; // Default fallback
 
     const botResponseMessage = {
@@ -117,7 +117,9 @@ const ChatComponent = () => {
 
     try {
       const res = await fetch(
-        `http://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/run-agent?query_reported=${encodeURIComponent(
+        `http://${
+          process.env.NEXT_PUBLIC_AGENT_SERVICE_URL
+        }/run-agent?query_reported=${encodeURIComponent(
           userMessageText
         )}&thread_id=${thread_id}&filters=${encodeURIComponent(
           JSON.stringify(filters)
@@ -141,6 +143,18 @@ const ChatComponent = () => {
 
       // Check if the response is OK (status 200)
       if (!res.ok) {
+        console.error("HTTP error! status:", res.status);
+        let data = {
+          chain_of_thought:
+            "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
+        };
+        dispatch(setIsChatbotThinking(false));
+        dispatch(
+          updateMessageText({
+            id: botResponseMessage.id,
+            text: data.chain_of_thought,
+          })
+        );
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
@@ -172,6 +186,17 @@ const ChatComponent = () => {
       );
     } catch (error) {
       console.error("Error fetching data:", error);
+      let data = {
+          chain_of_thought:
+            "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
+        };
+        dispatch(setIsChatbotThinking(false));
+        dispatch(
+          updateMessageText({
+            id: botResponseMessage.id,
+            text: data.chain_of_thought,
+          })
+        );
       dispatch(setIsChatbotThinking(false));
       // Already set default fallback data
     }

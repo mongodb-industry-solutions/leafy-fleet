@@ -1,35 +1,54 @@
-.filterComponent {
-  background-color: #ffffff;
-  color: white;
-  height: 100%;
-  padding: 10px;
-  box-sizing: border-box;
-}
 
-.cardWrapper {
-  padding: 12px;
-  border-radius: 0;
-  margin-bottom: 0px;
-}
 
-.filterGrid {
+
+
+.filterComponent {  
+  background-color: #ffffff;  
+  color: white;  
+  height: 100%;  
+  padding: 10px;  
+  box-sizing: border-box;  
+}  
+  
+.cardWrapper {  
+  padding: 12px;  
+  border-radius: 0;  
+  margin-bottom: 0px;  
+}  
+  
+.filterGrid {  
+  display: grid;  
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 24px;  
+}  
+  
+.checkboxGroup {  
+  display: grid;  
+  grid-template-columns: repeat(1, 1fr); /* 1 column */  
+  grid-template-rows: repeat(3, auto);   /* 3 rows */  
+  gap: 12px;  
+  align-content: start;  
+}  
+  
+.groupTitle {  
+  grid-column: span 1; /* Changed from span 2 to span 1 */  
+  font-size: 0.9rem;  
+  margin-bottom: 8px;  
+  color: black;  
+  display: flex;  
+  align-items: center;  
+}  
+  
+.checkboxGroupGeo {  
+  display: grid;  
+  grid-template-columns: repeat(4, 1fr); /* Changed to 4 columns */  
+  grid-template-rows: repeat(3, auto);    /* Changed to 3 rows */  
+  gap: 12px;  
+  align-content: start;  
+}  
+
+.normalGrid{
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-}
-
-.checkboxGroup {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, auto);
-  gap: 12px;
-  align-content: start;
-
-}
-
-.groupTitle {
-  grid-column: span 2;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
-  color: black;
 }

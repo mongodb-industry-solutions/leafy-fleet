@@ -132,8 +132,8 @@ const LoginManager = () => {
         const fleetConfig = {  
           fleet_size: [  
             fleet1Capacity || 20,  
-            fleet2Capacity || 0,  
-            fleet3Capacity || 0  
+            fleet2Capacity || 10,  
+            fleet3Capacity || 20  
           ]  
         };  
   
@@ -145,8 +145,8 @@ const LoginManager = () => {
           body: JSON.stringify({  
             session_id: sessionId, // Use sessionId from Redux  
             range1: fleetConfig.fleet_size[0] || 20,  
-            range2: fleetConfig.fleet_size[1] || 0,  
-            range3: fleetConfig.fleet_size[2] || 0  
+            range2: fleetConfig.fleet_size[1] || 10,  
+            range3: fleetConfig.fleet_size[2] || 20  
           })  
         });  
   
@@ -245,8 +245,14 @@ const LoginManager = () => {
     if (!fleet2Capacity && selectedFleets > 1 || fleet2Capacity === 0 && selectedFleets >1) {
       dispatch(setFleet2Capacity(10));
     }
-    if (!fleet3Capacity && selectedFleets === 3 || fleet2Capacity === 0 && selectedFleets === 3) {
+    if(selectedFleets <2){
+      dispatch(setFleet2Capacity(0));
+    }
+    if (!fleet3Capacity && selectedFleets === 3 || fleet3Capacity === 0 && selectedFleets > 2) {
       dispatch(setFleet3Capacity(10));
+    }
+    if(selectedFleets <3){
+      dispatch(setFleet3Capacity(0));
     }
     if(fleet1Name === ""){
       dispatch(setFleet1Name("Fleet 1"));
@@ -257,6 +263,7 @@ const LoginManager = () => {
     if(fleet3Name === "" && selectedFleets > 2){
       dispatch(setFleet3Name("Fleet 3"));
     }
+    
     const fleetNames = [];
     const fleetSizes = [];
     const attributeLists = []
@@ -321,7 +328,7 @@ const LoginManager = () => {
   };
 
   const pathname = usePathname(); // Get the current route  
-  const pathsRequiringLogin = ["/chat", "/charts", "/overview"]; // Paths requiring login  
+  const pathsRequiringLogin = ["/chat", "/charts", "/geosearch"]; // Paths requiring login  
   const shouldShowLoginPopup = pathsRequiringLogin.includes(pathname);  
 
   
@@ -391,18 +398,7 @@ const LoginManager = () => {
                 </Select>
                 <br />
                
-                {/* <NumberInput
-                  data-lgid="fleet-2"
-                  label="Number of vehicles per fleet"
-                  min={0}
-                  max={100}
-                  defaultValue={"Custom"}
-                  unit="vehicles"
-                  style={{ width: "180px" }}
-                  placeholder="Custom"
-                  onChange={(value) => console.log(`New value: ${value}`)}  
-                  onBlur={(value) => console.log(`Final value: ${value}`)}  
-                /> */}
+    
                 <br />
               </div>
               <AttributesComponent/>
@@ -447,6 +443,13 @@ const LoginManager = () => {
                     aria-label="Fleet Name"
                     className="form-control"
                     placeholder="Fleet Name"
+                    value={
+                      index === 0
+                        ? fleet1Name
+                        : index === 1
+                        ? fleet2Name
+                        : fleet3Name
+                    }
                     onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
 
                     onChange={(value) =>{
@@ -461,27 +464,41 @@ const LoginManager = () => {
                     placeholder="Fleet quantity"
                     min="0"
                     max="100"
+                    value={
+                      index === 0
+                        ? fleet1Capacity
+                        : index === 1
+                        ? fleet2Capacity
+                        : fleet3Capacity
+                    }
                     onFocus={() => dispatch(setEditFleet({ editFleet: index + 1 }))}
-                    onChange={(e) => {
-                      let value = parseInt(e.target.value, 10);
-                      // If the parsed value is greater than 100, set it back to 100
-                      if (value > 100) {
-                        value = 100;
-                        e.target.value = 100;
-                      }
-
-                      if (value < 0) {
-                        value = 0;
-                        e.target.value = 0;
-                      }
-
-                      // Handle cases where input is empty or not a valid number (e.g., after deleting all text)
-                      if (isNaN(value)) {
-                        value = 0; // Or null, depending on your desired default for empty
-                      }
-
-                      handleFleetCapacityChange(index + 1, value);
+                    onChange={(e) => {  
+                      const inputValue = e.target.value;  
+                      console.log('Input value:', inputValue);
                       
+                      if (inputValue === '') {  
+                        console.log('Empty input, setting to 0');
+                        handleFleetCapacityChange(index + 1, 0);  
+                        return;  
+                      }  
+                      
+                      const numValue = Number(inputValue);  
+                      console.log('Parsed number:', numValue);
+                      
+                      if (isNaN(numValue)) {  
+                        console.log('Invalid number, skipping');
+                        return;  
+                      }
+                      
+                      let finalValue = numValue;
+                      if (numValue > 100) {  
+                        finalValue = 100;
+                      } else if (numValue < 0) {  
+                        finalValue = 0;
+                      }
+                      
+                      console.log('Final value being dispatched:', finalValue);
+                      handleFleetCapacityChange(index + 1, finalValue);  
                     }}
                   />
                   

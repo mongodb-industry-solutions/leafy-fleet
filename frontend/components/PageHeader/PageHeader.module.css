@@ -4,7 +4,6 @@
   justify-content: space-between;
   height: 90px;
   background-color: white;
-  color: white;
   position: fixed;    /* Add this */
   top: 0;             /* Add this */
   left: 0;            /* Add this */
@@ -96,4 +95,127 @@
   
 .refreshButton:hover {  
   background-color: #005a3f;  
+}  
+
+
+  
+.sessionIdLabel {  
+  display: block;  
+  font-weight: 600;  
+  margin-bottom: 0.25rem;  
+  color: #333;  
+}  
+  
+.sessionIdDescription {  
+  margin: 0 0 0.5rem 0;  
+  color: #666;  
+  font-size: 0.875rem;  
+}  
+  
+.sessionIdButton {  
+  display: flex;  
+  align-items: center;  
+  justify-content: space-between;  
+  background-color: #f9f9f9;  
+  border: 1px solid #e8e8e8;  
+  border-radius: 6px;  
+  padding: 0.75rem;  
+  cursor: pointer;  
+  transition: all 0.2s ease;  
+}  
+  
+.sessionIdButton:hover {  
+  background-color: #f0f0f0;  
+  border-color: #d0d0d0;  
+}  
+  
+.sessionIdButton.copied {  
+  background-color: #e8f5e8;  
+  border-color: #4caf50;  
+}  
+  
+
+  
+.copyIcon {  
+  font-size: 0.875rem;  
+  color: #666;  
+  white-space: nowrap;  
+}  
+  
+.copied .copyIcon {  
+  color: #4caf50;  
+}  
+.sessionIdContainer{
+  /* Move it to be to the right of container */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.sessionIdValue{
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.875rem;
+  flex: 1;
+  margin-right: 1rem;
+  color: #333;
+  align-items: center; 
+}
+
+.buttonContainer{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  
+}
+.horizontalContainer {
+  display: flex;
+  justify-content: space-between;
+  width: 60%;
+  margin-left: 80px;
+  align-items: center; /* This centers vertically */  
+  height: 100%; /* Ensure it takes full height of the parent */
+
+}
+.sessionIdText {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #333;
+
+}
+.sessionIdButton {      
+  display: flex;      
+  align-items: center;      
+  justify-content: space-between;      
+  background-color: #f9f9f9;      
+  border: 1px solid #e8e8e8;      
+  border-radius: 6px;      
+  padding: 0.75rem;      
+  cursor: pointer;      
+  transition: all 0.2s ease;  
+    
+  /* Button-specific styles to maintain div appearance */  
+  font-family: inherit;  
+  font-size: inherit;  
+  text-align: left;  
+  width: 100%;  
+}      
+      
+.sessionIdButton:hover {      
+  background-color: #f0f0f0;      
+  border-color: #d0d0d0;      
+}      
+  
+.sessionIdButton:focus {  
+  outline: 2px solid #4caf50;  
+  outline-offset: 2px;  
+}  
+      
+.sessionIdButton.copied {      
+  background-color: #e8f5e8;      
+  border-color: #4caf50;      
 }  

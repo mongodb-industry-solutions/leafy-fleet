@@ -12,6 +12,9 @@ import {
   setFleet3Capacity,
   setQueryFilters,
 } from "@/redux/slices/UserSlice";
+import Icon from "@leafygreen-ui/icon";
+import Tooltip from "@leafygreen-ui/tooltip";
+import IconButton from "@leafygreen-ui/icon-button";
 
 // Dynamically import Code component to avoid SSR issues
 const Code = dynamic(() => import("@leafygreen-ui/code"), { ssr: false });
@@ -30,7 +33,8 @@ const FilterComponent = () => {
   const fleet1Name = useSelector((state) => state.User.fleet1Name);
   const fleet2Name = useSelector((state) => state.User.fleet2Name);
   const fleet3Name = useSelector((state) => state.User.fleet3Name);
-  
+  const all_geofences = useSelector((state) => state.Geofences?.all_geofences || []);  
+
   // console.log("Selected Message:", isSelected);
   // console.log("Message Data:", message);
 
@@ -44,78 +48,67 @@ const FilterComponent = () => {
       <div className={styles.cardWrapper}>
         <ExpandableCard
           title="Filters"
-          description="This filters will apply to the conversation with the Leafy Fleet assistant."
+          description="This filters will apply to the conversation with the Assistant Bot."
           flagText=""
           darkMode={false}
         >
           <div className={styles.filterGrid}>
             <div className={styles.checkboxGroup}>
-              <h3 className={styles.groupTitle}>Geofences</h3>
-              <Checkbox
-                onChange={(e) => setFilter("downtown", e.target.checked)}
-                label="Downtown"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("utxa", e.target.checked)}
-                label="University of Texas at Austin"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("north_austin", e.target.checked)}
-                label="North Austin"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("capitol_area", e.target.checked)}
-                label="Capitol Area"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("south_austin", e.target.checked)}
-                label="South Austin"
-              />
-              <Checkbox
-                onChange={(e) => setFilter("airport_zone", e.target.checked)}
-                label="Airport Zone"
-              />
-              <Checkbox
-                onChange={(e) =>
-                  setFilter("south_east_austin", e.target.checked)
-                }
-                label="South East Austin"
-              />
+              <h3 className={styles.groupTitle}>
+                Geofences{" "}
+                <Tooltip
+                  trigger={
+                    <IconButton aria-label="Information about Geofences">
+                      <Icon glyph={"InfoWithCircle"} />
+                    </IconButton>
+                  }
+                >
+                  Geofences are predefined geographic boundaries within which
+                  your fleet operates. Use these filters to focus on specific
+                  areas of interest in your fleet management tasks.
+                </Tooltip>
+              </h3>
+              <div className={styles.checkboxGroupGeo}>      
+                {all_geofences.length > 0 ? (      
+                  all_geofences.map((geofence) => (      
+                    <Checkbox      
+                      key={geofence.name} // Use id instead of name for better uniqueness      
+                      onChange={(e) => setFilter(geofence.name, e.target.checked)}      
+                      label={geofence.displayName}      
+                    />      
+                  ))      
+                ) : (      
+                  <div>Loading geofences...</div>      
+                )}      
+              </div>  
 
-              <Checkbox
-                onChange={(e) =>
-                  setFilter("south_west_austin", e.target.checked)
-                }
-                label="South West Austin"
-              />
-              <Checkbox
-                onChange={(e) =>
-                  setFilter("barton_creek", e.target.checked)
-                }
-                label="Barton Creek"
-              />
-              <Checkbox
-                onChange={(e) =>
-                  setFilter("georgetown", e.target.checked)
-                }
-                label="Georgetown"
-              />
             </div>
             <div className={styles.checkboxGroup}>
-              <h3 className={styles.groupTitle}>Fleets</h3>
-              {fleet1Name && (
+              <h3 className={styles.groupTitle}>
+                Fleets{" "}
+                <Tooltip
+                  trigger={
+                    <IconButton aria-label="Information about Fleets">
+                      <Icon glyph={"InfoWithCircle"} />
+                    </IconButton>
+                  }
+                >
+                  Select which fleets to include in your query.
+                </Tooltip>
+              </h3>
+              
                 <Checkbox
                   onChange={(e) => setFilter("Fleet 1", e.target.checked)}
                   label={fleet1Name}
                 />
-              )}
-              {fleet2Name && (
+             
+              {fleet2Capacity>0 && (
                 <Checkbox
                   onChange={(e) => setFilter("Fleet 2", e.target.checked)}
                   label={fleet2Name}
                 />
               )}
-              {fleet3Name && (
+              {fleet3Capacity >0 && (
                 <Checkbox
                   onChange={(e) => setFilter("Fleet 3", e.target.checked)}
                   label={fleet3Name}
@@ -123,7 +116,18 @@ const FilterComponent = () => {
               )}
             </div>
             <div className={styles.checkboxGroup}>
-              <h3 className={styles.groupTitle}>Time</h3>
+              <h3 className={styles.groupTitle}>
+                Time{" "}
+                <Tooltip
+                  trigger={
+                    <IconButton aria-label="Information about Time">
+                      <Icon glyph={"InfoWithCircle"} />
+                    </IconButton>
+                  }
+                >
+                  Select which time ranges to include in your query.
+                </Tooltip>
+              </h3>
               <Checkbox
                 onChange={(e) => setFilter("Last 30 min", e.target.checked)}
                 label="Last 30 min"
@@ -148,41 +152,47 @@ const FilterComponent = () => {
           flagText=""
           darkMode={false}
         >
-          <div className={styles.filterGrid}>
-            <NumberInput
-              data-lgid="fleet-1"
-              label={fleet1Name}
-              min={0}
-              max={100}
-              defaultValue={fleet1Capacity}
-              unit="vehicles"
-              disabled={true}
-              onChange={(value) =>
-                dispatch(setFleet1Capacity(value.target.value))
-              }
-            />
-            <NumberInput
-              data-lgid="fleet-2"
-              label={fleet2Name}
-              min={0}
-              max={100}
-              defaultValue={`None` ? fleet2Capacity : `None`}
-              unit="vehicles"
-              disabled={true}
-              onChange={(value) => dispatch(setFleet2Capacity(value))}
-            />
-            <NumberInput
-              data-lgid="fleet-3"
-              label={fleet3Name}
-              min={0}
-              max={100}
-              defaultValue={fleet3Capacity}
-              unit="vehicles"
-              disabled={true}
-              onChange={(value) =>
-                dispatch(setFleet3Capacity(value.target.value))
-              }
-            />
+          <div className={styles.normalGrid}>
+            {fleet1Capacity > 0 && (
+              <NumberInput
+                data-lgid="fleet-1"
+                label={fleet1Name}
+                min={0}
+                max={100}
+                value={fleet1Capacity}
+                unit="vehicles"
+                disabled={true}
+                onChange={(value) =>
+                  dispatch(setFleet1Capacity(value.target.value))
+                }
+              />
+            )}
+            {fleet2Capacity > 0 && (
+              <NumberInput
+                data-lgid="fleet-2"
+                label={fleet2Name}
+                min={0}
+                max={100}
+                value={fleet2Capacity}
+                unit="vehicles"
+                disabled={true}
+                onChange={(value) => dispatch(setFleet2Capacity(value))}
+              />
+            )}
+            {fleet3Capacity > 0 && (
+              <NumberInput
+                data-lgid="fleet-3"
+                label={fleet3Name}
+                min={0}
+                max={100}
+                value={fleet3Capacity}
+                unit="vehicles"
+                disabled={true}
+                onChange={(value) =>
+                  dispatch(setFleet3Capacity(value.target.value))
+                }
+              />
+            )}
           </div>
         </ExpandableCard>
       </div>
@@ -199,14 +209,15 @@ const FilterComponent = () => {
                 <strong>Agent Profiles</strong>
               </Body>
               <Body baseFontSize={14}>
-                Contains information about the agent's behavior and decisions.
+                Click on the <Icon glyph={"Visibility"} /> on any message to see
+                information about the agent's behavior and decisions.
               </Body>
               <Code language="javascript">
                 {message != null && message.agent_profiles
                   ? typeof message.agent_profiles === "string"
                     ? message.agent_profiles
                     : JSON.stringify(message.agent_profiles, null, 2)
-                  : "Select a message"}
+                  : "Select a message clicking on the eye icon"}
               </Code>
             </div>
             <div>
@@ -220,7 +231,7 @@ const FilterComponent = () => {
                   ? typeof message.recommendation_data === "string"
                     ? message.recommendation_data
                     : JSON.stringify(message.recommendation_data, null, 2)
-                  : "Select a message"}
+                  : "Select a message clicking on the eye icon"}
               </Code>
             </div>
             <div>
@@ -233,7 +244,7 @@ const FilterComponent = () => {
                   ? typeof message.used_tools === "string"
                     ? message.used_tools
                     : JSON.stringify(message.used_tools, null, 2)
-                  : "Select a message"}
+                  : "Select a message clicking on the eye icon"}
               </Code>
             </div>
             <div>
@@ -246,7 +257,7 @@ const FilterComponent = () => {
                   ? typeof message.checkpoint === "string"
                     ? message.checkpoint
                     : JSON.stringify(message.checkpoint, null, 2)
-                  : "Select a message"}
+                  : "Select a message clicking on the eye icon"}
               </Code>
             </div>
           </div>

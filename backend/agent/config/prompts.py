@@ -41,20 +41,12 @@ def get_chain_of_thoughts_prompt(agent_profile: str, agent_rules: str, agent_ins
         2. Vehicle filters (specific car IDs, routes, or "all")
         3. Relevant database fields from: timestamp, car_id, fuel_level, oil_temperature, quality_score, performance_score, availability_score, engine_oil_level, coordinates, current_route, speed, traveled_distance, is_engine_running, is_moving
 
-        Try to use today's date as a base: {datetime.now().strftime('%Y-%m-%d')}
-
         Respond ONLY with valid JSON:
         {{
           "tool": "tool_name",
-          "time_range": {{
-            "start_date": "YYYY-MM-DD",
-            "end_date": "YYYY-MM-DD"
-          }},
-          "fields": ["relevant_database_fields"]
         }}
 
         Generate it.
-
         """
 
 
@@ -89,6 +81,8 @@ def get_llm_recommendation_prompt(agent_role: str, agent_kind_of_data: str, crit
         - If it is important, mention the carID of important cars, up to 3 cars only. If more than 3 cars are important, mention only the most important ones.
         - Write maximum a sentence per carID.
         - If talking about localization, round the coordinates to 3 decimal places and take into account the current geozone of the car.
+
+        - if there is a document that has a 'timeframe' atribute, include that in your answer
 
         If the user question is related to the information you have, provide a response to the best of your hability based on the data.
 

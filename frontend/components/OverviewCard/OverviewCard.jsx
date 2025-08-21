@@ -13,7 +13,6 @@ import Banner from '@leafygreen-ui/banner';
 import { NumberInput } from '@leafygreen-ui/number-input';
 import { setResults } from '@/redux/slices/ResultSlice';
 import { geospatialAPI } from './geospatialAPI';
-import { geofences } from '@/components/Geofences/geofences'; // Import the geofences data  
 
 
 // Dynamically import components that might use browser APIs
@@ -33,10 +32,23 @@ const OverviewCard = () => {
     const fleet1Name = useSelector(state => state.User.fleet1Name);
     const fleet2Name = useSelector(state => state.User.fleet2Name);
     const fleet3Name = useSelector(state => state.User.fleet3Name);
+    const selectedFleets = useSelector(state => state.User.selectedFleets);
+    const all_geofences = useSelector(state=> state.Geofences.all_geofences);
 
+    const getFleetName = (carId) => {  
+      if (carId >= 1 && carId <= 100) {  
+          return fleet1Name;  
+      } else if (carId >= 101 && carId <= 200) {  
+          return fleet2Name;  
+      } else if (carId >= 201 && carId <= 300) {  
+          return fleet3Name;  
+      } else {  
+          return `Fleet ${Math.floor(carId/100) + 1}`; // Fallback for car_ids outside expected ranges  
+      }  
+    };  
     const handleSearch = async () => {
 
-        if (!location && selectedType === "nearest" || geofences.length === 0 && selectedType === "inside") {
+        if (!location && selectedType === "nearest" || geoFences.length === 0 && selectedType === "inside") {
             alert("Please select a geofence or location to search.");
             return;
         }
@@ -64,8 +76,7 @@ const OverviewCard = () => {
         const formattedResults = results.map(({ metadata, ...rest }) => ({
             ...rest, // Spread all fields except metadata
             status: getCarStatus(rest), // Add status based on car state
-            fleet: `Fleet ${Math.floor(rest.car_id/100) + 1}`,
-
+            fleet: getFleetName(rest.car_id),
             distance: rest.distance_to_geofence ? 
                 (rest.distance_to_geofence/1000).toFixed(2) : null
             }));
@@ -92,10 +103,10 @@ const OverviewCard = () => {
     <div>
       <Card className={styles.overviewCard}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <H3>Geospatial Vehicle Search</H3>
+          <H3>Geospatial Vehicle Search </H3> 
           <Button
-            variant={Variant.Default}
-            darkMode={true}
+            variant={Variant.BaseGreen}
+            darkMode={false}
             size={Size.Default}
             rightGlyph={<Icon glyph="MagnifyingGlass" />}
             onClick={handleSearch}
@@ -135,8 +146,10 @@ const OverviewCard = () => {
                 }}
             >
                 <ComboboxOption value="1" displayName={fleet1Name} />
-                <ComboboxOption value="2" displayName={fleet2Name}/>
-                <ComboboxOption value="3" displayName={fleet3Name}/>
+                {selectedFleets>1 && 
+                <ComboboxOption value="2" displayName={fleet2Name} />}
+                {selectedFleets>2 &&
+                <ComboboxOption value="3" displayName={fleet3Name}/>}
             </Combobox>
 
             {selectedType==="inside" && 
@@ -150,7 +163,7 @@ const OverviewCard = () => {
                     console.log('Selected geofences:', zone);
                     dispatch(setGeoFences({ geoFences: zone || [] }));
                 }}>
-                {geofences.map(geofence => (  
+                {all_geofences.map(geofence => (  
               <ComboboxOption   
                 key={geofence.name}   
                 value={geofence.name}   
@@ -171,7 +184,7 @@ const OverviewCard = () => {
                 onChange={loc => {
                     dispatch(setLocation({ location: loc || null }));
                 }}>
-                {geofences.map(geofence => (  
+                {all_geofences.map(geofence => (  
               <ComboboxOption   
                 key={`nearest-${geofence.name}`} 
                 value={geofence.name}   

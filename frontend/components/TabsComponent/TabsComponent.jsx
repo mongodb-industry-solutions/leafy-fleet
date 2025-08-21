@@ -6,10 +6,11 @@ import styles from './TabsComponent.module.css';
 import StaticComponent from '../StaticComponent/StaticComponent.jsx';
     
 const TabsComponent = () => {    
-  const car = useSelector((state) => state.Result.selectedCar);    
+  const car = useSelector((state) => state.Result.selectedCar);   
+  const staticCar = useSelector((state) => state.Result.staticSelectedCar); 
     
   // Add comprehensive null checks  
-  if (!car || Object.keys(car).length === 0) {  
+  if (!car || Object.keys(car).length === 0 || !staticCar) {  
     return <div>Loading car data...</div>;  
   }  
   

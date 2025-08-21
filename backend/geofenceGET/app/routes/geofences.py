@@ -13,7 +13,7 @@ async def return_all_geofences():
     """  
     try:  
         # Synchronously query geofences and convert cursor to list  
-        geofences_cursor = geofences_coll.find({}, {"_id": 1, "name": 1, "geometry": 1, "centroid":1})   
+        geofences_cursor = geofences_coll.find({}, {"_id": 1, "name": 1, "geometry": 1, "centroid":1, "displayName": 1})   
         geofences = list(geofences_cursor)  # Convert cursor to list  
   
         if not geofences:  
@@ -28,7 +28,8 @@ async def return_all_geofences():
                 "id": str(geofence["_id"]),  # Convert ObjectId to string  
                 "name": geofence.get("name", "Unnamed geofence"),  
                 "geometry": geofence.get("geometry"),
-                "centroid": geofence.get("centroid", None)  # Include centroid if available  
+                "centroid": geofence.get("centroid", None),  # Include centroid if available  
+                "displayName": geofence.get("displayName", "Unnamed Geofence")  # Optional display name
             }  
             for geofence in geofences  
         ]  
