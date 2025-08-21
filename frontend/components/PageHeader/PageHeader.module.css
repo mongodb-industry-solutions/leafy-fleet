@@ -187,3 +187,35 @@
   color: #333;
 
 }
+.sessionIdButton {      
+  display: flex;      
+  align-items: center;      
+  justify-content: space-between;      
+  background-color: #f9f9f9;      
+  border: 1px solid #e8e8e8;      
+  border-radius: 6px;      
+  padding: 0.75rem;      
+  cursor: pointer;      
+  transition: all 0.2s ease;  
+    
+  /* Button-specific styles to maintain div appearance */  
+  font-family: inherit;  
+  font-size: inherit;  
+  text-align: left;  
+  width: 100%;  
+}      
+      
+.sessionIdButton:hover {      
+  background-color: #f0f0f0;      
+  border-color: #d0d0d0;      
+}      
+  
+.sessionIdButton:focus {  
+  outline: 2px solid #4caf50;  
+  outline-offset: 2px;  
+}  
+      
+.sessionIdButton.copied {      
+  background-color: #e8f5e8;      
+  border-color: #4caf50;      
+}  
