@@ -52,9 +52,9 @@ const InfoWizard = ({
           <Tabs aria-label="info wizard tabs" setSelected={setSelected} selected={selected}>
             {sections.map((tab, tabIndex) => (
               <Tab key={tabIndex} name={tab.heading}>
-                <Banner className={styles.banner} variant="warning">
+                {/* <Banner className={styles.banner} variant="warning">
                   Editable text inside InfoWizard
-                </Banner>
+                </Banner> */}
                 {tab.content.map((section, sectionIndex) => (
                   <div key={sectionIndex} className={styles.section}>
                     {section.heading && <H3 className={styles.modalH3}>{section.heading}</H3>}

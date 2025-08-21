@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"thread_id":{"$numberInt":"1"},"checkpoint_ns":{"$numberInt":"1"},"checkpoint_id":{"$numberInt":"-1"}},"name":"thread_id_1_checkpoint_ns_1_checkpoint_id_-1","unique":true}],"uuid":"4374d97bef9040d4b0f759055a59fc2c","collectionName":"checkpoints","type":"collection"}
