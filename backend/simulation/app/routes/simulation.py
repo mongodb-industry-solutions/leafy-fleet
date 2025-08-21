@@ -5,7 +5,7 @@ from car_history_manager import clear_h_all_cars
 from state_manager import is_running, is_stopped, is_paused, set_state  
 from global_context import get_session, timeseries_get , latest_telemetry # Import HTTP_SESSION management functions  
 import logging  
-
+import datetime
 
 logger = logging.getLogger(__name__)  
 router = APIRouter()  
@@ -14,6 +14,57 @@ router = APIRouter()
 SIMULATION_TASKS = []  
 HISTORY_TASKS = []
 ACTIVE_USERS = 0  
+
+# Track last time /start was called  
+last_start_time = None  
+timeout_monitor_task = None  
+  
+async def timeout_monitor():  
+    """Monitor for simulation timeout and auto-stop after 30 minutes of inactivity."""  
+    global last_start_time  
+      
+    while True:  
+        try:  
+            await asyncio.sleep(60)  # Check every minute  
+              
+            if last_start_time is None:  
+                continue  
+                  
+            # Calculate time since last start  
+            time_since_start = datetime.datetime.utcnow() - last_start_time  
+              
+            # If more than 30 minutes have passed, stop the simulation  
+            if time_since_start.total_seconds() > 1800:  # 30 minutes = 1800 seconds  
+                logger.info(f"Simulation timeout: {time_since_start.total_seconds()/60:.1f} minutes since last start")  
+                if not is_stopped():      
+                    logger.info("Auto-stopping simulation due to timeout")      
+                    await stop_simulation_internal()      
+                    # No need to reset last_start_time here, stop_simulation_internal() does it  
+                else:  
+                    # If already stopped, just reset the timer  
+                    last_start_time = None    
+                      
+        except asyncio.CancelledError:  
+            logger.info("Timeout monitor cancelled")  
+            break  
+        except Exception as e:  
+            logger.error(f"Error in timeout monitor: {e}")  
+  
+def start_timeout_monitor():  
+    """Start the timeout monitoring task."""  
+    global timeout_monitor_task  
+      
+    if timeout_monitor_task is None or timeout_monitor_task.done():  
+        timeout_monitor_task = asyncio.create_task(timeout_monitor())  
+        logger.info("Timeout monitor started")  
+  
+def stop_timeout_monitor():  
+    """Stop the timeout monitoring task."""  
+    global timeout_monitor_task  
+      
+    if timeout_monitor_task and not timeout_monitor_task.done():  
+        timeout_monitor_task.cancel()  
+        logger.info("Timeout monitor stopped")  
 
 def increment_active_users():  
     """Increment the active user counter."""  
@@ -52,7 +103,16 @@ async def stop_simulation_internal():
     """Internal function to stop simulation and clean up tasks."""  
     global SIMULATION_TASKS  
     global HISTORY_TASKS
+    global ACTIVE_USERS
+    global last_start_time
+    
+    # Stop timeout monitor  
+    stop_timeout_monitor()  
+      
+    # Reset start time  
+    last_start_time = None  
 
+    ACTIVE_USERS = 0
     # Update simulation state first
     set_state("stopped")  
     
@@ -121,9 +181,17 @@ async def start_simulation_endpoint(num_cars: int):
     if is_running() or is_paused():  
         raise HTTPException(status_code=400, detail="Simulation is already running")  
     
+    global last_start_time  
 
+    
     # Stop any active simulation to ensure a clean slate  
     await stop_simulation_internal()  
+
+    # Update last start time  
+    last_start_time = datetime.datetime.utcnow()  
+      
+    # Start timeout monitor if not already running  
+    start_timeout_monitor()  
   
     global SIMULATION_TASKS  
     session = get_session()  # Safely retrieve HTTP_SESSION  
