@@ -159,7 +159,7 @@ const FilterComponent = () => {
                 label={fleet1Name}
                 min={0}
                 max={100}
-                defaultValue={fleet1Capacity}
+                value={fleet1Capacity}
                 unit="vehicles"
                 disabled={true}
                 onChange={(value) =>
@@ -173,7 +173,7 @@ const FilterComponent = () => {
                 label={fleet2Name}
                 min={0}
                 max={100}
-                defaultValue={fleet2Capacity}
+                value={fleet2Capacity}
                 unit="vehicles"
                 disabled={true}
                 onChange={(value) => dispatch(setFleet2Capacity(value))}
@@ -185,7 +185,7 @@ const FilterComponent = () => {
                 label={fleet3Name}
                 min={0}
                 max={100}
-                defaultValue={fleet3Capacity}
+                value={fleet3Capacity}
                 unit="vehicles"
                 disabled={true}
                 onChange={(value) =>
