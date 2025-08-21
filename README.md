@@ -124,7 +124,7 @@ This demo consists of a backend with multiple microservices. Each microservice h
 1. Log in to **MongoDB Atlas** and obtain your **MongoDB connection string URI**. Follow [this guide](https://www.mongodb.com/resources/products/fundamentals/mongodb-connection-string) if you need help obtaining a connection string.
 
 ###  Step 2. Populate your database
-Next, populate your database with the required data and metadata required for the demo. In the application code locate the dump/leafy_popup_store directory. Inside it, there are several .gz files which contain the data and metadata of the collections: users, products, orders, locations and carts.
+Next, populate your database with the required data and metadata required for the demo. In the application code locate the dump/leafy_fleet directory. Inside it, there are several .gz files which contain the data and metadata of the collections: users, products, orders, locations and carts.
 
 Use the [mongorestore](https://www.mongodb.com/docs/database-tools/mongorestore/) command to load the data from the database dump into a new database within your Cluster.
 
