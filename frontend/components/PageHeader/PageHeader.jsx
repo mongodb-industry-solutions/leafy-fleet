@@ -178,16 +178,18 @@ const PageHeader = () => {
                 {sessionId && ( 
                   <div className={styles.sessionIdText}> 
                     SessionID:
-                  <button       
-                      className={`${styles.sessionIdButton} ${copied ? styles.copied : ''}`}      
-                      onClick={handleCopySessionId}      
-                    >      
-                      <code className={styles.sessionIdValue}>{sessionId}</code>      
-                      <span className={styles.copyIcon}>      
+                  <div   
+                      className={`${styles.sessionIdButton} ${copied ? styles.copied : ''}`}  
+                      //onClick={handleCopySessionId}  
+                    >  
+            
+                  <code className={styles.sessionIdValue}>{sessionId}</code>  
+                    {/*
+                      <span className={styles.copyIcon}>
                         {copied ? '✓' : '📋 '}      
-                      </span>      
-                    </button>  
-
+                      </span>   
+                     */}  
+                </div> 
                 </div> )}
             </div>
           </div>
@@ -211,15 +213,17 @@ const PageHeader = () => {
             <h2>Demo Stopped Due to Inactivity</h2>  
             <p>Your session has been stopped due to 5 minutes of inactivity.</p>  
             {sessionId && (  
-              <button       
-                      className={`${styles.sessionIdButton} ${copied ? styles.copied : ''}`}      
-                      onClick={handleCopySessionId}      
-                    >      
-                      <code className={styles.sessionIdValue}>{sessionId}</code>      
-                      <span className={styles.copyIcon}>      
+              <div   
+                  className={`${styles.sessionIdButton} ${copied ? styles.copied : ''}`}  
+                  //onClick={handleCopySessionId}  
+                >  
+               <code className={styles.sessionIdValue}>{sessionId}</code>  
+                {/*
+                      <span className={styles.copyIcon}>
                         {copied ? '✓' : '📋 '}      
-                      </span>      
-                    </button>  )}
+                      </span>   
+                     */}  
+              </div>  )}
             <p>Please refresh to continue.</p>  
             <button onClick={handleRefresh} className={styles.refreshButton}>  
               Refresh to Continue  
