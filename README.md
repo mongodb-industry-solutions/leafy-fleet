@@ -119,7 +119,7 @@ git clone <REPOSITORY_URL>
 
 This demo consists of a backend with multiple microservices. Each microservice has its own `Dockerfile` and can be run independently. The backend services are defined in the `docker-compose.yml` file located in the root directory.
 
-### Step 1: Retreieve your MongoDB connection string
+### Step 1: Retrieve your MongoDB connection string
 
 1. Log in to **MongoDB Atlas** and obtain your **MongoDB connection string URI**. Follow [this guide](https://www.mongodb.com/resources/products/fundamentals/mongodb-connection-string) if you need help obtaining a connection string.
 
