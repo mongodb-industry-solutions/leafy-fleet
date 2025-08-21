@@ -128,6 +128,8 @@ Next, populate your database with the required data and metadata required for th
 
 Use the [mongorestore](https://www.mongodb.com/docs/database-tools/mongorestore/) command to load the data from the database dump into a new database within your Cluster.
 
+You will need a way of interacting with your MongoDB Atlas cluster. The easiest way is to use the [MongoDB Shell](https://www.mongodb.com/docs/mongodb-shell/install/)
+
 Let's go back to your terminal, navigate to the directory /leafy-fleet (the root level of the application code), and run the following command:
 
 ```bash
@@ -182,6 +184,7 @@ GEOFENCES_SERVICE_ENDPOINT=http://geofence-get-service
 Only replace the values in `<>` with your actual values.
 
 You'll need to copy this file into multiple directories for different services in the backend:
+- `/`
 - `/backend`
 - `/backend/agent`
 - `/backend/geofenceGET/app`
@@ -215,138 +218,123 @@ NEXT_PUBLIC_SIMULATION_SERVICE_URL=localhost:9006
 
 ## Run it Locally
 
-Once you made sure the network is created, the `.env` files are in place, and your computer has access to the AWS profile you can run the backend services with the following command from the `/backend` directory:
+Once you made sure the network is created, the `.env` files are in place, and your computer has access to the AWS profile you can run the backend services with the following command from the root `/` directory:
 ```bash
 docker compose up -d
 ```
-docker should build the containers and start the services.
+Docker should build the containers and start the services.
 
-```
+Once the services are up and running you can start the frontend by going into your browser and navigating to `http://localhost:3000`. This will load the frontend application, which connects to the backend services running on the specified ports.
 
-> **_IMPORTANT NOTES_**: For better understanding of the JSON `config.json` file inside agent, this is the main configuration file for the Agent.
+You can go to `http://localhost:3000/chat` to access the chat interface.
 
-Attributes in config.json
+
+
+## Application flow
+
+The flow of the application's AI Agent backend is as follows:
+
+1. **Frontend**: Once the user loads the `/chat` on the frontend, the client connects to a websocket server to receive real-time updates from the AI Agent (shown as its chain-of-thought).
+2. **Backend**: When the user sends a query, a REST request is received in `/agent/app/main.py`, which starts the agent workflow.
+3. `main.py` parses environment variables, sets up the agent workflow, and invokes the LangGraph graph builder via `/backend/agent/async_workflow_runner.py` (see https://langchain-ai.github.io/langgraph/how-tos/graph-api/#async).
+4. The async workflow builder loads nodes and their order from `/backend/agent/config/config.json`, beginning with the embedding node implemented in `/backend/agent/agent_tools.py` as `get_query_embedding_tool`.
+5. The graph contains conditional edges — at runtime the agent chooses different paths (for example, routing to a vector search tool when similar results exist, otherwise routing to the reasoning node). Routing logic is implemented inside the corresponding tool functions (see `vector_search_tool` in `/backend/agent/agent_tools.py`).
+
+
+## Important notes
+
+- The JSON file `config.json` inside `/backend/agent/config/` is the primary configuration for the agent. Review it to understand the workflow graph and other settings.
+
+### Key attributes in `config.json`
+
 1. `MDB_DATABASE_NAME`:
-   * Name of the MongoDB database where all collections and data are stored.
+   - Name of the MongoDB database where collections and data are stored.
 
 2. `MDB_TIMESERIES_COLLECTION`:
-    * Name of the MongoDB collection used to store timeseries data.
-    * Example: `timeseries_data`
+   - Name of the MongoDB collection used for timeseries data (e.g. `timeseries_data`).
 
 3. `MDB_TIMESERIES_TIMEFIELD`:
-    * Name of the field in the timeseries data that represents the timestamp.
-    * Example: `timestamp`
+   - Field name representing the timestamp (e.g. `timestamp`).
 
 4. `MDB_TIMESERIES_GRANULARITY`:
-    * Granularity of the timeseries data (e.g. `minutes`, `hours`, `days`).
-    * Example: `minutes`
+   - Granularity of the timeseries data (e.g. `minutes`, `hours`, `days`).
 
 5. `MDB_EMBEDDINGS_COLLECTION`:
-    * Name of the MongoDB collection used to store query embeddings.
-    * Example: `historical_recommendations`
+   - Collection for storing query embeddings (e.g. `historical_recommendations`).
 
 6. `MDB_EMBEDDINGS_COLLECTION_VS_FIELD`:
-    * Name of the field in the embeddings collection that stores the embeddings.
-    * Example: `query_embedding`
+   - Field in the embeddings collection that stores the embedding vector (e.g. `query_embedding`).
 
 7. `MDB_VS_INDEX`:
-    * Name of the MongoDB index used for vector search.
-    * Example: `agentic_historical_recommendations_queries_idx`
+   - Name of the MongoDB vector-search index (e.g. `agentic_historical_recommendations_queries_idx`).
 
 8. `MDB_HISTORICAL_RECOMMENDATIONS_COLLECTION`:
-    * Name of the MongoDB collection used to store historical recommendations.
-    * Example: `historical_recommendations`
-
+   - Collection for historical recommendations (e.g. `historical_recommendations`).
 
 9. `MDB_CHECKPOINTER_COLLECTION`:
-    * Name of the MongoDB collection used to store checkpoints.
-    * Example: `checkpoints`
-
+   - Collection for storing checkpoints (e.g. `checkpoints`).
 
 10. `MDB_AGENT_PROFILES_COLLECTION`:
-    * Name of the MongoDB collection used to store agent profiles. e.g.: `agent_profiles`
-    * You can add your custom agent profiles to this collection by importing a JSON file to the collection.
-  
+   - Collection for agent profiles (e.g. `agent_profiles`). You can add custom profiles by importing JSON documents.
 
 11. `MDB_AGENT_SESSIONS_COLLECTION`:
-    * Name of the MongoDB collection used to store agent sessions.
-    * Example: `agent_sessions`
-
+   - Collection for agent sessions (e.g. `agent_sessions`).
 
 12. `DEFAULT_AGENT_PROFILE`:
-    * Default agent profile used in the agent workflow.
-    * Example:
-    ```json
-    {
-        "agent_id": "DEFAULT",
-        "profile": "Default Agent Profile",
-        "role": "Expert Advisor",
-        "kind_of_data": "Specific Data",
-        "motive": "diagnose the query and provide recommendations",
-        "instructions": "Follow procedures meticulously.",
-        "rules": "Document all steps.",
-        "goals": "Provide actionable recommendations."
-    }
-    ```
+   - Default profile used by the agent. Example:
+
+```json
+{
+    "agent_id": "DEFAULT",
+    "profile": "Default Agent Profile",
+    "role": "Expert Advisor",
+    "kind_of_data": "Specific Data",
+    "motive": "diagnose the query and provide recommendations",
+    "instructions": "Follow procedures meticulously.",
+    "rules": "Document all steps.",
+    "goals": "Provide actionable recommendations."
+}
+```
 
 13. `CHATCOMPLETIONS_MODEL_NAME`:
-    * Name of the chat completions model used for generating responses.
-    * Example: `Anthropic Claude 3 Haiku (within AWS Bedrock)`
+   - Name of the chat model used for generating responses (e.g. Anthropic Claude 3 Haiku via Bedrock).
 
 14. `CHATCOMPLETIONS_MODEL_ID`:
-    * Model ID of the chat completions model.
-    * Example: `anthropic.claude-3-haiku-20240307-v1:0`
+   - Model ID used for chat completions (example format provided in the file).
 
 15. `AGENT_WORKFLOW_GRAPH`:
-    * Agent workflow graph that defines the sequence of tools used in the agent workflow.
-    * Example:
-    ```json
-    "AGENT_WORKFLOW_GRAPH": {
-        "nodes": [
-            {"id": "reasoning_node", "tool": "agent_tools.generate_chain_of_thought_tool"},
-            {"id": "embedding_node", "tool": "agent_tools.get_query_embedding_tool"},
-            {"id": "vector_search_tool", "tool": "agent_tools.vector_search_tool"},
-            {"id": "recommendation_node", "tool": "agent_tools.get_llm_recommendation_tool"},
-            {"id": "router_node", "tool": "agent_tools.router_tool"},
-            {"id": "vehicle_state_search_tool", "tool": "query_tools.vehicle_state_search_tool"},
-            {"id": "save_embedding_tool", "tool": "agent_tools.save_query_embedding_tool"},
-            {"id": "fleet_position_search_tool", "tool": "query_tools.fleet_position_search_tool"},
-            {"id": "get_vehicle_maintenance_data_tool", "tool": "query_tools.get_vehicle_maintenance_data_tool"}
-            
-        ],
-        "edges": [
-            {"from": "embedding_node", "to": "vector_search_tool"},
-            {"from": "reasoning_node", "to": "save_embedding_tool"},
-            {"from": "save_embedding_tool", "to": "router_node"},
-            {"from": "vehicle_state_search_tool", "to": "recommendation_node"}, 
-            {"from": "fleet_position_search_tool", "to": "recommendation_node"},
-            {"from": "get_vehicle_maintenance_data_tool", "to": "recommendation_node"},
-            {"from": "recommendation_node", "to": "END"}
-        ],
-        "conditional_edges": [
-            {
-                "from": "vector_search_tool",
-                "condition": "route_from_vector_search",
-                "condition_map": {
-                    "router_node": "router_node",
-                    "reasoning_node": "reasoning_node"
-                }
-            },
-            {
-                "from": "router_node",
-                "condition": "route_to_query_tool",
-                "condition_map": {
-                    "vehicle_state_search_tool": "vehicle_state_search_tool",
-                    "fleet_position_search_tool": "fleet_position_search_tool", 
-                    "get_vehicle_maintenance_data_tool": "get_vehicle_maintenance_data_tool"
-                }
-            }
-        ],
-        "entry_point": "embedding_node"
-    }
-    ```
-    * Components:
-        - `nodes`: Defines the tools used in the workflow.
-        - `edges`: Defines the connections between nodes.
-        - `entry_point`: Starting point of the agent workflow.
+   - Defines nodes, edges, conditional_edges, and entry_point for the LangGraph workflow. Example structure is included in the repository README below.
 
+
+
+## Common Errors & Troubleshooting
+
+- If you are deploying on a local machine, ensure that the .aws folder is present in the directory of the agent microservice. This folder should contain your AWS credentials and configuration files, if not, configure a secret in your AWS Secrets Manager and update the `AWS_PROFILE` in the `.env` file accordingly.
+- There should be an env in every folder in the project, since the project is designed for every service to run independently.
+- If you are using Docker, ensure that the Docker network is created before running the services.
+- If experiencing build issues with peer dependencies, try installing with `npm install --legacy-peer-deps`
+
+
+## Suggestions for improvement
+
+- Allow the chatbot to answer user's questions about how the demo works
+
+
+## Authors & Contributors
+
+
+- **Humza Akhtar** — Senior Principal — humza.akhtar@mongodb.com
+- **Raphael Schor** — Principal — raphael.schor@mongodb.com
+- **Kirill Makienko** — Developer — https://github.com/Kicho-Fops
+- **Fernando Morán** — Developer — https://github.com/fermofou
+- **Romina Carranza** — Maintainer — romina.carranza@mongodb.com
+- **Rami Pinto** — Maintainer — rami.pinto@mongodb.com
+
+## License
+
+© 2025 MongoDB. All rights reserved.
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
+This repository is intended solely for demonstration and educational purposes.  
+No support or warranty is provided. Use at your own risk.
