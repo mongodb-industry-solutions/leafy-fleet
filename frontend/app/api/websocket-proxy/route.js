@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 
 // This is a polling-based alternative to WebSocket
 // For true WebSocket support, you might need to use a separate server or Next.js custom server

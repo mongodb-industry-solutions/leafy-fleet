@@ -1,4 +1,5 @@
 export async function GET(request) {
+export const dynamic = 'force-dynamic';
   const { searchParams } = new URL(request.url);
   const thread_id = searchParams.get("thread_id");
   if (!thread_id) {
