@@ -20,7 +20,7 @@ RUN find /app -name "requirements.txt" -exec pip install --no-cache-dir -r {} \;
 RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisor
 
 # Create supervisor configuration file
-RUN cat > /etc/supervisor/conf.d/supervisord.conf <<'EOF'
+RUN cat > /etc/supervisord.conf <<'EOF'
 [supervisord]
 nodaemon=true
 logfile=/var/log/supervisor/supervisord.log
@@ -106,4 +106,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:9000/ || exit 1
 
 # Start supervisor
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
