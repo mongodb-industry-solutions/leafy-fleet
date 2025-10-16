@@ -2,21 +2,9 @@
 # This configuration deploys frontend + backend as a single pod with sidecar pattern
 
 # Frontend environment variables
+# Note: NEXT_PUBLIC_* variables are baked into the build via Drone build_args
 env:
   NODE_ENV: production
-
-  # Backend services accessible via loopback (127.0.0.1)
-  NEXT_PUBLIC_AGENT_SERVICE_URL: 127.0.0.1:9000
-  NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL: 127.0.0.1:9001
-  NEXT_PUBLIC_TIMESERIES_POST_SERVICE_URL: 127.0.0.1:9002
-  NEXT_PUBLIC_SESSIONS_SERVICE_URL: 127.0.0.1:9003
-  NEXT_PUBLIC_GEOFENCE_SERVICE_URL: 127.0.0.1:9004
-  NEXT_PUBLIC_STATIC_SERVICE_URL: 127.0.0.1:9005
-  NEXT_PUBLIC_SIMULATION_SERVICE_URL: 127.0.0.1:9006
-
-# Frontend secrets
-envSecrets:
-  # Add any frontend-specific secrets here if needed
 
 # Backend sidecar container (runs all 7 backend services)
 sidecarContainers:

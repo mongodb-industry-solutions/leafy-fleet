@@ -7,10 +7,6 @@
 env:
   NODE_ENV: staging
 
-# Frontend secrets (reference Kubernetes secrets created via helm ksec)
-envSecrets:
-  # Add any frontend-specific secrets here if needed
-
 # Backend sidecar container (runs all 7 backend services)
 sidecarContainers:
   - name: backend
