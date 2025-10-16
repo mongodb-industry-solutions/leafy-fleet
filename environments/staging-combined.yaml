@@ -30,6 +30,15 @@ sidecarContainers:
       - containerPort: 9006
         name: simulation
 
+    # Resource limits for backend (running 7 services)
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+
     # Backend environment variables
     env:
       # MongoDB connection
