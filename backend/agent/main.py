@@ -101,7 +101,9 @@ async def run_agent(query_reported: str = Query("Default query reported by the u
     parsed_filters = ast.literal_eval(filters)
     logger.info(f"Parsed filters: {parsed_filters}")
 
+    logger.info(f"Raw preferences received: {preferences}")
     parsed_preferences = ast.literal_eval(preferences) if preferences else []
+    logger.info(f"Parsed preferences: {parsed_preferences}")
     initial_state: AgentState = {
         "userFilters": parsed_filters,
         "userPreferences": parsed_preferences,
