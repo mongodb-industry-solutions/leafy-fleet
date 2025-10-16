@@ -10,93 +10,17 @@ RUN apt-get update && \
     apt-get install -y supervisor curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy all backend code first
+# Copy supervisor configuration file first (before backend code for better caching)
+COPY backend/supervisord.conf /etc/supervisord.conf
+
+# Copy all backend code
 COPY backend/ /app/
 
 # Collect all requirements.txt files and install dependencies
 RUN find /app -name "requirements.txt" -exec pip install --no-cache-dir -r {} \;
 
-# Create supervisor configuration directory and log directory
-RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisor
-
-# Create supervisor configuration file
-RUN cat > /etc/supervisord.conf <<'EOF'
-[supervisord]
-nodaemon=true
-logfile=/var/log/supervisor/supervisord.log
-pidfile=/var/run/supervisord.pid
-loglevel=info
-
-[program:agent-service]
-command=uvicorn main:app --host 0.0.0.0 --port 9000 --workers 2
-directory=/app/agent
-autostart=true
-autorestart=true
-stderr_logfile=/var/log/supervisor/agent-service.err.log
-stdout_logfile=/var/log/supervisor/agent-service.out.log
-stopwaitsecs=30
-priority=10
-
-[program:timeseries-get]
-command=uvicorn main:app --host 0.0.0.0 --port 9001
-directory=/app/timeSeriesGET/app
-autostart=true
-autorestart=true
-stderr_logfile=/var/log/supervisor/timeseries-get.err.log
-stdout_logfile=/var/log/supervisor/timeseries-get.out.log
-stopwaitsecs=10
-priority=20
-
-[program:timeseries-post]
-command=uvicorn main:app --host 0.0.0.0 --port 9002
-directory=/app/timeSeriesPOST/app
-autostart=true
-autorestart=true
-stderr_logfile=/var/log/supervisor/timeseries-post.err.log
-stdout_logfile=/var/log/supervisor/timeseries-post.out.log
-stopwaitsecs=10
-priority=30
-
-[program:sessions-service]
-command=uvicorn main:app --host 0.0.0.0 --port 9003
-directory=/app/sessions/app
-autostart=true
-autorestart=true
-stderr_logfile=/var/log/supervisor/sessions-service.err.log
-stdout_logfile=/var/log/supervisor/sessions-service.out.log
-stopwaitsecs=10
-priority=40
-
-[program:geofence-service]
-command=uvicorn main:app --host 0.0.0.0 --port 9004
-directory=/app/geofenceGET/app
-autostart=true
-autorestart=true
-stderr_logfile=/var/log/supervisor/geofence-service.err.log
-stdout_logfile=/var/log/supervisor/geofence-service.out.log
-stopwaitsecs=10
-priority=50
-
-[program:static-service]
-command=uvicorn main:app --host 0.0.0.0 --port 9005
-directory=/app/static_service/app
-autostart=true
-autorestart=true
-stderr_logfile=/var/log/supervisor/static-service.err.log
-stdout_logfile=/var/log/supervisor/static-service.out.log
-stopwaitsecs=10
-priority=60
-
-[program:simulation-service]
-command=uvicorn main:app --host 0.0.0.0 --port 9006
-directory=/app/simulation/app
-autostart=true
-autorestart=true
-stderr_logfile=/var/log/supervisor/simulation-service.err.log
-stdout_logfile=/var/log/supervisor/simulation-service.out.log
-stopwaitsecs=10
-priority=70
-EOF
+# Create supervisor log directory
+RUN mkdir -p /var/log/supervisor
 
 # Expose all backend ports
 EXPOSE 9000 9001 9002 9003 9004 9005 9006
