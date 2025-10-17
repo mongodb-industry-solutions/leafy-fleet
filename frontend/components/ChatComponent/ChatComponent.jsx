@@ -38,9 +38,15 @@ const ChatComponent = () => {
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
-    const socket = new WebSocket(
-      `ws://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/ws?thread_id=${thread_id}`
-    );
+    // Use the current host instead of hardcoded 127.0.0.1
+    // This allows WebSocket to work both locally and in Kubernetes
+    const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = typeof window !== 'undefined' ? window.location.host : 'localhost:3000';
+    const wsUrl = `${protocol}//${host}/ws?thread_id=${thread_id}`;
+
+    console.log('[ChatComponent DEBUG] WebSocket URL:', wsUrl);
+
+    const socket = new WebSocket(wsUrl);
     socketRef.current = socket; // Store it in the ref
 
     socket.onopen = () => {
