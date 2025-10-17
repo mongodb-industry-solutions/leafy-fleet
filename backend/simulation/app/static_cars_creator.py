@@ -222,9 +222,9 @@ async def create_cars_ONCE(num_cars: int):
                 sessions=[]  # Initialize with an empty list
             )
             cars.append(car)
-            try:    
+            try:
                 async with HTTP_SESSION.post(
-                    f"{static_service}:9005/static",
+                    f"{static_service}/static",
                     json=car.to_static()
                 ) as response:
                     if response.status == 201:
@@ -292,7 +292,7 @@ async def create_maintenance_data():
 
 
     try:
-        async with HTTP_SESSION.get(f"{hostname}:9005/static") as response:
+        async with HTTP_SESSION.get(f"{hostname}/static") as response:
             if response.status == 200:
                 static_entries = await response.json()
                 print(f"Static entries retrieved: {len(static_entries)}")
@@ -312,7 +312,7 @@ async def create_maintenance_data():
                     json=jsonable_encoder(maintenance_logs)
                     # print(f"Creating maintenance data for car {car_id} with logs: {json}")
                     async with HTTP_SESSION.put(
-                        f"{hostname}:9005/static/{car_id}",
+                        f"{hostname}/static/{car_id}",
                         json=json
                     ) as put_response:
                         if put_response.status == 200:

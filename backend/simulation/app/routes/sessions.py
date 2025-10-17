@@ -107,9 +107,9 @@ async def add_sessions(request: SessionRequest):
             logger.error("No historic cars were created")
             raise HTTPException(status_code=500, detail="Failed to create historic cars")
             # Check latest timestamp, if any      
-        timestamp_data = None                   
-        try:          
-            url = f"{timeseries_get}:9001/timeseries"          
+        timestamp_data = None
+        try:
+            url = f"{timeseries_get}/timeseries"          
             fetch = await session.get(url)          
             if fetch.status == 200:          
                 response_data = await fetch.json()          
