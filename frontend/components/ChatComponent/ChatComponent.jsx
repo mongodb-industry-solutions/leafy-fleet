@@ -116,15 +116,15 @@ const ChatComponent = () => {
     );
 
     try {
-      const url = `http://${
-        process.env.NEXT_PUBLIC_AGENT_SERVICE_URL
-      }/run-agent?query_reported=${encodeURIComponent(
+      // Use Next.js API route instead of direct backend call
+      // This allows the request to be made server-side where 127.0.0.1 works
+      const url = `/api/run-agent?query_reported=${encodeURIComponent(
         userMessageText
       )}&thread_id=${thread_id}&filters=${encodeURIComponent(
         JSON.stringify(filters)
       )}&preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`;
 
-      console.log('[ChatComponent DEBUG] Calling agent service:', url);
+      console.log('[ChatComponent DEBUG] Calling agent API route:', url);
       console.log('[ChatComponent DEBUG] User preferences:', userPreferences);
       console.log('[ChatComponent DEBUG] Filters:', filters);
       console.log('[ChatComponent DEBUG] Thread ID:', thread_id);

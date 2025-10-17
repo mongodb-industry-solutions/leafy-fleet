@@ -31,23 +31,24 @@ const LoginComp = ({ modalObserver }) => {
   
   const dispatch = useDispatch();  
 
-  useEffect(() => {  
-    const fetchGeofences = async () => {  
-      try {  
-        const response = await fetch(`http://${process.env.NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL}/geofences`);  
-        if (!response.ok) {  
-          throw new Error("Failed to fetch geofences");  
-        }  
-        const data = await response.json();  
-        dispatch(setGeofences({ geofences: data.geofences })); // Fixed action name 
-        //console.log("Fetched geofences:", data.geofences); 
-        
+  useEffect(() => {
+    const fetchGeofences = async () => {
+      try {
+        // Use API route instead of direct backend call
+        const response = await fetch(`/api/geofences`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch geofences");
+        }
+        const data = await response.json();
+        dispatch(setGeofences({ geofences: data.geofences })); // Fixed action name
         //console.log("Fetched geofences:", data.geofences);
-      } catch (error) {  
-        console.error("Error fetching geofences:", error);  
-      }  
-    }  
-    fetchGeofences();  
+
+        //console.log("Fetched geofences:", data.geofences);
+      } catch (error) {
+        console.error("Error fetching geofences:", error);
+      }
+    }
+    fetchGeofences();
   }, [dispatch]);  
 
   
@@ -61,15 +62,16 @@ const LoginComp = ({ modalObserver }) => {
     setOpen(false);
   };
   
-  const handleRestore = async () => {  
-  try {  
-    const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/${threadId}`);  
-  
-    if (!response.ok) {  
-      throw new Error('Session not found');  
-    }  
-  
-    const data = await response.json();  
+  const handleRestore = async () => {
+  try {
+    // Use API route instead of direct backend call
+    const response = await fetch(`/api/sessions-get?threadId=${threadId}`);
+
+    if (!response.ok) {
+      throw new Error('Session not found');
+    }
+
+    const data = await response.json();
     console.log("Restored session:", data);  
   
     // Set session data in Redux  
@@ -112,17 +114,18 @@ const LoginComp = ({ modalObserver }) => {
           ]  
         };  
   
-        const simResponse = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/sessions`, {  
-          method: 'POST',  
-          headers: {  
-            'Content-Type': 'application/json',  
-          },  
-          body: JSON.stringify({  
-            session_id: sessionId, // Use sessionId from Redux  
-            range1: fleetConfig.fleet_size[0] || 20,  
-            range2: fleetConfig.fleet_size[1] || 10,  
-            range3: fleetConfig.fleet_size[2] || 20  
-          })  
+        // Use API route instead of direct backend call
+        const simResponse = await fetch(`/api/simulation-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: sessionId, // Use sessionId from Redux
+            range1: fleetConfig.fleet_size[0] || 20,
+            range2: fleetConfig.fleet_size[1] || 10,
+            range3: fleetConfig.fleet_size[2] || 20
+          })
         });  
   
         if (!simResponse.ok) {  

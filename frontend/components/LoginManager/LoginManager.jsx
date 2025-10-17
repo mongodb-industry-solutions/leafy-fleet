@@ -85,14 +85,15 @@ const LoginManager = () => {
 
   };
   //  simulation start request  
-  useEffect(() => {      
-    const startSimulation = async () => {      
-      try {      
-        const response = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/start/300`, {      
-          method: 'POST',      
-          headers: {      
-            'Content-Type': 'application/json',      
-          },      
+  useEffect(() => {
+    const startSimulation = async () => {
+      try {
+        // Use API route instead of direct backend call
+        const response = await fetch(`/api/simulation-start?vehicleCount=300`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });      
     
         if (!response.ok) {  
@@ -137,17 +138,18 @@ const LoginManager = () => {
           ]  
         };  
   
-        const simResponse = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/sessions`, {  
-          method: 'POST',  
-          headers: {  
-            'Content-Type': 'application/json',  
-          },  
-          body: JSON.stringify({  
-            session_id: sessionId, // Use sessionId from Redux  
-            range1: fleetConfig.fleet_size[0] || 20,  
-            range2: fleetConfig.fleet_size[1] || 10,  
-            range3: fleetConfig.fleet_size[2] || 20  
-          })  
+        // Use API route instead of direct backend call
+        const simResponse = await fetch(`/api/simulation-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: sessionId, // Use sessionId from Redux
+            range1: fleetConfig.fleet_size[0] || 20,
+            range2: fleetConfig.fleet_size[1] || 10,
+            range3: fleetConfig.fleet_size[2] || 20
+          })
         });  
   
         if (!simResponse.ok) {  
@@ -208,7 +210,8 @@ const LoginManager = () => {
           fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
         ];
 
-        const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/create`, {
+        // Use API route instead of direct backend call
+        const response = await fetch(`/api/sessions-create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -296,7 +299,8 @@ const LoginManager = () => {
 
     try {
 
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/create`, {
+      // Use API route instead of direct backend call
+      const response = await fetch(`/api/sessions-create`, {
 
         method: "POST",
         headers: {

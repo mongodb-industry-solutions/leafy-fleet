@@ -20,8 +20,9 @@ const ChartsComponent = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Use API route instead of direct backend call
         const res = await fetch(
-          `http://${process.env.NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL}/timeseries/all/latest?thread_id=${thread_id}`
+          `/api/get-timeseries?thread_id=${thread_id}`
         );
 
         if (!res.ok) {
