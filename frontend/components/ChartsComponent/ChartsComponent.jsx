@@ -72,12 +72,24 @@ const ChartsComponent = () => {
 
     // Only fetch if we have a thread_id
     if (thread_id) {
-      // Add a small delay to allow simulation session to complete
-      const timer = setTimeout(() => {
-        fetchData();
-      }, 2000); // Wait 2 seconds for simulation to associate session with cars
+      console.log('[ChartsComponent] Thread ID available, setting up data fetching');
 
-      return () => clearTimeout(timer);
+      // Initial fetch after delay to allow simulation to start
+      const initialTimer = setTimeout(() => {
+        console.log('[ChartsComponent] Initial fetch after delay');
+        fetchData();
+      }, 3000); // Wait 3 seconds for simulation to associate session with cars
+
+      // Also set up periodic refresh every 10 seconds
+      const refreshInterval = setInterval(() => {
+        console.log('[ChartsComponent] Periodic refresh');
+        fetchData();
+      }, 10000); // Refresh every 10 seconds
+
+      return () => {
+        clearTimeout(initialTimer);
+        clearInterval(refreshInterval);
+      };
     } else {
       console.log('[ChartsComponent] No thread_id yet, skipping fetch');
     }
