@@ -70,8 +70,13 @@ const ChartsComponent = () => {
       }
     };
 
-    fetchData();
-  }, []); // Empty dependency array ensures this runs once when the component mounts
+    // Only fetch if we have a thread_id
+    if (thread_id) {
+      fetchData();
+    } else {
+      console.log('[ChartsComponent] No thread_id yet, skipping fetch');
+    }
+  }, [thread_id]); // Re-fetch when thread_id changes
 
   // Create filtered chart URLs  - here u can change refresh time 
   const createFilteredChartUrl = (chartId) => {  
