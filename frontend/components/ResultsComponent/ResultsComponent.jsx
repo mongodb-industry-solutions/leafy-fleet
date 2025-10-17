@@ -43,32 +43,27 @@ const ResultsComponent = () => {
         }  
     };  
   
-    // Handle fetching static car data (separate loading state)  
-    const handleSearchStatic = useCallback(async (id) => {  
-        try {  
-            let baseUrl = process.env.NEXT_PUBLIC_STATIC_SERVICE_URL;  
-  
-              
-            baseUrl = `http://${baseUrl}`;  
-              
-  
-            const response = await fetch(`${baseUrl}/static/${id}`);  
-  
-            if (!response.ok) {  
-                throw new Error(`HTTP error! Status: ${response.status}`);  
-            }  
-  
-            const data = await response.json();  
-            console.log('Static data fetched:', data);  
-  
-            // Store in Redux  
-            dispatch(setStaticSelectedCar({ staticCar: data }));  
-            return data;  
-  
-        } catch (error) {  
-            console.error('Error fetching static car data:', error);  
-            return null;  
-        }  
+    // Handle fetching static car data (separate loading state)
+    const handleSearchStatic = useCallback(async (id) => {
+        try {
+            // Use API route instead of direct backend call
+            const response = await fetch(`/api/static/${id}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Static data fetched:', data);
+
+            // Store in Redux
+            dispatch(setStaticSelectedCar({ staticCar: data }));
+            return data;
+
+        } catch (error) {
+            console.error('Error fetching static car data:', error);
+            return null;
+        }
     }, [dispatch]);  
   
     const handleCarClick = useCallback(async (car) => {  

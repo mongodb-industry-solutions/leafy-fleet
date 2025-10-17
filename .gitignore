@@ -192,3 +192,4 @@ KANOPY_DEPLOYMENT_GUIDE.md
 DEPLOYMENT_SUMMARY.md
 docker-compose.kanopy-sim.yml
 docker-compose.test.yml
+CLAUDE.md
