@@ -13,24 +13,36 @@ logger = logging.getLogger(__name__)
 
 @router.post("/sessions/create")
 def create_timeseries_entry(entry: SessionModel):
-    logger.info("Creating new session...")
-    logger.info(f"Received data: {entry}")
+    logger.info("[SESSIONS SERVICE] ========== Creating new session ==========")
+    logger.info(f"[SESSIONS SERVICE] Received data: {entry.dict()}")
+    logger.info(f"[SESSIONS SERVICE] Vehicle fleet config: {entry.vehicle_fleet}")
 
-    try:  
-        result = sessions_coll.insert_one(entry.dict())
+    try:
+        entry_dict = entry.dict()
+        logger.info(f"[SESSIONS SERVICE] Inserting document into MongoDB: {entry_dict}")
+
+        result = sessions_coll.insert_one(entry_dict)
+        logger.info(f"[SESSIONS SERVICE] MongoDB insert result - inserted_id: {result.inserted_id}")
+
         sessions_coll.update_one(
-            {"_id": result.inserted_id}, 
+            {"_id": result.inserted_id},
             {"$set": {
                 "last_used_at": datetime.now(timezone.utc)
             }}
         )
-        logger.info(f"Session created with ID: {result.inserted_id}") 
+
+        session_id_str = str(result.inserted_id)
+        logger.info(f"[SESSIONS SERVICE] Session created successfully with ID: {session_id_str}")
+        logger.info(f"[SESSIONS SERVICE] Returning session_id to frontend: {session_id_str}")
+
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,
-            content=jsonable_encoder({"session_id": str(result.inserted_id)})
+            content=jsonable_encoder({"session_id": session_id_str})
         )
-    except Exception as e:  
-        logger.error(f"Error: {e}")  # Log the error for debugging  
+    except Exception as e:
+        logger.error(f"[SESSIONS SERVICE] ERROR creating session: {e}")
+        logger.error(f"[SESSIONS SERVICE] Exception type: {type(e).__name__}")
+        logger.error(f"[SESSIONS SERVICE] Exception details: {str(e)}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"message": "Error creating session", "error": str(e)}

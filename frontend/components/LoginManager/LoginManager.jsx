@@ -210,31 +210,40 @@ const LoginManager = () => {
           fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
         ];
 
+        const requestBody = {
+          vehicle_fleet: {
+            selected_fleets: 3,
+            fleet_names: fleetNames,
+            fleet_size: fleetSizes,
+            attribute_list: attributeLists,
+          },
+          chat_history: [],
+        };
+
+        console.log('[LoginManager] Creating session with request body:', JSON.stringify(requestBody, null, 2));
+
         // Use API route instead of direct backend call
         const response = await fetch(`/api/sessions-create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            vehicle_fleet: {
-              selected_fleets: 3,
-              fleet_names: fleetNames,
-              fleet_size: fleetSizes,
-              attribute_list: attributeLists,
-            },
-            chat_history: [],
-          }),
+          body: JSON.stringify(requestBody),
         });
 
+        console.log('[LoginManager] Session creation response status:', response.status);
+
         if (!response.ok) {
-          throw new Error("Failed to create session");
+          const errorText = await response.text();
+          console.error('[LoginManager] Session creation failed:', errorText);
+          throw new Error(`Failed to create session: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
+        console.log('[LoginManager] Session created successfully:', data);
         dispatch(setSessionId({ sessionId: data.session_id }));
       } catch (error) {
-        console.error("Error creating session:", error);
+        console.error('[LoginManager] Error creating session:', error);
       }
     }
   }; // End of modalObserver
@@ -298,6 +307,17 @@ const LoginManager = () => {
     }
 
     try {
+      const requestBody = {
+        vehicle_fleet: {
+          selected_fleets: selectedFleets,
+          fleet_names: fleetNames,
+          fleet_size: fleetSizes,
+          attribute_list: attributeLists
+        },
+        chat_history: []
+      };
+
+      console.log('[LoginManager handleClose] Creating session with request body:', JSON.stringify(requestBody, null, 2));
 
       // Use API route instead of direct backend call
       const response = await fetch(`/api/sessions-create`, {
@@ -306,27 +326,24 @@ const LoginManager = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          vehicle_fleet: {
-            selected_fleets: selectedFleets,
-            fleet_names: fleetNames,
-            fleet_size: fleetSizes,
-            attribute_list: attributeLists
-          },
-          chat_history: []
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('[LoginManager handleClose] Session creation response status:', response.status);
 
       if (!response.ok) {
-        throw new Error('Failed to create session');
+        const errorText = await response.text();
+        console.error('[LoginManager handleClose] Session creation failed:', errorText);
+        throw new Error(`Failed to create session: ${response.status} - ${errorText}`);
       }
+
       const data = await response.json();
+      console.log('[LoginManager handleClose] Session created successfully:', data);
       // Save the session ID in Redux
       dispatch(setSessionId({ sessionId: data.session_id }));
 
     } catch (error) {
-      console.error("Error creating session:", error);
+      console.error('[LoginManager handleClose] Error creating session:', error);
     }
 
   };
