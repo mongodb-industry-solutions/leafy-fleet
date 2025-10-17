@@ -23,6 +23,9 @@ export async function GET(request) {
       filters || '[]'
     )}&preferences=${encodeURIComponent(preferences || '[]')}`;
 
+    console.log('[DEBUG] Calling backend URL:', url);
+    console.log('[DEBUG] Preferences being sent:', preferences);
+
     const response = await fetch(url, {
       method: "GET",
       headers: {
@@ -49,8 +52,9 @@ export async function GET(request) {
     }
   } catch (error) {
     console.error('Error calling agent service:', error);
+    console.error('Error details:', error.message, error.stack);
     return NextResponse.json(
-      { error: 'Failed to call agent service' },
+      { error: 'Failed to call agent service', details: error.message },
       { status: 500 }
     );
   }
