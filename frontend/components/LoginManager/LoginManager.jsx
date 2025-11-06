@@ -85,14 +85,15 @@ const LoginManager = () => {
 
   };
   //  simulation start request  
-  useEffect(() => {      
-    const startSimulation = async () => {      
-      try {      
-        const response = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/start/300`, {      
-          method: 'POST',      
-          headers: {      
-            'Content-Type': 'application/json',      
-          },      
+  useEffect(() => {
+    const startSimulation = async () => {
+      try {
+        // Use API route instead of direct backend call
+        const response = await fetch(`/api/simulation-start?vehicleCount=300`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });      
     
         if (!response.ok) {  
@@ -137,17 +138,18 @@ const LoginManager = () => {
           ]  
         };  
   
-        const simResponse = await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/sessions`, {  
-          method: 'POST',  
-          headers: {  
-            'Content-Type': 'application/json',  
-          },  
-          body: JSON.stringify({  
-            session_id: sessionId, // Use sessionId from Redux  
-            range1: fleetConfig.fleet_size[0] || 20,  
-            range2: fleetConfig.fleet_size[1] || 10,  
-            range3: fleetConfig.fleet_size[2] || 20  
-          })  
+        // Use API route instead of direct backend call
+        const simResponse = await fetch(`/api/simulation-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: sessionId, // Use sessionId from Redux
+            range1: fleetConfig.fleet_size[0] || 20,
+            range2: fleetConfig.fleet_size[1] || 10,
+            range3: fleetConfig.fleet_size[2] || 20
+          })
         });  
   
         if (!simResponse.ok) {  
@@ -208,30 +210,40 @@ const LoginManager = () => {
           fleet3Attributes.map((attr) => ATTR_KEY_MAP[attr] || attr),
         ];
 
-        const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/create`, {
+        const requestBody = {
+          vehicle_fleet: {
+            selected_fleets: 3,
+            fleet_names: fleetNames,
+            fleet_size: fleetSizes,
+            attribute_list: attributeLists,
+          },
+          chat_history: [],
+        };
+
+        console.log('[LoginManager] Creating session with request body:', JSON.stringify(requestBody, null, 2));
+
+        // Use API route instead of direct backend call
+        const response = await fetch(`/api/sessions-create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            vehicle_fleet: {
-              selected_fleets: 3,
-              fleet_names: fleetNames,
-              fleet_size: fleetSizes,
-              attribute_list: attributeLists,
-            },
-            chat_history: [],
-          }),
+          body: JSON.stringify(requestBody),
         });
 
+        console.log('[LoginManager] Session creation response status:', response.status);
+
         if (!response.ok) {
-          throw new Error("Failed to create session");
+          const errorText = await response.text();
+          console.error('[LoginManager] Session creation failed:', errorText);
+          throw new Error(`Failed to create session: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
+        console.log('[LoginManager] Session created successfully:', data);
         dispatch(setSessionId({ sessionId: data.session_id }));
       } catch (error) {
-        console.error("Error creating session:", error);
+        console.error('[LoginManager] Error creating session:', error);
       }
     }
   }; // End of modalObserver
@@ -295,34 +307,43 @@ const LoginManager = () => {
     }
 
     try {
+      const requestBody = {
+        vehicle_fleet: {
+          selected_fleets: selectedFleets,
+          fleet_names: fleetNames,
+          fleet_size: fleetSizes,
+          attribute_list: attributeLists
+        },
+        chat_history: []
+      };
 
-      const response = await fetch(`http://${process.env.NEXT_PUBLIC_SESSIONS_SERVICE_URL}/sessions/create`, {
+      console.log('[LoginManager handleClose] Creating session with request body:', JSON.stringify(requestBody, null, 2));
+
+      // Use API route instead of direct backend call
+      const response = await fetch(`/api/sessions-create`, {
 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          vehicle_fleet: {
-            selected_fleets: selectedFleets,
-            fleet_names: fleetNames,
-            fleet_size: fleetSizes,
-            attribute_list: attributeLists
-          },
-          chat_history: []
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('[LoginManager handleClose] Session creation response status:', response.status);
 
       if (!response.ok) {
-        throw new Error('Failed to create session');
+        const errorText = await response.text();
+        console.error('[LoginManager handleClose] Session creation failed:', errorText);
+        throw new Error(`Failed to create session: ${response.status} - ${errorText}`);
       }
+
       const data = await response.json();
+      console.log('[LoginManager handleClose] Session created successfully:', data);
       // Save the session ID in Redux
       dispatch(setSessionId({ sessionId: data.session_id }));
 
     } catch (error) {
-      console.error("Error creating session:", error);
+      console.error('[LoginManager handleClose] Error creating session:', error);
     }
 
   };

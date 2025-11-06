@@ -13,6 +13,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+cicd-kanopy/
 
 # Config
 **/config.yml
@@ -184,3 +185,11 @@ cython_debug/
 !frontend/app/lib/
 
 .DS_Store
+README_KANOPY.md
+ENV_SETUP_GUIDE.md
+FINAL_SETUP_SUMMARY.md
+KANOPY_DEPLOYMENT_GUIDE.md
+DEPLOYMENT_SUMMARY.md
+docker-compose.kanopy-sim.yml
+docker-compose.test.yml
+CLAUDE.md

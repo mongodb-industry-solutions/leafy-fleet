@@ -1,0 +1,33 @@
+FROM python:3.10-slim
+
+ENV GET_POETRY_IGNORE_DEPRECATION=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install supervisor and curl for health checks
+RUN apt-get update && \
+    apt-get install -y supervisor curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy supervisor configuration file first (before backend code for better caching)
+COPY backend/supervisord.conf /etc/supervisord.conf
+
+# Copy all backend code
+COPY backend/ /app/
+
+# Collect all requirements.txt files and install dependencies
+RUN find /app -name "requirements.txt" -exec pip install --no-cache-dir -r {} \;
+
+# Create supervisor log directory
+RUN mkdir -p /var/log/supervisor
+
+# Expose all backend ports
+EXPOSE 9000 9001 9002 9003 9004 9005 9006
+
+# Health check for agent service (main service)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:9000/ || exit 1
+
+# Start supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

@@ -1,8 +1,37 @@
 FROM node:20.10.0
 WORKDIR /app
+
+# Build arguments for Next.js environment variables
+# These will be passed from Drone pipeline during build
+ARG NEXT_PUBLIC_AGENT_SERVICE_URL=127.0.0.1:9000
+ARG NEXT_PUBLIC_SESSIONS_SERVICE_URL=127.0.0.1:9003
+ARG NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL=127.0.0.1:9001
+ARG NEXT_PUBLIC_SIMULATION_SERVICE_URL=127.0.0.1:9006
+ARG NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL=127.0.0.1:9004
+ARG NEXT_PUBLIC_STATIC_SERVICE_URL=127.0.0.1:9005
+
+# Convert build args to environment variables for Next.js build
+ENV NEXT_PUBLIC_AGENT_SERVICE_URL=${NEXT_PUBLIC_AGENT_SERVICE_URL}
+ENV NEXT_PUBLIC_SESSIONS_SERVICE_URL=${NEXT_PUBLIC_SESSIONS_SERVICE_URL}
+ENV NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL=${NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL}
+ENV NEXT_PUBLIC_SIMULATION_SERVICE_URL=${NEXT_PUBLIC_SIMULATION_SERVICE_URL}
+ENV NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL=${NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL}
+ENV NEXT_PUBLIC_STATIC_SERVICE_URL=${NEXT_PUBLIC_STATIC_SERVICE_URL}
+
 COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps
+
+# Copy frontend code (excluding .env.local for deployment)
 COPY frontend/ .
+
+# Remove local .env.local file to prevent conflicts
+RUN rm -f .env.local
+
+# Build the application with environment variables baked in
 RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
+
+# Kanopy requires port 8080
+EXPOSE 8080
+
+# Start on port 8080
+CMD ["npm", "start", "--", "-p", "8080"]

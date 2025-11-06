@@ -1,0 +1,179 @@
+---
+kind: pipeline
+type: kubernetes
+name: staging
+
+trigger:
+  branch:
+    - staging
+
+steps:
+  # Step 1: Build unified backend (all 7 services in one container)
+  - name: publish-backend
+    image: plugins/kaniko-ecr
+    settings:
+      create_repository: true
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      repo: industrysolutions/leafy-fleet-backend
+      dockerfile: Dockerfile.backend.unified
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+    when:
+      event:
+        - push
+
+  # Step 2: Build frontend
+  - name: publish-frontend
+    image: plugins/kaniko-ecr
+    settings:
+      create_repository: true
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      repo: industrysolutions/leafy-fleet-frontend
+      dockerfile: Dockerfile.frontend
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+      build_args:
+        - NEXT_PUBLIC_AGENT_SERVICE_URL=127.0.0.1:9000
+        - NEXT_PUBLIC_SESSIONS_SERVICE_URL=127.0.0.1:9003
+        - NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL=127.0.0.1:9001
+        - NEXT_PUBLIC_SIMULATION_SERVICE_URL=127.0.0.1:9006
+        - NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL=127.0.0.1:9004
+        - NEXT_PUBLIC_STATIC_SERVICE_URL=127.0.0.1:9005
+    when:
+      event:
+        - push
+
+  # Step 3: Deploy combined pod (frontend + backend sidecar)
+  - name: deploy-combined-staging
+    image: public.ecr.aws/kanopy/drone-helm:v3
+    settings:
+      chart: mongodb/web-app
+      chart_version: 4.25.0
+      add_repos: [mongodb=https://10gen.github.io/helm-charts]
+      namespace: industrysolutions
+      release: leafy-fleet
+      values_files: ["environments/staging-combined.yaml"]
+      values:
+        # Frontend main container (port 8080)
+        - "image.tag=git-${DRONE_COMMIT_SHA:0:7}"
+        - "image.repository=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/leafy-fleet-frontend"
+        # Backend sidecar (all services in one container)
+        - "sidecarContainers[0].image=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/leafy-fleet-backend:git-${DRONE_COMMIT_SHA:0:7}"
+        # Ingress configuration
+        - "ingress.enabled=true"
+        - "ingress.hosts[0]=leafy-fleet.industrysolutions.staging.corp.mongodb.com"
+        # Service mesh
+        - "mesh.enabled=true"
+        # Resource limits (adjust based on load testing)
+        - "resources.limits.cpu=1000m"
+        - "resources.limits.memory=1024Mi"
+        - "resources.requests.cpu=250m"
+        - "resources.requests.memory=256Mi"
+      api_server: https://api.staging.corp.mongodb.com
+      kubernetes_token:
+        from_secret: staging_kubernetes_token
+    when:
+      branch:
+        - staging
+      event:
+        - push
+
+---
+kind: pipeline
+type: kubernetes
+name: production
+
+trigger:
+  branch:
+    - main
+
+steps:
+  # Step 1: Build unified backend
+  - name: publish-backend
+    image: plugins/kaniko-ecr
+    settings:
+      create_repository: true
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      repo: industrysolutions/leafy-fleet-backend-prod
+      dockerfile: Dockerfile.backend.unified
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+    when:
+      event:
+        - push
+
+  # Step 2: Build frontend
+  - name: publish-frontend
+    image: plugins/kaniko-ecr
+    settings:
+      create_repository: true
+      registry: 795250896452.dkr.ecr.us-east-1.amazonaws.com
+      repo: industrysolutions/leafy-fleet-frontend-prod
+      dockerfile: Dockerfile.frontend
+      tags:
+        - git-${DRONE_COMMIT_SHA:0:7}
+        - latest
+      access_key:
+        from_secret: ecr_access_key
+      secret_key:
+        from_secret: ecr_secret_key
+      build_args:
+        - NEXT_PUBLIC_AGENT_SERVICE_URL=127.0.0.1:9000
+        - NEXT_PUBLIC_SESSIONS_SERVICE_URL=127.0.0.1:9003
+        - NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL=127.0.0.1:9001
+        - NEXT_PUBLIC_SIMULATION_SERVICE_URL=127.0.0.1:9006
+        - NEXT_PUBLIC_GEOSPATIAL_SERVICE_URL=127.0.0.1:9004
+        - NEXT_PUBLIC_STATIC_SERVICE_URL=127.0.0.1:9005
+    when:
+      event:
+        - push
+
+  # Step 3: Deploy to production
+  - name: deploy-combined-prod
+    image: public.ecr.aws/kanopy/drone-helm:v3
+    settings:
+      chart: mongodb/web-app
+      chart_version: 4.25.0
+      add_repos: [mongodb=https://10gen.github.io/helm-charts]
+      namespace: industrysolutions
+      release: leafy-fleet-prod
+      values_files: ["environments/production-combined.yaml"]
+      values:
+        # Frontend main container
+        - "image.tag=git-${DRONE_COMMIT_SHA:0:7}"
+        - "image.repository=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/leafy-fleet-frontend-prod"
+        # Backend sidecar
+        - "sidecarContainers[0].image=795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/leafy-fleet-backend-prod:git-${DRONE_COMMIT_SHA:0:7}"
+        # Ingress configuration
+        - "ingress.enabled=true"
+        - "ingress.hosts[0]=leafy-fleet.industrysolutions.prod.corp.mongodb.com"
+        # Service mesh
+        - "mesh.enabled=true"
+        # Resource limits (adjust based on load testing)
+        - "resources.limits.cpu=1000m"
+        - "resources.limits.memory=1024Mi"
+        - "resources.requests.cpu=250m"
+        - "resources.requests.memory=256Mi"
+      api_server: https://api.prod.corp.mongodb.com
+      kubernetes_token:
+        from_secret: prod_kubernetes_token
+    when:
+      branch:
+        - main
+      event:
+        - push

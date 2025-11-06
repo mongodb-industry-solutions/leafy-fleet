@@ -481,7 +481,7 @@ class Car:
             
             # Make the API call
             response = await session.post(
-                f"{timeseries_post}:9002/historic-batch",
+                f"{timeseries_post}/historic-batch",
                 json=formatted_data,
                 headers={"Content-Type": "application/json"}
             )
@@ -600,10 +600,10 @@ async def send_batch_to_api(batch_data):
         # Convert numpy types to regular Python types  
         formatted_data = convert_numpy_types(batch_data)  
           
-        response = await session.post(  
-            f"{timeseries_post}:9002/timeseries-batch",  # Assuming you have a batch endpoint  
-            json=formatted_data,  
-            headers={"Content-Type": "application/json"}  
+        response = await session.post(
+            f"{timeseries_post}/timeseries-batch",
+            json=formatted_data,
+            headers={"Content-Type": "application/json"}
         )  
           
         if response.status in [200, 201]:  
@@ -640,9 +640,9 @@ async def startup_event():
     global latest_telemetry 
     latest_telemetry= datetime.now(cdt).timestamp()-3600
     load_routes("processed_routes.json") # if want to try with 10 cars, use smaller_sim_routes/processed_routes_10.json
-    try:  
-        
-        await geofence_manager.load_geofences(f"{geofences_service}:9004/geofences",session) 
+    try:
+
+        await geofence_manager.load_geofences(f"{geofences_service}/geofences",session) 
 
   # Load geofences from an API  
     except Exception as e:  

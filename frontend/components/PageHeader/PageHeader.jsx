@@ -29,22 +29,23 @@ const PageHeader = () => {
   const INACTIVITY_TIMEOUT =  60 * 5 * 1000; // 5 minutes in milliseconds  
   
   // Function to call the stop API , to not pause if multiple users just calls to reduce user by 1, if user count is 0 then stop the simulation
-  const callStopAPI = useCallback(async ( isManualStop = false) => {  
-  if (hasBeenStopped) return;  
-  try {  
-    await fetch(`http://${process.env.NEXT_PUBLIC_SIMULATION_SERVICE_URL}/simulation/reduce-users`, {  
-      method: "POST",  
+  const callStopAPI = useCallback(async ( isManualStop = false) => {
+  if (hasBeenStopped) return;
+  try {
+    // Use API route instead of direct backend call
+    await fetch(`/api/simulation-reduce`, {
+      method: "POST",
 
-      keepalive: true,  
-    });  
-    console.log("Stop API called successfully");  
-    setHasBeenStopped(true); 
-    if (isManualStop) {  
-      setPausedByButton(true);  
-    }  
-  } catch (error) {  
-    console.error("Error calling stop API:", error);  
-  }  
+      keepalive: true,
+    });
+    console.log("Stop API called successfully");
+    setHasBeenStopped(true);
+    if (isManualStop) {
+      setPausedByButton(true);
+    }
+  } catch (error) {
+    console.error("Error calling stop API:", error);
+  }
 }, [hasBeenStopped]);   
 
 

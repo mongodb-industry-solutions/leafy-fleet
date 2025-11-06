@@ -24,53 +24,67 @@ router = APIRouter()
 @router.post("/sessions")
 async def add_sessions(request: SessionRequest):
     """Add session to cars based on three ranges: 1-x1, 101-x2, 201-x3."""
+    logger.info("[SIMULATION SERVICE] ========== Add session to cars ==========")
+    logger.info(f"[SIMULATION SERVICE] Request: session_id={request.session_id}, range1={request.range1}, range2={request.range2}, range3={request.range3}")
+
     if is_stopped():
+        logger.error("[SIMULATION SERVICE] Simulation is stopped")
         raise HTTPException(status_code=400, detail="Simulation is not running")
-    
+
     # Validate ranges
     if not all(0 <= x <= 100 for x in [request.range1, request.range2, request.range3]):
+        logger.error("[SIMULATION SERVICE] Invalid ranges")
         raise HTTPException(status_code=400, detail="All ranges must be between 0 and 100")
-    
+
     # Generate car ID lists based on ranges
     car_ids = []
-    
+
     # Range 1: cars 1 to range1 (if range1 > 0)
     if request.range1 > 0:
         car_ids.extend(list(range(1, request.range1 + 1)))
-    
-    # Range 2: cars 101 to 101+range2-1 (if range2 > 0)  
+
+    # Range 2: cars 101 to 101+range2-1 (if range2 > 0)
     if request.range2 > 0:
         car_ids.extend(list(range(101, 101 + request.range2)))
-    
+
     # Range 3: cars 201 to 201+range3-1 (if range3 > 0)
     if request.range3 > 0:
         car_ids.extend(list(range(201, 201 + request.range3)))
-    
+
+    logger.info(f"[SIMULATION SERVICE] Generated car_ids list (count={len(car_ids)}): {car_ids}")
+
     if not car_ids:
+        logger.info("[SIMULATION SERVICE] No cars selected (all ranges are 0)")
         return {
             "message": "No cars selected (all ranges are 0)",
             "session_id": request.session_id,
             "cars_updated": 0,
             "ranges": {
                 "range1": f"1-{request.range1}" if request.range1 > 0 else "none",
-                "range2": f"101-{100 + request.range2}" if request.range2 > 0 else "none", 
+                "range2": f"101-{100 + request.range2}" if request.range2 > 0 else "none",
                 "range3": f"201-{200 + request.range3}" if request.range3 > 0 else "none"
             }
         }
     # Add sessions to cars
     cars_updated = 0
     cars_not_found = []
+    logger.info(f"[SIMULATION SERVICE] Simulation state - is_running: {is_running()}, is_paused: {is_paused()}")
+
     if is_running() or is_paused():
         for car_id in car_ids:
             car = await get_car_by_id(car_id)
             hc = await get_h_car_by_id(car_id)
             if car:
+                logger.info(f"[SIMULATION SERVICE] Adding session to car {car_id}")
                 await car.add_session(request.session_id)
                 cars_updated += 1
                 if hc:
                     await hc.add_session(request.session_id)
             else:
+                logger.warning(f"[SIMULATION SERVICE] Car {car_id} not found")
                 cars_not_found.append(car_id)
+
+    logger.info(f"[SIMULATION SERVICE] Session added to {cars_updated}/{len(car_ids)} cars")
     
     result = {
         "message": f"Session {request.session_id} added to {cars_updated} cars",
@@ -93,9 +107,9 @@ async def add_sessions(request: SessionRequest):
             logger.error("No historic cars were created")
             raise HTTPException(status_code=500, detail="Failed to create historic cars")
             # Check latest timestamp, if any      
-        timestamp_data = None                   
-        try:          
-            url = f"{timeseries_get}:9001/timeseries"          
+        timestamp_data = None
+        try:
+            url = f"{timeseries_get}/timeseries"          
             fetch = await session.get(url)          
             if fetch.status == 200:          
                 response_data = await fetch.json()          

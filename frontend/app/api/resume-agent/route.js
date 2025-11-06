@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const thread_id = searchParams.get("thread_id");

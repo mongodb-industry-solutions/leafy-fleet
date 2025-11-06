@@ -38,9 +38,15 @@ const ChatComponent = () => {
 
   useEffect(() => {
     // 1. Create a new WebSocket connection when the component mounts
-    const socket = new WebSocket(
-      `ws://${process.env.NEXT_PUBLIC_AGENT_SERVICE_URL}/ws?thread_id=${thread_id}`
-    );
+    // Use the current host instead of hardcoded 127.0.0.1
+    // This allows WebSocket to work both locally and in Kubernetes
+    const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = typeof window !== 'undefined' ? window.location.host : 'localhost:3000';
+    const wsUrl = `${protocol}//${host}/ws?thread_id=${thread_id}`;
+
+    console.log('[ChatComponent DEBUG] WebSocket URL:', wsUrl);
+
+    const socket = new WebSocket(wsUrl);
     socketRef.current = socket; // Store it in the ref
 
     socket.onopen = () => {
@@ -116,21 +122,25 @@ const ChatComponent = () => {
     );
 
     try {
-      const res = await fetch(
-        `http://${
-          process.env.NEXT_PUBLIC_AGENT_SERVICE_URL
-        }/run-agent?query_reported=${encodeURIComponent(
-          userMessageText
-        )}&thread_id=${thread_id}&filters=${encodeURIComponent(
-          JSON.stringify(filters)
-        )}&preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Use Next.js API route instead of direct backend call
+      // This allows the request to be made server-side where 127.0.0.1 works
+      const url = `/api/run-agent?query_reported=${encodeURIComponent(
+        userMessageText
+      )}&thread_id=${thread_id}&filters=${encodeURIComponent(
+        JSON.stringify(filters)
+      )}&preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`;
+
+      console.log('[ChatComponent DEBUG] Calling agent API route:', url);
+      console.log('[ChatComponent DEBUG] User preferences:', userPreferences);
+      console.log('[ChatComponent DEBUG] Filters:', filters);
+      console.log('[ChatComponent DEBUG] Thread ID:', thread_id);
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       //   const res = {
       //     ok: true,
@@ -143,10 +153,12 @@ const ChatComponent = () => {
 
       // Check if the response is OK (status 200)
       if (!res.ok) {
-        console.error("HTTP error! status:", res.status);
+        console.error("[ChatComponent DEBUG] HTTP error! status:", res.status);
+        const errorText = await res.text();
+        console.error("[ChatComponent DEBUG] Error response:", errorText);
         let data = {
           chain_of_thought:
-            "I’m sorry, I’m experiencing technical difficulties. Please try again later.",
+            "I'm sorry, I'm experiencing technical difficulties. Please try again later.",
         };
         dispatch(setIsChatbotThinking(false));
         dispatch(
@@ -155,11 +167,12 @@ const ChatComponent = () => {
             text: data.chain_of_thought,
           })
         );
-        throw new Error(`HTTP error! status: ${res.status}`);
+        throw new Error(`HTTP error! status: ${res.status}, response: ${errorText}`);
       }
 
       const text = await res.text();
-      // console.log("Response text:", text);
+      console.log("[ChatComponent DEBUG] Response received, length:", text.length);
+      console.log("[ChatComponent DEBUG] Response text:", text.substring(0, 200));
       try {
         // Parse JSON if valid
         const parsedData = JSON.parse(text);

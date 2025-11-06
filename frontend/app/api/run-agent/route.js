@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -20,6 +22,9 @@ export async function GET(request) {
     )}&thread_id=${thread_id}&filters=${encodeURIComponent(
       filters || '[]'
     )}&preferences=${encodeURIComponent(preferences || '[]')}`;
+
+    console.log('[DEBUG] Calling backend URL:', url);
+    console.log('[DEBUG] Preferences being sent:', preferences);
 
     const response = await fetch(url, {
       method: "GET",
@@ -47,8 +52,9 @@ export async function GET(request) {
     }
   } catch (error) {
     console.error('Error calling agent service:', error);
+    console.error('Error details:', error.message, error.stack);
     return NextResponse.json(
-      { error: 'Failed to call agent service' },
+      { error: 'Failed to call agent service', details: error.message },
       { status: 500 }
     );
   }

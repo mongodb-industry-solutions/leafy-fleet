@@ -1,0 +1,79 @@
+# Leafy Fleet - Production Environment Configuration
+# This configuration deploys frontend + backend as a single pod with sidecar pattern
+
+# Frontend environment variables
+# Note: NEXT_PUBLIC_* variables are baked into the build via Drone build_args
+env:
+  NODE_ENV: production
+
+# Backend sidecar container (runs all 7 backend services)
+sidecarContainers:
+  - name: backend
+    image: 795250896452.dkr.ecr.us-east-1.amazonaws.com/industrysolutions/leafy-fleet-backend-prod:latest
+
+    ports:
+      - containerPort: 9000
+        name: agent
+      - containerPort: 9001
+        name: ts-get
+      - containerPort: 9002
+        name: ts-post
+      - containerPort: 9003
+        name: sessions
+      - containerPort: 9004
+        name: geofence
+      - containerPort: 9005
+        name: static
+      - containerPort: 9006
+        name: simulation
+
+    # Resource limits for backend (running 7 services)
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+
+    env:
+      # MongoDB connection
+      - name: MONGODB_URI
+        valueFrom:
+          secretKeyRef:
+            name: leafy-fleet-secrets-prod
+            key: MONGODB_URI
+
+      - name: APP_NAME
+        value: "leafy_fleet"
+
+      - name: AWS_REGION
+        value: "us-east-1"
+
+      - name: VOYAGE_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: leafy-fleet-secrets-prod
+            key: VOYAGE_API_KEY
+
+      - name: STATIC_SERVICE_ENDPOINT
+        value: "http://127.0.0.1:9005"
+
+      - name: TIMESERIES_POST_ENDPOINT
+        value: "http://127.0.0.1:9002"
+
+      - name: GEOFENCES_SERVICE_ENDPOINT
+        value: "http://127.0.0.1:9004"
+
+      - name: ORIGINS
+        value: "http://127.0.0.1:8080,https://leafy-fleet.industrysolutions.prod.corp.mongodb.com"
+
+      - name: PYTHONUNBUFFERED
+        value: "1"
+
+# Production service account with AWS IRSA
+serviceAccount:
+  enabled: true
+  irsa:
+    accountId: "275662791714"
+    roleName: "kanopy-prod-cicd-irsa"

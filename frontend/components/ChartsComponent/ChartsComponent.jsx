@@ -20,15 +20,29 @@ const ChartsComponent = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('[ChartsComponent] Fetching timeseries data for thread_id:', thread_id);
+        console.log('[ChartsComponent] Fleet capacities:', { fleet1Capacity, fleet2Capacity, fleet3Capacity });
+
+        // Use API route instead of direct backend call
         const res = await fetch(
-          `http://${process.env.NEXT_PUBLIC_TIMESERIES_GET_SERVICE_URL}/timeseries/all/latest?thread_id=${thread_id}`
+          `/api/get-timeseries?thread_id=${thread_id}`
         );
 
+        console.log('[ChartsComponent] Response status:', res.status);
+
         if (!res.ok) {
-          throw new Error("Network response was not ok");
+          const errorText = await res.text();
+          console.error('[ChartsComponent] Error response:', errorText);
+          throw new Error(`Network response was not ok: ${res.status} - ${errorText}`);
         }
 
         const data = await res.json();
+        console.log('[ChartsComponent] Received data:', {
+          totalCars: data.length,
+          sampleCar: data[0],
+          allCarIds: data.map(c => c.car_id)
+        });
+
         // the data returns a collection of ordered by carID of cars, I want to separate them by the fleet1Capacity, fleet2Capacity+100 and fleet3Capacity+200
         const fleet1 = data.filter((car) => car.car_id <= fleet1Capacity);
         const fleet2 = data.filter(
@@ -40,17 +54,46 @@ const ChartsComponent = () => {
             car.car_id > fleet2Capacity + 100 &&
             car.car_id <= fleet3Capacity + 200
         );
+
+        console.log('[ChartsComponent] Fleet data split:', {
+          fleet1Count: fleet1.length,
+          fleet2Count: fleet2.length,
+          fleet3Count: fleet3.length
+        });
+
         // Update state with fleet data
         setFleet1Cars(fleet1);
         setFleet2Cars(fleet2);
         setFleet3Cars(fleet3);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error('[ChartsComponent] Error fetching data:', error);
       }
     };
 
-    fetchData();
-  }, []); // Empty dependency array ensures this runs once when the component mounts
+    // Only fetch if we have a thread_id
+    if (thread_id) {
+      console.log('[ChartsComponent] Thread ID available, setting up data fetching');
+
+      // Initial fetch after delay to allow simulation to start
+      const initialTimer = setTimeout(() => {
+        console.log('[ChartsComponent] Initial fetch after delay');
+        fetchData();
+      }, 3000); // Wait 3 seconds for simulation to associate session with cars
+
+      // Also set up periodic refresh every 10 seconds
+      const refreshInterval = setInterval(() => {
+        console.log('[ChartsComponent] Periodic refresh');
+        fetchData();
+      }, 10000); // Refresh every 10 seconds
+
+      return () => {
+        clearTimeout(initialTimer);
+        clearInterval(refreshInterval);
+      };
+    } else {
+      console.log('[ChartsComponent] No thread_id yet, skipping fetch');
+    }
+  }, [thread_id]); // Re-fetch when thread_id changes
 
   // Create filtered chart URLs  - here u can change refresh time 
   const createFilteredChartUrl = (chartId) => {  

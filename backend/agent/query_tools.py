@@ -716,7 +716,7 @@ class QueryTools(MongoDBConnector):
     
 
     def understand_fleet_number(self, user_preferences: str):
-        """       
+        """
         Understand the fleet number from user preferences.
 
         Args:
@@ -726,10 +726,23 @@ class QueryTools(MongoDBConnector):
             [int]: an array of the last car IDs in the fleet
             for example [50,150,250] for fleets 1,2,3 so we know we should search for car IDs 0-50, 100-150, 200-250
         """
+        logger.info(f"[DEBUG] understand_fleet_number - Input user_preferences: {user_preferences}")
+        logger.info(f"[DEBUG] understand_fleet_number - Type: {type(user_preferences)}")
+        logger.info(f"[DEBUG] understand_fleet_number - Length: {len(user_preferences) if user_preferences else 0}")
+
         fleet_numbers = []
-        for preference in user_preferences:
-            if isinstance(preference[-1], int):
-                fleet_numbers.append(preference[-1])
+        for i, preference in enumerate(user_preferences):
+            logger.info(f"[DEBUG] Processing preference[{i}]: {preference}, type: {type(preference)}, length: {len(preference) if preference else 0}")
+            if preference and len(preference) > 0:
+                last_item = preference[-1]
+                logger.info(f"[DEBUG] Last item in preference[{i}]: {last_item}, type: {type(last_item)}, is int: {isinstance(last_item, int)}")
+                if isinstance(last_item, int):
+                    fleet_numbers.append(last_item)
+                    logger.info(f"[DEBUG] Added {last_item} to fleet_numbers")
+            else:
+                logger.info(f"[DEBUG] Preference[{i}] is empty, skipping")
+
+        logger.info(f"[DEBUG] understand_fleet_number - Final fleet_numbers: {fleet_numbers}")
         return fleet_numbers
 
     def obtain_checkpoint(self):
@@ -768,9 +781,10 @@ async def vehicle_state_search_tool(state: dict) -> AgentState:
     userFilters = state.get("userFilters")
     agentPreferences = state.get("botPreferences")
 
-    logger.info(f"User Preferences: {userPreferences}")
-    logger.info(f"User Filters: {userFilters}")
-    logger.info(f"Agent Preferences: {agentPreferences}")
+    logger.info(f"[DEBUG] vehicle_state_search_tool - User Preferences: {userPreferences}")
+    logger.info(f"[DEBUG] vehicle_state_search_tool - Type: {type(userPreferences)}")
+    logger.info(f"[DEBUG] vehicle_state_search_tool - User Filters: {userFilters}")
+    logger.info(f"[DEBUG] vehicle_state_search_tool - Agent Preferences: {agentPreferences}")
 
     query_tools = QueryTools()
     result = await query_tools.vehicle_state_search(user_preferences=userPreferences, agent_filters=agentPreferences, user_filters=userFilters)
