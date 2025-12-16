@@ -133,7 +133,7 @@ You will need a way of interacting with your MongoDB Atlas cluster. The easiest 
 Let's go back to your terminal, navigate to the directory /leafy-fleet (the root level of the application code), and run the following command:
 
 ```bash
-mongorestore --uri "mongodb+srv://<user>:<password>@<cluster-url>" ./dmp/leafy_fleet
+mongorestore --uri "mongodb+srv://<user>:<password>@<cluster-url>" ./dump/leafy_fleet
 ```
 
 This command will create the database and collections and log its progress. Upon completion, you should see a log like this:
