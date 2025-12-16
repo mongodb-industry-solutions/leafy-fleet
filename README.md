@@ -133,7 +133,7 @@ You will need a way of interacting with your MongoDB Atlas cluster. The easiest 
 Let's go back to your terminal, navigate to the directory /leafy-fleet (the root level of the application code), and run the following command:
 
 ```bash
-mongorestore --uri "mongodb+srv://<user>:<password>@<cluster-url>" ./dump/leafy_fleet
+mongorestore --uri "YOUR_MONGODBURI" ./dump/leafy_fleet
 ```
 
 This command will create the database and collections and log its progress. Upon completion, you should see a log like this:
@@ -170,7 +170,7 @@ You will need to have 2 sets of environment variables, one for the backend and o
 Thi is the .env that goes into the `/backend` directory.
 
 ```bash
-MONGODB_URI="mongodb+srv://<USERNAME>:<PASSWORD>@<CLUSTER>"
+MONGODB_URI=""
 APP_NAME="leafy_fleet"
 AWS_REGION=<THE_AWS_REGION_YOU_SET_UP_YOUR_ACCOUNT_IN>
 AWS_PROFILE=<YOUR_AWS_PROFILE_NAME>
