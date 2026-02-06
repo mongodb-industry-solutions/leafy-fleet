@@ -30,7 +30,7 @@ sidecarContainers:
     # Resource limits for backend (running 7 services)
     resources:
       requests:
-        memory: "1Gi"
+        memory: "512Mi"
         cpu: "200m"
       limits:
         memory: "2Gi"
