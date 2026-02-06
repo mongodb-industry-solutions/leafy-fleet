@@ -544,4 +544,4 @@ const LoginManager = () => {
   
 };
 
-module.exports = LoginManager;
+export default LoginManager;

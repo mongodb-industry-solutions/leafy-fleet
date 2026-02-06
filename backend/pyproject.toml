@@ -5,7 +5,7 @@ description = "Unified backend services for Leafy Fleet"
 authors = ["MongoDB Industry Solutions <industry-solutions@mongodb.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 fastapi = "^0.115.11"
 uvicorn = "^0.32.1"
 motor = "^3.7.0"

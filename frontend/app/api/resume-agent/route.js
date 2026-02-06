@@ -1,10 +1,12 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const thread_id = searchParams.get("thread_id");
   if (!thread_id) {
-    return new Response(JSON.stringify({ error: "thread_id is required" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "thread_id is required" }), {
+      status: 400,
+    });
   }
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;

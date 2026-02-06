@@ -39,4 +39,4 @@ const InfocardComponent = ({ title, car, fleetSize }) => {
     );
 }
 
-module.exports = InfocardComponent;
+export default InfocardComponent;

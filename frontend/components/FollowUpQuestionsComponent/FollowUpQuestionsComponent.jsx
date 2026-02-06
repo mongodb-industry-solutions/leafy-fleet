@@ -25,4 +25,4 @@ const FollowUpQuestionsComponent = ({ handleSuggestion, questions }) => {
 
 }
 
-module.exports = FollowUpQuestionsComponent;
+export default FollowUpQuestionsComponent;

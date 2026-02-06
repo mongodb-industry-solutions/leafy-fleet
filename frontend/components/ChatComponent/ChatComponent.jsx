@@ -237,4 +237,4 @@ const ChatComponent = () => {
   );
 };
 
-module.exports = ChatComponent;
+export default ChatComponent;
