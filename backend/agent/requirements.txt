@@ -31,7 +31,7 @@ langsmith==0.3.45
 motor==3.7.0
 msgpack==1.1.0
 numpy==1.26.4
-orjson==3.10.15
+orjson==3.11.5
 packaging==24.2
 pandas==2.2.3
 pydantic==2.10.6
