@@ -89,4 +89,4 @@ const ChatInput = ({ onSendMessage }) => {
     );
 }
 
-module.exports = ChatInput;
+export default ChatInput;

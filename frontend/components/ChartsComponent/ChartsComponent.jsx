@@ -189,4 +189,4 @@ const ChartsComponent = () => {
   );
 };
 
-module.exports = ChartsComponent;
+export default ChartsComponent;
