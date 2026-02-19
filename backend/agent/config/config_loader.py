@@ -49,9 +49,9 @@ class ConfigLoader:
     def get(self, key, default=None):
         """
         Get a configuration value by key.
+        Environment variables take precedence over config file values.
         """
-        value = self.config_data.get(key, default)
-        return value
+        return os.environ.get(key, self.config_data.get(key, default))
 
 # ==================
 # Example usage
