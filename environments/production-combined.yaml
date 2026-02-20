@@ -50,6 +50,18 @@ sidecarContainers:
       - name: AWS_REGION
         value: "us-east-1"
 
+      # Bedrock inference profile ARNs (for per-demo cost tracking)
+      - name: CHATCOMPLETIONS_MODEL_ID
+        valueFrom:
+          secretKeyRef:
+            name: leafy-fleet-secrets-prod
+            key: CHATCOMPLETIONS_MODEL_ID
+      - name: EMBEDDINGS_MODEL_ID
+        valueFrom:
+          secretKeyRef:
+            name: leafy-fleet-secrets-prod
+            key: EMBEDDINGS_MODEL_ID
+
       - name: VOYAGE_API_KEY
         valueFrom:
           secretKeyRef:
