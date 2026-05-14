@@ -1,6 +1,9 @@
 # task-def.json
 **/task-def.json
 
+# Runtime state
+**/simulation_state.json
+
 
 #dockers ecs
 create-ecs.txt
