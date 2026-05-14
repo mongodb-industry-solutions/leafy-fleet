@@ -23,7 +23,7 @@ class BedrockAnthropicChatCompletions(BedrockClient):
     log: logging.Logger = logging.getLogger("BedrockAnthropicChatCompletions")
 
     def __init__(self, aws_access_key: Optional[str] = None, aws_secret_key: Optional[str] = None, region_name: Optional[str] = "us-east-1",
-                model_id: Optional[str] = "us.anthropic.claude-3-5-haiku-20241022-v1:0") -> None:
+                model_id: Optional[str] = "us.anthropic.claude-haiku-4-5-20251001-v1:0") -> None:
         super().__init__(aws_access_key=aws_access_key, aws_secret_key=aws_secret_key, region_name=region_name)
         """
         Initialize the BedrockAnthropicChatCompletions class.
