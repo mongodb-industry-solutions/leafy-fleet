@@ -23,7 +23,7 @@ class BedrockAnthropicChatCompletions(BedrockClient):
     log: logging.Logger = logging.getLogger("BedrockAnthropicChatCompletions")
 
     def __init__(self, aws_access_key: Optional[str] = None, aws_secret_key: Optional[str] = None, region_name: Optional[str] = "us-east-1",
-                model_id: Optional[str] = "anthropic.claude-3-haiku-20240307-v1:0") -> None:
+                model_id: Optional[str] = "us.anthropic.claude-3-5-haiku-20241022-v1:0") -> None:
         super().__init__(aws_access_key=aws_access_key, aws_secret_key=aws_secret_key, region_name=region_name)
         """
         Initialize the BedrockAnthropicChatCompletions class.
@@ -74,8 +74,8 @@ class BedrockAnthropicChatCompletions(BedrockClient):
 
         except (ClientError, Exception) as e:
             self.log.error(
-                f"ERROR: Can't invoke '{self.text_model}'. Reason: {e}")
-            exit(1)
+                f"ERROR: Can't invoke '{self.model_id}'. Reason: {e}")
+            raise
 
         # Decode the response body.
         model_response = json.loads(response["body"].read())
